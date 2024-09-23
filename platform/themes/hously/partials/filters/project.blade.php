@@ -1,0 +1,26 @@
+<form action="{{ $actionUrl ?? RealEstateHelper::getProjectsListPageUrl() }}" data-ajax-url="{{ $ajaxUrl ?? route('public.projects') }}">
+    <input type="hidden" name="type" value="project">
+    <div class="space-y-5 registration-form text-dark text-start">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-0">
+            {!! Theme::partial('filters.keyword', compact('type')) !!}
+
+            {!! Theme::partial('filters.location', compact('type')) !!}
+        </div>
+
+        <button type="button" class="flex items-center gap-2 toggle-advanced-search text-primary hover:text-secondary">
+            {{ __('Advanced') }}
+            <i class="mdi mdi-chevron-down-circle-outline"></i>
+        </button>
+
+        <div class="grid hidden grid-cols-1 gap-6 transition-all duration-200 ease-in-out lg:grid-cols-3 md:grid-cols-2 lg:gap-0 advanced-search">
+            {!! Theme::partial('filters.category', compact('type', 'categories')) !!}
+
+            {!! Theme::partial('filters.prices') !!}
+        </div>
+
+        <button type="submit" class="btn bg-primary hover:bg-secondary border-primary hover:border-secondary text-white submit-btn w-full md:w-1/4 !h-12 rounded transition-all ease-in-out duration-200">
+            <i class="mdi mdi-magnify me-2"></i>
+            {{ __('Search') }}
+        </button>
+    </div>
+</form>
