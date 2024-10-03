@@ -161,7 +161,7 @@
                 </ul>
             </div>
         @else
-            <p class="mt-4 text-green-600">No future bookings for this property.</p>
+            <p class="mt-4 text-green-600">No bookings for this property.</p>
         @endif
 
         <div class="mt-6">
