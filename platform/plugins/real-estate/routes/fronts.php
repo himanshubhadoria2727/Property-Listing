@@ -11,6 +11,9 @@ use Botble\RealEstate\Models\Account;
 use Botble\RealEstate\Models\Project;
 use Botble\RealEstate\Models\Property;
 use Botble\Slug\Facades\SlugHelper;
+use Botble\RealEstate\Http\Controllers\BookingController;
+use Botble\RealEstate\Http\Controllers\BroadcastController;
+use Botble\RealEstate\Http\Controllers\AgoraController;
 use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Facades\Route;
 
@@ -107,7 +110,21 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                         ->name('confirm');
                 });
             });
-
+            Route::group(['middleware' => ['web']], function () {
+                Route::group(['prefix' => 'account'], function () {
+                // Booking routes
+                Route::get('/join/{channel}', [AgoraController::class, 'joinStream']);
+                Route::post('/agora/token', [AgoraController::class, 'token']);
+                // Route::get('/start-broadcast/{broadcastId}', [BroadcastController::class, 'startBroadcast'])->name('start.broadcast');
+    
+                Route::post('/book', [BookingController::class, 'book']);
+                Route::get('properties/{property}/bookings',  [BookingController::class, 'viewBookings']);
+    
+                // Signaling routes for WebRTC
+                // Route::post('/send-signal', [BroadcastController::class, 'sendSignal']);
+                // Route::post('/handleSignaling', [BroadcastController::class, 'handleSignaling']);
+                });
+            });
             Route::get('feed/properties', [
                 'as' => 'feeds.properties',
                 'uses' => 'PublicController@getPropertyFeeds',

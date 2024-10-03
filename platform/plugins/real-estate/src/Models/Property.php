@@ -84,6 +84,14 @@ class Property extends BaseModel
         });
     }
 
+    // Botble\RealEstate\Models\Property.php
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'property_id');
+    }
+
+
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class, 'project_id')->withDefault();

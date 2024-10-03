@@ -4,7 +4,10 @@ use Botble\Base\Facades\BaseHelper;
 use Botble\RealEstate\Http\Controllers\CouponController;
 use Botble\RealEstate\Http\Controllers\CustomFieldController;
 use Botble\RealEstate\Http\Controllers\InvoiceController;
+
 use Illuminate\Support\Facades\Route;
+
+
 
 Route::group(['namespace' => 'Botble\RealEstate\Http\Controllers', 'middleware' => ['web', 'core']], function () {
     Route::group([
