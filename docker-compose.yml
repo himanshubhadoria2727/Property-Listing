@@ -11,30 +11,29 @@ services:
         networks:
             - sail
         depends_on:
-            - postgres
+            - postgres  # Change 'mysql' to 'postgres'
 
-    postgres:
-        image: 'postgres:13'
+    postgres:  # Renamed the service to 'postgres'
+        image: postgres:9.6.24  # Specify the PostgreSQL version
         ports:
-            - '${FORWARD_DB_PORT:-5432}:5432'
+            - '5432:5432'  # Mapping PostgreSQL port
         environment:
-            POSTGRES_DB: '${DB_DATABASE}'
-            POSTGRES_USER: '${DB_USERNAME}'
-            POSTGRES_PASSWORD: '${DB_PASSWORD}'
-            POSTGRES_HOST_AUTH_METHOD: 'trust'  # Allow password-less access for development
+            POSTGRES_PASSWORD: 'mypass'  # Set the PostgreSQL superuser password
+            POSTGRES_USER: '${DB_USERNAME}'  # Optionally, specify your username
+            POSTGRES_DB: '${DB_DATABASE}'  # Optionally, specify your database name
         volumes:
-            - 'sail-postgres:/var/lib/postgresql/data'
+            - 'sail-postgres:/var/lib/postgresql/data'  # Persist data
         networks:
             - sail
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
-            retries: 3
-            timeout: 5s
+            interval: 10s
+            retries: 5
 
 networks:
     sail:
         driver: bridge
 
 volumes:
-    sail-postgres:
+    sail-postgres:  # Renamed volume for clarity
         driver: local
