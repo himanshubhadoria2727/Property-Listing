@@ -5,7 +5,9 @@ namespace Botble\RealEstate\Http\Controllers;
 use Botble\RealEstate\Models\Booking;
 use Botble\RealEstate\Models\Property;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Botble\Base\Http\Controllers\BaseController;
+use Botble\RealEstate\Models\Account;
 
 class BookingController extends BaseController
 {
@@ -16,9 +18,17 @@ class BookingController extends BaseController
             'scheduled_at' => 'required|date|after:now',
         ]);
 
+        $account = Account::query()->findOrFail(auth('account')->id());
+        Log::info('account info'. $account);
+        // Check if the account exists
+        if (!$account) {
+            return redirect()->back()->withErrors(['error' => 'Account not found.']);
+        }
+
+
         Booking::create([
             'property_id' => $request->property_id,
-            'user_id' => auth()->id(),
+            'user_id' => $account->id, // Use the account ID instead of auth()->id()
             'scheduled_at' => $request->scheduled_at,
         ]);
 

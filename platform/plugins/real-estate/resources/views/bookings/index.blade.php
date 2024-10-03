@@ -83,7 +83,7 @@
             console.log('Fetched token:', token);
 
             // Use a valid Agora App ID
-            const appId = '{{ env('AGORA_APP_ID') }}'; // Replace with your actual Agora App ID from your environment
+            const appId = `{{ env('AGORA_APP_ID') }}`; // Replace with your actual Agora App ID from your environment
             console.log('app_id', appId)
             if (!appId) {
                 console.error('Agora App ID is missing.');
@@ -130,9 +130,11 @@
 
         try {
             await client.leave();
-            if (localTracks.videoTrack) localTracks.videoTrack.stop();
+            if (localTracks.videoTrack) {
+            localTracks.videoTrack.stop();
+            localTracks.videoTrack.close(); // Close the video track to turn off the camera
+        }
             if (localTracks.audioTrack) localTracks.audioTrack.stop();
-
             document.getElementById('startButton').style.display = 'inline-block';
             document.getElementById('stopButton').style.display = 'none';
             document.getElementById('muteAudioButton').style.display = 'none';
@@ -185,8 +187,7 @@
             const token = tokenResponse; // Get the token from the response
 
             // Use the Agora App ID from the environment variable
-            const appId = '{{ env('
-            AGORA_APP_ID ') }}'; // Ensure no spaces within the env call
+            const appId = `{{ env('AGORA_APP_ID')}}`; // Ensure no spaces within the env call
 
             // Join the channel with the fetched token
             await client.join(appId, channel, token, null); // Using null for the user ID

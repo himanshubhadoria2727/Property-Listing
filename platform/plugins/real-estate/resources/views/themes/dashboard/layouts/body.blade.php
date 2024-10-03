@@ -128,5 +128,67 @@
 
             @yield('content')
         </div>
+        <div class="mb-6 pb-4 pl-3 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700">
+    @auth('account')
+        
+        @php
+            // Fetch the authenticated user's ID
+            $userId = auth('account')->id();
+
+            // Log the user ID for debugging
+            \Log::info('Authenticated User ID: ' . $userId);
+
+            // Fetch future bookings for the authenticated user with property details
+            $futureBookings = \Botble\RealEstate\Models\Booking::where('user_id', $userId)
+                ->where('scheduled_at', '>', now())
+                ->with('property') // Eager load the property relationship
+                ->get();
+
+            // Log the future bookings for debugging
+            \Log::info('Future Bookings: ', $futureBookings->toArray());
+        @endphp
+
+        @if ($futureBookings->isNotEmpty())
+            <div class="mt-4 text-red-600">
+                <p>Already booked for the following times:</p>
+                <ul>
+                    @foreach ($futureBookings as $booking)
+                        <li>
+                            {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('Y-m-d H:i') }} - 
+                            {{ $booking->property->name }} <!-- Display property name -->
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @else
+            <p class="mt-4 text-green-600">No future bookings for this property.</p>
+        @endif
+
+        <div class="mt-6">
+            <h3 class="font-semibold">Your Properties and Their Bookings:</h3>
+            @php
+                // Fetch properties owned by the authenticated user
+                $ownedProperties = \Botble\RealEstate\Models\Property::where('author_id', $userId)->get(); // Assuming owner_id is the column for property ownership
+
+                // Count bookings for each owned property
+                $propertyBookingsCount = [];
+                foreach ($ownedProperties as $property) {
+                    $propertyBookingsCount[$property->id] = $property->bookings()->count(); // Count bookings for each property
+                }
+            @endphp
+
+            <ul>
+                @foreach ($ownedProperties as $property)
+                    <li>
+                        {{ $property->name }}: {{ $propertyBookingsCount[$property->id] ?? 0 }} bookings
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @else
+        <p>Please log in to make a booking.</p>
+    @endauth
+</div>
+
     </div>
 </main>

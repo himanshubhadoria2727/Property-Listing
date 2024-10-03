@@ -110,6 +110,8 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                         ->name('confirm');
                 });
             });
+            Route::post('/book', [BookingController::class, 'book']);
+
             Route::group(['middleware' => ['web']], function () {
                 Route::group(['prefix' => 'account'], function () {
                 // Booking routes
@@ -117,7 +119,6 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 Route::post('/agora/token', [AgoraController::class, 'token']);
                 // Route::get('/start-broadcast/{broadcastId}', [BroadcastController::class, 'startBroadcast'])->name('start.broadcast');
     
-                Route::post('/book', [BookingController::class, 'book']);
                 Route::get('properties/{property}/bookings',  [BookingController::class, 'viewBookings']);
     
                 // Signaling routes for WebRTC
@@ -221,6 +222,10 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                     Route::post('renew/{id}', [
                         'as' => 'renew',
                         'uses' => 'AccountPropertyController@renew',
+                    ])->wherePrimaryKey();
+                    Route::post('edit/{id}', [
+                        'as' => 'edit',
+                        'uses' => 'AccountPropertyController@edit',
                     ])->wherePrimaryKey();
                 });
 

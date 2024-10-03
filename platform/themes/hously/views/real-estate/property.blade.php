@@ -237,14 +237,50 @@ RealEstateHelper::getReviewExtraData()
                         </div>
                     </div>
                     <div class="mb-6 pb-4 pl-3 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700">
-                    <form method="POST" action="/book">
-                        @csrf
-                        <input type="hidden" name="property_id" value="{{ $property->id }}">
-                        <label for="schedule">Schedule Tour:</label>
-                        <input type="datetime-local" name="scheduled_at" required>
-                        <button type="submit">Book Tour</button>
-                    </form>
+                        @if (auth('account')->check()) <!-- Check if the user is logged in -->
+                        @php
+                        // Fetch the authenticated user's ID
+                        $account = Botble\RealEstate\Models\Account::query()->findOrFail(auth('account')->id());
+                        $userId = $account->id;
+
+                        // Log the user ID for debugging
+                        \Log::info('Authenticated User ID: ' . $userId);
+
+                        // Fetch future bookings for the property made by the authenticated user
+                        $futureBookings = $property->bookings()
+                        ->where('scheduled_at', '>', now())
+                        ->where('user_id', $userId) // Filter by the authenticated user's ID
+                        ->get();
+
+                        // Log the future bookings for debugging
+                        \Log::info('Future Bookings: ', $futureBookings->toArray());
+                        @endphp
+
+                        @if ($futureBookings->isNotEmpty())
+                        <div class="mt-4 text-red-600">
+                            <p>Already booked for the following times:</p>
+                            <ul>
+                                @foreach ($futureBookings as $booking)
+                                <li>{{ \Carbon\Carbon::parse($booking->scheduled_at)->format('Y-m-d H:i') }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        @else
+                        <!-- Display booking form only if there are no future bookings -->
+                        <form method="POST" action="/book">
+                            @csrf
+                            <input type="hidden" name="property_id" value="{{ $property->id }}">
+                            <label for="schedule">Schedule Tour:</label>
+                            <input type="datetime-local" name="scheduled_at" required>
+                            <button type="submit">Book Tour</button>
+                        </form>
+                        @endif
+                        @else
+                        <p class="mt-4 text-gray-600">Please log in to book a tour.</p> <!-- Message for users not logged in -->
+                        @endif
                     </div>
+
+
                     @endif
 
                     <div class="mb-6 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700">

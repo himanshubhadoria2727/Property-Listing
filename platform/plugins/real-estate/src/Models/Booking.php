@@ -19,10 +19,11 @@ class Booking extends BaseModel
 
     public function property()
     {
-        return $this->belongsTo(Property::class, 'property_id');
+        return $this->belongsTo(Property::class, 'property_id', 'id');
     }
+
     public function user()
-{
-    return $this->belongsTo(Account ::class, 'user_id');
-}
+    {
+        return $this->belongsTo(Account::class, 'user_id', 'id'); // Assuming 'user_id' is the foreign key in bookings table
+    }
 }
