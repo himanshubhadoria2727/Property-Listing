@@ -6,11 +6,34 @@ window.axios = axios
 
 window.$httpClient = new HttpClient()
 
+import Echo from 'laravel-echo'
+
+window.Pusher = require('pusher-js');
+
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: "70b927373bd3f040ba8d",
+    cluster: "ap2",
+    encrypted: true
+});
+
+
+
 $.ajaxSetup({
     headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
     },
 })
+
+window.Vue = require('vue');
+Vue.use(require('vue-chat-scroll'))
+
+Vue.component('chat-component', require('./components/ChatComponent.vue'));
+
+const app = new Vue({
+    el: '#app'
+});
+
 
 $(() => {
     setTimeout(() => {
