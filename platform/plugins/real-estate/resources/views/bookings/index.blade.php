@@ -2,7 +2,27 @@
 
 @section('content')
 <div class="broadcast-container">
-    <h1>Live Streaming with Agora</h1>
+    <h1>Live Virtual Tour of Property: {{ $property->name }}</h1>
+
+    <div class="property-details">
+        <div class="property-images">
+            @foreach ($property->images as $image)
+                <img src="{{ asset($image) }}" alt="Property Image" class="property-image">
+            @endforeach
+        </div>
+        <div class="property-description">
+            <h2>Description</h2>
+            <p>{{ $property->description }}</p>
+        </div>
+        <!-- <div class="property-features">
+            <h2>Features</h2>
+            <ul>
+                @foreach ($property->features as $feature)
+                    <li>{{ $feature }}</li>
+                @endforeach
+            </ul>
+        </div> -->
+    </div>
 
     <!-- Buttons for controlling the broadcast -->
     <div id="controls" class="controls">
@@ -41,8 +61,9 @@
     let isBroadcasting = false;
     let audioMuted = false;
     let videoOff = false;
-    let uid = 0
-    const channel = 'my-agora-channel';
+    let uid = 0;
+    const propertyId = `{{ $property->id }}`;
+    const channel = `channel-${propertyId}`; // Ensure this is a valid channel name
     let token = null;
 
     function fetchToken(channelName) {
@@ -51,10 +72,9 @@
                 uid
             })
             .then(response => {
-                // Assuming the token is in the response data
-                const token = response.data; // Remove 'a' if it exists at the front
+                const token = response.data; // Assuming token is returned directly
                 console.log('token fetched', token);
-                return token; // Return the token
+                return token;
             })
             .catch(error => {
                 console.error('Error fetching the token:', error);
@@ -62,9 +82,20 @@
             });
     }
 
+    function isValidChannelName(channelName) {
+        const regex = /^[a-zA-Z0-9 !#$%&()+\-:;<=>.?@[\]^{|}~]{1,64}$/; // Allowed characters
+        return regex.test(channelName);
+    }
+
     async function startBroadcast() {
         if (isBroadcasting) {
             console.log('Broadcast already in progress.');
+            return;
+        }
+
+        // Validate channel name
+        if (!isValidChannelName(channel)) {
+            console.error('Invalid channel name:', channel);
             return;
         }
 
@@ -76,22 +107,18 @@
         });
 
         try {
-            // Fetch the token
+            console.log('Attempting to join channel:', channel);
             const response = await fetchToken(channel);
-            console.log('response', response)
-            const token = response; // Make sure to access the token correctly from the response
-            console.log('Fetched token:', token);
+            const token = response; // Make sure to access the token correctly
 
-            // Use a valid Agora App ID
-            const appId = `{{ env('AGORA_APP_ID') }}`; // Replace with your actual Agora App ID from your environment
-            console.log('app_id', appId)
+            const appId = `{{ env('AGORA_APP_ID') }}`; // Replace with your actual Agora App ID
             if (!appId) {
                 console.error('Agora App ID is missing.');
                 return;
             }
 
             // Join the Agora channel with the token and App ID
-            await client.join(appId, channel, token, 0);
+            await client.join(appId, channel, token, uid);
 
             // Create and publish local tracks (audio and video)
             const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
@@ -113,8 +140,8 @@
 
             // Update broadcast link for viewers
             document.getElementById('broadcastLink').style.display = 'block';
-            document.getElementById('joinLink').href = `/account/join/${channel}`;
-            document.getElementById('joinLink').innerText = `${window.location.origin}/account/join/${channel}`;
+            document.getElementById('joinLink').href = `/account/join/${propertyId}`;
+            document.getElementById('joinLink').innerText = `${window.location.origin}/account/join/${propertyId}`;
 
             isBroadcasting = true;
         } catch (error) {
@@ -131,9 +158,9 @@
         try {
             await client.leave();
             if (localTracks.videoTrack) {
-            localTracks.videoTrack.stop();
-            localTracks.videoTrack.close(); // Close the video track to turn off the camera
-        }
+                localTracks.videoTrack.stop();
+                localTracks.videoTrack.close(); // Close the video track to turn off the camera
+            }
             if (localTracks.audioTrack) localTracks.audioTrack.stop();
             document.getElementById('startButton').style.display = 'inline-block';
             document.getElementById('stopButton').style.display = 'none';
@@ -172,6 +199,7 @@
             document.getElementById('toggleVideoButton').innerText = 'Turn Video Off';
         }
     }
+
     // Handling viewer-side stream
     async function joinBroadcast() {
         if (!client) {
@@ -181,15 +209,22 @@
             });
         }
 
+        // Validate channel name before joining
+        if (!isValidChannelName(channel)) {
+            console.error('Invalid channel name for joining:', channel);
+            return;
+        }
+
         try {
-            // Fetch the token for the specified channel
             const tokenResponse = await fetchToken(channel);
-            const token = tokenResponse; // Get the token from the response
+            const token = tokenResponse;
 
-            // Use the Agora App ID from the environment variable
-            const appId = `{{ env('AGORA_APP_ID')}}`; // Ensure no spaces within the env call
+            const appId = `{{ env('AGORA_APP_ID')}}`;
+            if (!appId) {
+                console.error('Agora App ID is missing.');
+                return;
+            }
 
-            // Join the channel with the fetched token
             await client.join(appId, channel, token, null); // Using null for the user ID
 
             // Subscribe to the user published event
@@ -215,4 +250,45 @@
     const viewChannel = urlParams.get('channel');
     if (viewChannel) joinBroadcast();
 </script>
+
+<style>
+    .broadcast-container {
+        padding: 20px;
+        max-width: 800px;
+        margin: auto;
+        text-align: center;
+    }
+
+    .property-details {
+        margin-bottom: 20px;
+    }
+
+    .property-images {
+        display: flex;
+        overflow: auto;
+    }
+
+    .property-image {
+        max-width: 100%;
+        margin: 5px;
+    }
+
+    .video-container {
+        margin-top: 20px;
+    }
+
+    .video-stream {
+        width: 100%;
+        height: auto;
+        max-height: 480px; /* Set maximum height for video */
+    }
+
+    .controls {
+        margin: 20px 0;
+    }
+
+    .btn {
+        margin: 5px;
+    }
+</style>
 @endsection

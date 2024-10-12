@@ -1,6 +1,6 @@
 <?php
 
-namespace Botble\RealEstate\Http\Controllers;
+namespace Botble\RealEstate\Http\Controllers\Fronts;
 
 use Botble\RealEstate\Models\Booking;
 use Botble\RealEstate\Models\Property;
@@ -42,5 +42,13 @@ class BookingController extends BaseController
 
         // Return the view with the property and bookings data
         return view('plugins/real-estate::bookings.index', compact('property', 'bookings'));
+    }
+    public function show(Property $property)
+    {
+        // Retrieve bookings with their related user information
+        $bookings = $property->bookings()->with('user')->get();
+
+        // Return the view with the property and bookings data
+        return view('plugins/real-estate::bookings.show', compact('property', 'bookings'));
     }
 }

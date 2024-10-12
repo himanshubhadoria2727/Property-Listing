@@ -15,9 +15,9 @@ class BroadcastController extends BaseController
         return view('broadcast.start', compact('broadcastId'));
     }
 
-    public function joinBroadcast($broadcastId)
-    {
-        // Pass the broadcastId to the view
-        return view('plugins/real-estate::broadcast.join', compact('broadcastId'));
-    }
+    // public function joinBroadcast($broadcastId)
+    // {
+    //     // Pass the broadcastId to the view
+    //     return view('plugins/real-estate::broadcast.join', compact('broadcastId'));
+    // }
 }

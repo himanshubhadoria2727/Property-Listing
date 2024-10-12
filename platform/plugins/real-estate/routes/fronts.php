@@ -11,8 +11,7 @@ use Botble\RealEstate\Models\Account;
 use Botble\RealEstate\Models\Project;
 use Botble\RealEstate\Models\Property;
 use Botble\Slug\Facades\SlugHelper;
-use Botble\RealEstate\Http\Controllers\BookingController;
-use Botble\RealEstate\Http\Controllers\BroadcastController;
+use Botble\RealEstate\Http\Controllers\Fronts\BookingController;
 use Botble\RealEstate\Http\Controllers\AgoraController;
 use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Facades\Route;
@@ -115,12 +114,13 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
             Route::group(['middleware' => ['web']], function () {
                 Route::group(['prefix' => 'account'], function () {
                 // Booking routes
-                Route::get('/join/{channel}', [AgoraController::class, 'joinStream']);
+                Route::get('/join/{property}', [AgoraController::class, 'joinStream'])->name('broadcast.join');
                 Route::post('/agora/token', [AgoraController::class, 'token']);
                 // Route::get('/start-broadcast/{broadcastId}', [BroadcastController::class, 'startBroadcast'])->name('start.broadcast');
     
-                Route::get('properties/{property}/bookings',  [BookingController::class, 'viewBookings']);
-    
+                Route::get('properties/{property}/bookings',  [BookingController::class, 'viewBookings'])->name('bookings.index');
+                // Route::get('bookings', [BookingController::class, 'show'])
+                // ->name('bookings.show'); // Named route for bookings.show    
                 // Signaling routes for WebRTC
                 // Route::post('/send-signal', [BroadcastController::class, 'sendSignal']);
                 // Route::post('/handleSignaling', [BroadcastController::class, 'handleSignaling']);
@@ -136,15 +136,20 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 'uses' => 'PublicController@getProjectFeeds',
             ]);
 
-            Route::group(['middleware' => ['account'], 'as' => 'public.account.'], function () {
-                Route::group(['prefix' => 'account'], function () {
-                    Route::post('logout', 'LoginController@logout')
-                        ->name('logout');
+                Route::group(['middleware' => ['account'], 'as' => 'public.account.'], function () {
+                    Route::group(['prefix' => 'account'], function () {
+                        Route::post('logout', 'LoginController@logout')
+                            ->name('logout');
 
-                    Route::get('dashboard', [
-                        'as' => 'dashboard',
-                        'uses' => 'PublicAccountController@getDashboard',
-                    ]);
+                        Route::get('dashboard', [
+                            'as' => 'dashboard',
+                            'uses' => 'PublicAccountController@getDashboard',
+                        ]);
+
+                        Route::get('bookings', [
+                            'as' => 'bookings.show',
+                            'uses' => 'BookingController@show',
+                        ]);
 
                     Route::get('settings', [
                         'as' => 'settings',

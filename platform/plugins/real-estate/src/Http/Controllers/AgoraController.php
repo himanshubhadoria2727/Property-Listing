@@ -47,11 +47,11 @@ class AgoraController extends BaseController
 }
 
 
-    public function joinStream($channel)
+    public function joinStream($property)
     {
         Assets::addScriptsDirectly('vendor/core/plugins/real-estate/js/join.js');
 
         // Render the join stream view
-        return view('plugins/real-estate::broadcast.join', compact('channel'));
+        return view('plugins/real-estate::broadcast.join', compact('property'));
     }
 }

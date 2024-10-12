@@ -374,6 +374,13 @@ class RealEstateServiceProvider extends ServiceProvider
                     'icon' => 'ti ti-receipt',
                 ])
                 ->registerItem([
+                    'id' => 'cms-account-bookings',
+                    'priority' => 4,
+                    'name' => 'Bookings',
+                    'url' => fn () => route('public.account.bookings.show'),
+                    'icon' => 'ti ti-receipt',
+                ])
+                ->registerItem([
                     'id' => 'cms-account-settings',
                     'priority' => 5,
                     'name' => 'plugins/real-estate::dashboard.header_settings_link',
