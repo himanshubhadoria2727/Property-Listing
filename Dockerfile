@@ -1,31 +1,38 @@
-# Use the official PHP image with Apache
-FROM php:8.1-apache
+# Use the official PHP image
+FROM php:8.1-fpm
 
-# Install dependencies
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
+    libpq-dev \
     libzip-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxslt1-dev \
+    libxml2-dev \
+    zlib1g-dev \
+    libssl-dev \
     unzip \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd \
-    && docker-php-ext-install pdo pdo_pgsql zip
+    && docker-php-ext-install pdo pdo_pgsql zip gd calendar
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# Configure GD with Freetype and JPEG support
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && docker-php-ext-install gd
 
 # Set the working directory
 WORKDIR /var/www
 
-# Copy the application code to the container
+# Copy the application files
 COPY . .
 
 # Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Install PHP dependencies
-RUN composer install
+# Install application dependencies
+RUN composer install --no-interaction --prefer-dist
 
-# Set permissions
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Expose the port the app runs on
+EXPOSE 9000
+
+# Start the PHP-FPM server
+CMD ["php-fpm"]
