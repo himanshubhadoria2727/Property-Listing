@@ -14,9 +14,13 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     libssl-dev \
     unzip \
+    curl \
     nginx \
     && docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
     && docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql zip calendar
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Set the working directory
 WORKDIR /var/www
@@ -24,16 +28,13 @@ WORKDIR /var/www
 # Copy the application files
 COPY . .
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Install application dependencies
+# Install application dependencies with Composer
 RUN composer install --no-interaction --prefer-dist
 
 # Copy Nginx configuration file
 COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
 
-# Expose the port that Nginx will serve (port 80)
+# Expose the port Nginx will serve (port 80)
 EXPOSE 80
 
 # Start Nginx and PHP-FPM
