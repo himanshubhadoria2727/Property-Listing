@@ -1,0 +1,10 @@
+version: 1
+services:
+  - type: web
+    name: your-laravel-app
+    env: docker
+    docker:
+      dockerfilePath: ./Dockerfile
+    plan: free
+    autoDeploy: true
+    region: oregon

@@ -1,54 +1,31 @@
-# Step 1: Use the official PHP image with necessary extensions
-FROM php:8.1-fpm
+# Use the official PHP image with Apache
+FROM php:8.1-apache
 
-# Step 2: Set working directory
-WORKDIR /var/www/html
-
-# Step 3: Install dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
-    locales \
-    zip \
-    jpegoptim optipng pngquant gifsicle \
-    vim \
+    libzip-dev \
     unzip \
-    git \
-    curl \
-    libpq-dev \
-    libonig-dev
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd \
+    && docker-php-ext-install pdo pdo_pgsql zip
 
-# Step 4: Install extensions
-RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
 
-# Step 5: Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Set the working directory
+WORKDIR /var/www
 
-# Step 6: Copy the Laravel project files
+# Copy the application code to the container
 COPY . .
 
-# Step 7: Install Laravel dependencies
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Install PHP dependencies
 RUN composer install
 
-# Step 8: Copy the existing entrypoint script (used to serve Laravel)
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Step 9: Expose port (default for Laravel is 8000)
-EXPOSE 8000
-
-# Step 10: Start the entrypoint script
-ENTRYPOINT ["entrypoint.sh"]
-CMD ["php-fpm"]
-
-# PostgreSQL Service
-FROM postgres:13
-
-# Set environment variables
-ENV POSTGRES_USER="root"
-ENV POSTGRES_PASSWORD=""
-ENV POSTGRES_DB="hously"
-
-EXPOSE 5432
+# Set permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
