@@ -1,4 +1,4 @@
-version: '3.8'  # Updated version
+version: '3.8'
 
 services:
   app:
@@ -14,6 +14,8 @@ services:
       - DB_DATABASE=hously
       - DB_USERNAME=root
       - DB_PASSWORD=wZZdeGMTVlIKIV3he4YRwGeWghqN9nLT
+    ports:
+      - "80:80"  # Map Nginx's port 80 to the host
   db:
     image: postgres:13
     restart: always

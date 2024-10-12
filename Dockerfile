@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     libssl-dev \
     unzip \
+    nginx \
     && docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
     && docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql zip calendar
 
@@ -29,8 +30,11 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Install application dependencies
 RUN composer install --no-interaction --prefer-dist
 
-# Expose the port the app runs on
-EXPOSE 9000
+# Copy Nginx configuration file
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
 
-# Start the PHP-FPM server
-CMD ["php-fpm"]
+# Expose the port that Nginx will serve (port 80)
+EXPOSE 80
+
+# Start Nginx and PHP-FPM
+CMD ["sh", "-c", "nginx && php-fpm"]
