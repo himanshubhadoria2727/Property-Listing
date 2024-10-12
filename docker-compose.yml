@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - .:/var/www
+      - .:/app  # Mount to /app instead of /var/www
     environment:
       - DB_CONNECTION=pgsql
       - DB_HOST=dpg-crvcak5ds78s73aciiig-a
@@ -14,8 +14,7 @@ services:
       - DB_DATABASE=hously
       - DB_USERNAME=root
       - DB_PASSWORD=wZZdeGMTVlIKIV3he4YRwGeWghqN9nLT
-    ports:
-      - "80:80"  # Map Nginx's port 80 to the host
+
   db:
     image: postgres:13
     restart: always
@@ -25,3 +24,13 @@ services:
       POSTGRES_PASSWORD: wZZdeGMTVlIKIV3he4YRwGeWghqN9nLT
     ports:
       - "5432:5432"
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf  # Reference to custom Nginx config
+      - .:/app  # Mount app to /app directory
+    depends_on:
+      - app  # Ensure Nginx waits for PHP-FPM (app) to start
