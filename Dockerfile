@@ -14,10 +14,8 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     libssl-dev \
     unzip \
-    && docker-php-ext-install pdo pdo_pgsql zip gd calendar
-
-# Configure GD with Freetype and JPEG support
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg && docker-php-ext-install gd -e POSTGRES_PASSWORD=wZZdeGMTVlIKIV3he4YRwGeWghqN9nLT
+    && docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql zip calendar
 
 # Set the working directory
 WORKDIR /var/www
