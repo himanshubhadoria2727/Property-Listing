@@ -55,6 +55,7 @@ class Account extends BaseModel implements
         'phone',
         'description',
         'gender',
+        'role',
         'company',
         'country_id',
         'state_id',

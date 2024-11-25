@@ -23,6 +23,22 @@
                 <h5 class="my-2 text-xl font-semibold">{{ __('Register') }}</h5>
                 <form class="text-start" action="{{ route('public.account.register') }}" method="post">
                     @csrf
+
+                    <!-- User Type Selection -->
+                    <div class="mb-4">
+                        <!-- <label class="font-medium">{{ __('Register as:') }}</label> -->
+                        <div class="flex gap-4 mt-1">
+                            <div>
+                                <input type="radio" id="user" name="role" value="1" checked>
+                                <label for="user" class="ml-2">{{ __('User') }}</label>
+                            </div>
+                            <div>
+                                <input type="radio" id="agent" name="role" value="2">
+                                <label for="agent" class="ml-2">{{ __('Agent') }}</label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1">
                         <div class="grid grid-cols-2 gap-2">
                             <div class="mb-4">

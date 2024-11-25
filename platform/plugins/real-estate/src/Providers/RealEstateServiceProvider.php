@@ -376,7 +376,7 @@ class RealEstateServiceProvider extends ServiceProvider
                 ->registerItem([
                     'id' => 'cms-account-bookings',
                     'priority' => 4,
-                    'name' => 'Bookings',
+                    'name' => 'Live Tour Bookings',
                     'url' => fn () => route('public.account.bookings.show'),
                     'icon' => 'ti ti-receipt',
                 ])
