@@ -11,11 +11,13 @@ use Botble\RealEstate\Facades\RealEstateHelper;
 use Botble\RealEstate\Models\Account;
 use Botble\RealEstate\Notifications\ConfirmEmailNotification;
 use Botble\SeoHelper\Facades\SeoHelper;
+use Illuminate\Support\Facades\Log;
 use Botble\Theme\Facades\Theme;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Botble\ACL\Models\Role;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 
@@ -131,9 +133,21 @@ class RegisterController extends BaseController
         $account->confirmed_at = Carbon::now();
 
         $account->is_public_profile = false;
-
+        if($request->has('role')) {
+            $account->role = $request->input('role');
+            if($request->input('role') == 1){
+                $this->redirectTo = '/';
+            }
+        }
         $account->save();
-
+        // if ($request->has('role')) {
+        //     // Here we assume `getRoleIdByName` is a helper method to get the role ID by name
+        //     $roleId = Role::where('name', $request->input('role'))->value('id');
+        //     if ($roleId) {
+        //         $account->roles()->sync([$roleId]);
+        //     }
+        // }
+        Log::info('account'. $account);
         $this->guard()->login($account);
 
         return $this

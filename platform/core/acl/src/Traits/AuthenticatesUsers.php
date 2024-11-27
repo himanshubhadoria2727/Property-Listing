@@ -80,6 +80,7 @@ trait AuthenticatesUsers
         return $request->only($this->username(), 'password');
     }
 
+
     protected function sendLoginResponse(Request $request): Response|RedirectResponse
     {
         $request->session()->regenerate();

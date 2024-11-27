@@ -8,6 +8,7 @@ use Botble\RealEstate\Facades\RealEstateHelper;
 use Botble\RealEstate\Http\Controllers\BaseController;
 use Botble\SeoHelper\Facades\SeoHelper;
 use Botble\Theme\Facades\Theme;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -23,7 +24,7 @@ class LoginController extends BaseController
     {
         parent::__construct();
 
-        $this->redirectTo = route('public.account.dashboard');
+         $this->redirectTo = route('public.account.dashboard');
     }
 
     public function showLoginForm()
@@ -51,10 +52,14 @@ class LoginController extends BaseController
         if (! RealEstateHelper::isLoginEnabled()) {
             abort(404);
         }
-
+        Log::info('user request', $request->all());
         $request->merge([$this->username() => $request->input('email')]);
 
         $this->validateLogin($request);
+        if($request->input('role')==1) {
+            Log::info($request->input('role'));
+            $this->redirectTo = route('/');
+        }
 
         // If the class is using the ThrottlesLogins trait, we can automatically throttle
         // the login attempts for this application. We'll key this by the username and
