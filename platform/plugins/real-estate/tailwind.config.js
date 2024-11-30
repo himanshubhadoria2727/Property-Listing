@@ -1,7 +1,7 @@
 
 const path = require('path')
 const directory = path.basename(path.resolve(__dirname))
-const source = 'platform/themes/' + directory
+const source = 'platform/plugins/real-estate/' + directory
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {

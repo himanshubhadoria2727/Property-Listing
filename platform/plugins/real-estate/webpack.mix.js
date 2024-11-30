@@ -1,13 +1,23 @@
-const mix = require('laravel-mix')
-const path = require('path')
+const mix = require("laravel-mix");
+const tailwindcss = require('tailwindcss')
+const path = require("path");
 
-const directory = path.basename(path.resolve(__dirname))
-const source = `platform/plugins/${directory}`
-const dist = `public/vendor/core/plugins/${directory}`
+const directory = path.basename(path.resolve(__dirname));
+const source = `platform/plugins/${directory}`;
+const dist = `public/vendor/core/plugins/${directory}`;
 
-mix
-    .sass(`${source}/resources/sass/dashboard/style.scss`, `${dist}/css/dashboard`)
-    .sass(`${source}/resources/sass/dashboard/style-rtl.scss`, `${dist}/css/dashboard`)
+mix.sass(source + "/resources/sass/icons.scss", dist + "/css")
+    .sass(source + "/resources/sass/style.scss", dist + "/css", {}, [
+        tailwindcss(source + "/tailwind.config.js"),
+    ])
+    .sass(
+        `${source}/resources/sass/dashboard/style.scss`,
+        `${dist}/css/dashboard`,
+    )
+    .sass(
+        `${source}/resources/sass/dashboard/style-rtl.scss`,
+        `${dist}/css/dashboard`,
+    )
     .sass(`${source}/resources/sass/real-estate.scss`, `${dist}/css`)
     .sass(`${source}/resources/sass/review.scss`, `${dist}/css`)
     .sass(`${source}/resources/sass/currencies.scss`, `${dist}/css`)
@@ -24,10 +34,11 @@ mix
     .js(`${source}/resources/js/bulk-import.js`, `${dist}/js`)
     .js(`${source}/resources/js/export.js`, `${dist}/js`)
     .js(`${source}/resources/js/duplicate-property.js`, `${dist}/js`)
-    .js(`${source}/resources/js/setting.js`, `${dist}/js`)
+    .js(`${source}/resources/js/setting.js`, `${dist}/js`);
 
 if (mix.inProduction()) {
-    mix
-        .copyDirectory(`${dist}/js`, `${source}/public/js`)
-        .copyDirectory(`${dist}/css`, `${source}/public/css`)
+    mix.copyDirectory(`${dist}/js`, `${source}/public/js`).copyDirectory(
+        `${dist}/css`,
+        `${source}/public/css`,
+    );
 }

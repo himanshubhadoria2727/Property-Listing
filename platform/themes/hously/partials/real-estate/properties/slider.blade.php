@@ -1,6 +1,6 @@
 @php
     $images = $item->images;
-    $images = array_values($images);
+    $images = array_values($images?? []);
     $numberImages = count($images);
 @endphp
 

@@ -43,6 +43,14 @@ class BookingController extends BaseController
         // Return the view with the property and bookings data
         return view('plugins/real-estate::bookings.index', compact('property', 'bookings'));
     }
+    public function userBooking(Property $property)
+    {
+        // Retrieve bookings with their related user information
+        $bookings = $property->bookings()->with('user')->get();
+
+        // Return the view with the property and bookings data
+        return view('plugins/real-estate::user.show', compact('property', 'bookings'));
+    }
     public function show(Property $property)
     {
         // Retrieve bookings with their related user information

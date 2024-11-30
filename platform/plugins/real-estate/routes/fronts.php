@@ -112,6 +112,10 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
             Route::post('/book', [BookingController::class, 'book']);
 
             Route::group(['middleware' => ['web']], function () {
+                Route::get('/bookings', [BookingController::class, 'userBooking'])->name('user.show');
+                Route::get('bookings/join/{property}', [AgoraController::class, 'joinLive'])->name('user.join');
+            }); 
+            Route::group(['middleware' => ['web']], function () {
                 Route::group(['prefix' => 'account'], function () {
                 // Booking routes
                 Route::get('/join/{property}', [AgoraController::class, 'joinStream'])->name('broadcast.join');
