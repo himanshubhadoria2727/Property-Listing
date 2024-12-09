@@ -1,44 +1,66 @@
 @extends('plugins/real-estate::themes.dashboard.UserLayouts.userLayout')
 
 @section('content')
-<div class="container mx-auto py-2">
-    <h1 class="text-3xl font-extrabold text-center mb-6 text-gray-800">Join Live Broadcast</h1>
-
-    <!-- Property Details Section -->
-    <div class="property-details mb-8">
-        <h2 class="text-2xl font-bold text-gray-800">{{ $property->name }}</h2>
-        <div class="flex space-x-4">
-            @foreach($property->images as $image)
-                <img src="{{ asset($image) }}" alt="{{ $property->name }}" class="property-image rounded-lg shadow-lg w-1/4" />
-            @endforeach
+<div style="max-width: 100%; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+    <nav style="background-color: #1F2937; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <a href="/" style="color: #fff; font-size: 1.25rem; font-weight: bold; text-decoration: none;">Home</a>
+        <div style="display: flex; gap: 15px;">
+            <a href="/properties" style="color: #D1D5DB; text-decoration: none; font-size: 1rem;">Properties</a>
+            <a href="/live-broadcast" style="color: #D1D5DB; text-decoration: none; font-size: 1rem;">Live Broadcast</a>
+            <a href="/contact" style="color: #D1D5DB; text-decoration: none; font-size: 1rem;">Contact</a>
         </div>
-        <p class="mt-4 text-gray-600">{{ $property->description }}</p>
-        <!-- <h3 class="mt-4 text-lg font-semibold">Features:</h3>
-        <ul class="list-disc list-inside">
-            @foreach($property->features as $feature)
-                <li class="text-gray-600">{{ $feature }}</li>
-            @endforeach
-        </ul> -->
-    </div>
+    </nav>
+
 
     <!-- Video Container -->
-    <div id="videoContainer" class="relative w-full max-w-4xl mx-auto mb-6 rounded-lg overflow-hidden shadow-lg">
-        <video id="remoteVideo" class="video-responsive w-full h-200 bg-black" autoplay controls></video>
+    <!-- Video Container -->
+    <!-- <h1 style="font-size: 1rem; font-weight: 700; text-align: center; margin-bottom: 6px; color: #1F2937;">Live Broadcast for {{ $property->name }}</h1> -->
+
+    <div id="videoContainer" style="position: relative; width: 90vw; height: 35vmax; margin: 0 auto 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+        <video id="remoteVideo" style="width: 100%; height: 100%; background-color: #000;" autoplay controls></video>
+
+        <!-- Control Buttons Container with Round Background -->
+        <div style="position: absolute; top: 50%; right: 20px; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; padding: 10px; background-color: rgba(0, 0, 0, 0.5); border-radius: 50px;">
+            <button id="toggleAudio" style=" color: #fff;margin-bottom: 10px; border: none; font-size: 1rem; border-radius: 50px; cursor: pointer;">
+                <i id="audioIcon" class="fas fa-volume-up" style="font-size: 1.2rem;"></i>
+            </button>
+
+            <button id="fullScreen" style=" color: #fff; border: none; font-size: 1rem; border-radius: 50px; cursor: pointer;">
+                <i class="fas fa-expand" style="font-size: 1.2rem;"></i>
+            </button>
+        </div>
+
     </div>
 
-    <!-- Audio Container -->
-    <div id="audioContainer" class="hidden">
-        <audio id="remoteAudio" controls class="hidden"></audio>
+    <!-- Property Details Section in Card -->
+    <div style="background-color: #ffffff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+        <h2 style="font-size: 1.5rem; font-weight: 600; color: #1F2937; margin-bottom: 10px;">{{ $property->name }}</h2>
+        <h4 style="font-size: 1rem; font-weight: 400; color: #1F2937; margin-bottom: 10px;">{{ $property->location }}</h4>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+            @foreach($property->images as $image)
+            <img
+                style="flex: 1 1 calc(25% - 10px); max-width: calc(25% - 10px); border-radius: 8px; height: auto; transition: transform 0.3s ease; cursor: pointer;"
+                src="{{ RvMedia::getImageUrl($image, 'large', false, RvMedia::getDefaultImage()) }}"
+                alt="{{ $property->name }}"
+                onmouseover="this.style.transform='scale(1.1)'"
+                onmouseout="this.style.transform='scale(1)'"
+                onclick="openModal('{{ RvMedia::getImageUrl($image, 'large', false, RvMedia::getDefaultImage()) }}')">
+            @if($loop->index == 3)
+            @break
+            @endif
+            @endforeach
+        </div>
+
+        <span style="margin-top: 30px; color: #4B5563; font-size: 0.8rem; line-height: 1.5;">
+            {!! $property->content !!}
+        </span>
     </div>
 
-    <!-- Control Buttons -->
-    <div class="flex space-x-6 justify-around mt-6">
-        <button id="toggleAudio" class="btn btn-primary btn-base mr-2">
-            <i class="fas fa-volume-up mr-1"></i>Mute Audio
-        </button>
-        <button id="fullScreen" class="btn btn-secondary btn-base">
-            <i class="fas fa-expand mr-1"></i>Fullscreen
-        </button>
+    <!-- Modal -->
+    <div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <span style="position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2rem; cursor: pointer;" onclick="closeModal()">&times;</span>
+        <img id="modalImage" style="max-width: 90%; max-height: 80%; border-radius: 8px;">
     </div>
 </div>
 
@@ -52,7 +74,7 @@
     let token = '';
     let remoteAudioTrack = null;
     let remoteVideoTrack = null;
-    let isAudioMuted = false;  // Track the audio state
+    let isAudioMuted = false; // Track the audio state
 
     async function joinBroadcast() {
         client = AgoraRTC.createClient({
@@ -79,7 +101,7 @@
                 if (mediaType === 'audio') {
                     remoteAudioTrack = user.audioTrack;
                     remoteAudioTrack.play('remoteAudio');
-                    document.getElementById('audioContainer').classList.remove('hidden');
+                    document.getElementById('audioContainer').style.display = 'block';
                 }
             });
 
@@ -101,70 +123,68 @@
     };
 
     // Audio Toggle Button
+    // Audio Toggle Button
     const toggleAudioButton = document.getElementById('toggleAudio');
+    const audioIcon = document.getElementById('audioIcon');
     toggleAudioButton.addEventListener('click', () => {
         if (remoteAudioTrack) {
             if (isAudioMuted) {
-                remoteAudioTrack.play('remoteAudio');  // Unmute audio
-                toggleAudioButton.textContent = 'Mute Audio';
-                toggleAudioButton.classList.remove('bg-red-500');
-                toggleAudioButton.classList.add('bg-blue-500');
+                remoteAudioTrack.play('remoteAudio'); // Unmute audio
+                audioIcon.classList.replace('fa-volume-mute', 'fa-volume-up');
                 console.log('Audio unmuted');
             } else {
-                remoteAudioTrack.stop();  // Mute audio
-                toggleAudioButton.textContent = 'Unmute Audio';
-                toggleAudioButton.classList.remove('bg-blue-500');
-                toggleAudioButton.classList.add('bg-red-500');
+                remoteAudioTrack.stop(); // Mute audio
+                audioIcon.classList.replace('fa-volume-up', 'fa-volume-mute');
                 console.log('Audio muted');
             }
             isAudioMuted = !isAudioMuted;
         }
     });
 
+
     // Fullscreen functionality
     document.getElementById('fullScreen').addEventListener('click', () => {
         const videoElement = document.getElementById('remoteVideo');
         if (videoElement.requestFullscreen) {
             videoElement.requestFullscreen();
-        } else if (videoElement.mozRequestFullScreen) { 
+        } else if (videoElement.mozRequestFullScreen) {
             videoElement.mozRequestFullScreen();
-        } else if (videoElement.webkitRequestFullscreen) { 
+        } else if (videoElement.webkitRequestFullscreen) {
             videoElement.webkitRequestFullscreen();
-        } else if (videoElement.msRequestFullscreen) { 
+        } else if (videoElement.msRequestFullscreen) {
             videoElement.msRequestFullscreen();
         }
     });
 
     async function fetchToken(channelName) {
-        return axios.post(`/account/agora/token`, { channelName, uid })
+        return axios.post(`/account/agora/token`, {
+                channelName,
+                uid
+            })
             .then(response => response.data)
             .catch(error => {
                 console.error('Error fetching the token:', error);
                 throw error;
             });
     }
+
+    // Modal Functions
+    function openModal(imageUrl) {
+        const modal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        modalImage.src = imageUrl;
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('imageModal');
+        modal.style.display = 'none';
+    }
+
+    document.getElementById('imageModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            closeModal();
+        }
+    });
 </script>
-
-<style>
-    #videoContainer {
-        max-width: 100%;
-    }
-
-    @media (min-width: 1024px) {
-        .video-responsive {
-            height: 500px;
-        }
-    }
-
-    @media (max-width: 1023px) {
-        .video-responsive {
-            height: auto;
-        }
-    }
-
-    .property-image {
-        max-width: 100%;
-        border-radius: 8px;
-    }
-</style>
 @endsection

@@ -3,27 +3,20 @@
 @section('content')
 <div class="broadcast-container">
     <h1>Live Virtual Tour of Property: {{ $property->name }}</h1>
-
-    <div class="property-details">
-        <div class="property-images">
-            @foreach ($property->images as $image)
-                <img src="{{ asset($image) }}" alt="Property Image" class="property-image">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+            @foreach($property->images as $image)
+            <img
+                style="flex: 1 1 calc(25% - 10px); max-width: calc(25% - 10px); border-radius: 8px; height: auto; transition: transform 0.3s ease; cursor: pointer;"
+                src="{{ RvMedia::getImageUrl($image, 'large', false, RvMedia::getDefaultImage()) }}"
+                alt="{{ $property->name }}"
+                onmouseover="this.style.transform='scale(1.1)'"
+                onmouseout="this.style.transform='scale(1)'"
+                onclick="openModal('{{ RvMedia::getImageUrl($image, 'large', false, RvMedia::getDefaultImage()) }}')">
+            @if($loop->index == 3)
+            @break
+            @endif
             @endforeach
         </div>
-        <div class="property-description">
-            <h2>Description</h2>
-            <p>{{ $property->description }}</p>
-        </div>
-        <!-- <div class="property-features">
-            <h2>Features</h2>
-            <ul>
-                @foreach ($property->features as $feature)
-                    <li>{{ $feature }}</li>
-                @endforeach
-            </ul>
-        </div> -->
-    </div>
-
     <!-- Buttons for controlling the broadcast -->
     <div id="controls" class="controls">
         <button id="startButton" class="btn btn-primary" onclick="startBroadcast()">Start Broadcast</button>
@@ -42,7 +35,12 @@
         Share this link with viewers to join:
         <a href="#" id="joinLink" target="_blank"></a>
     </p>
-
+    
+    <!-- Modal -->
+    <div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <span style="position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2rem; cursor: pointer;" onclick="closeModal()">&times;</span>
+        <img id="modalImage" style="max-width: 90%; max-height: 80%; border-radius: 8px;">
+    </div>
     <!-- User interaction prompt for starting playback -->
     <div id="startPlaybackPrompt" style="display: none;">
         <p>Your browser blocked autoplay. Please click below to start the video.</p>
@@ -249,6 +247,23 @@
     const urlParams = new URLSearchParams(window.location.search);
     const viewChannel = urlParams.get('channel');
     if (viewChannel) joinBroadcast();
+    function openModal(imageUrl) {
+        const modal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        modalImage.src = imageUrl;
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('imageModal');
+        modal.style.display = 'none';
+    }
+
+    document.getElementById('imageModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            closeModal();
+        }
+    });
 </script>
 
 <style>

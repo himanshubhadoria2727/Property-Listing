@@ -76,18 +76,16 @@ $user = auth('account')->user();
             @endif
             @if($user && $user->role == 1)
             <!-- Dropdown Menu -->
-            <div class="relative inline-block text-left">
+            <!-- Dropdown Menu -->
+            <div class="relative inline-block text-left group">
                 <button
                     type="button"
-                    class="inline-flex justify-center items-center w-full rounded-full border border-gray-300 shadow-sm mx-1 px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all ease-in-out duration-300 transform hover:scale-105"
-                    id="dropdownButton"
+                    class="inline-flex justify-center items-center w-full rounded-full border border-gray-200 shadow-sm mx-1 px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all hover:text-green-700 ease-in-out duration-300 transform"
                     aria-expanded="false"
-                    aria-haspopup="true"
-                    onclick="toggleDropdown()">
+                    aria-haspopup="true">
                     Profile Options
                     <svg
-                        id="dropdownIcon"
-                        class="-mr-1 ml-2 h-5 w-5 transition-transform duration-300"
+                        class="-mr-1 ml-2 h-5 w-5 transition-transform duration-300 group-hover:rotate-180"
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
                         fill="currentColor"
@@ -99,11 +97,9 @@ $user = auth('account')->user();
                     </svg>
                 </button>
                 <div
-                    id="dropdownMenu"
-                    class="hidden absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none transform scale-95 origin-top-right transition-all duration-200"
+                    class="invisible group-hover:visible opacity-0 group-hover:opacity-100 absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none transform scale-95 origin-top-right transition-all duration-200"
                     role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="dropdownButton">
+                    aria-orientation="vertical">
                     <div class="py-1">
                         <a href="#" class="block px-4 py-2 text-base text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-all duration-150 ease-in-out" role="menuitem">
                             Account Settings
@@ -131,6 +127,7 @@ $user = auth('account')->user();
                     </div>
                 </div>
             </div>
+            <!-- End Dropdown Menu -->
             @endif
             <!-- End Dropdown Menu -->
             @endif
@@ -151,19 +148,24 @@ $user = auth('account')->user();
 
         </div>
 
+
     </div>
 </nav>
 
-
+<div id="streamBookingModal" class="hidden">
+    {!! Theme::partial('bookingsModal') !!}
+</div>
 <script>
     function toggleModal(modalId) {
         const modal = document.getElementById(modalId);
-        modal.classList.toggle('hidden');
-        modal.classList.toggle('flex');
+        const isHidden = modal.classList.contains('hidden');
+
+        // Toggle visibility
+        modal.classList.toggle('hidden', !isHidden);
+        modal.classList.toggle('flex', isHidden);
+        modal.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
     }
 </script>
-
-
 <script>
     function toggleDropdown() {
         const dropdownMenu = document.getElementById('dropdownMenu');

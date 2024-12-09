@@ -1,11 +1,7 @@
-<header class="header--mobile w-full">
-    <div class="header__left">
-        <button class="navbar-toggler">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-    <div class="header__center">
-        <a class="ps-logo" href="{{ route('public.account.dashboard') }}">
+<header class="w-full" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+    
+    <div class="header__center" style="flex: 1;">
+        <a class="ps-logo" href="/">
             @if ($logo = theme_option('logo', theme_option('logo')))
             <img
                 src="{{ RvMedia::getImageUrl($logo) }}"
@@ -13,6 +9,7 @@
             @endif
         </a>
     </div>
+    
     <div class="header__right">
         <a
             href="{{ route('public.account.logout') }}"
@@ -41,8 +38,8 @@
 
 <div class="ps-site-overlay w-full"></div>
 
-<main class="ps-main w-full">
-    <div class=" w-full" id="vendor-dashboard">
+<main style="padding-top: 20px; background-color: #C8C8C8;" class="ps-main w-full">
+    <div class="w-full" id="vendor-dashboard">
         <!-- <header class="d-flex justify-content-center align-items-center content-center mb-3 w-full">
         <h3 class="fs-1">{{ PageTitle::getTitle(false) }}</h3>
 
@@ -58,7 +55,6 @@
             </div>
             @endif
         </header> -->
-
 
         <!-- <div id="app">
             @if (auth('account')->check() && !auth('account')->user()->canPost())

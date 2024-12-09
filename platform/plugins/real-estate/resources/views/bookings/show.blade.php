@@ -1,7 +1,7 @@
 @extends('plugins/real-estate::themes.dashboard.layouts.master')
 
 @section('content')
-<div class="container mx-auto p-6">
+<div style="max-width: 1200px; margin: 0 auto; padding: 24px;">
     @auth('account')
 
     @php
@@ -34,88 +34,54 @@
     }
     @endphp
 
-    <!-- Modern Flex Layout for the main container -->
-    <div class="flex flex-col md:flex-row justify-between space-y-6 md:space-y-0 md:space-x-10">
-
-        <!-- Future Bookings by the Authenticated User -->
-        <div class="flex-1 bg-gradient-to-b from-gray-100 via-white to-white dark:bg-gradient-to-b dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <h3 class="font-bold text-2xl text-gray-900 dark:text-white mb-4">Your Future Bookings</h3>
-
-            @if ($futureBookings->isNotEmpty())
-            <ul class="list-none space-y-4">
-                @foreach ($futureBookings as $booking)
-                <li class="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-md shadow-md transition-transform duration-300 hover:-translate-y-1">
-                    <div class="flex items-center space-x-4">
-                        <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <div>
-                            <span class="block text-lg font-semibold text-gray-900 dark:text-white">
-                                {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('Y-m-d H:i') }}
-                            </span>
-                            <span class="text-sm text-gray-600 dark:text-gray-400">{{ $booking->property->name }}</span>
-                        </div>
-                    </div>
-                </li>
-                @endforeach
-            </ul>
-            <div class="mt-4">
-                <a href="{{ route('broadcast.join',  $booking['property_id']) }}" class="btn btn-primary gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full transition-colors duration-200 ease-in-out">
-                    <i class="fas fa-video gap-2 mr-2"></i> Join Broadcast
-                </a>
-
-            </div>
-            @else
-            <p class="text-xl text-green-600 dark:text-green-400">You have no future bookings.</p>
-            @endif
-        </div>
+    <!-- Main container with flex layout for the section -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
 
         <!-- Bookings for User's Properties by Others -->
-        <div class="flex-1 bg-gradient-to-b from-gray-100 via-white to-white dark:bg-gradient-to-b dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <h3 class="font-bold text-2xl text-gray-900 dark:text-white mb-4">Live Tour Bookings for Your Properties</h3>
+        <div style="flex: 1; background: linear-gradient(to bottom, #f3f4f6, #ffffff); padding: 24px; border-radius: 8px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); transition: box-shadow 0.3s;">
+            <h3 style="font-weight: bold; font-size: 24px; color: #1a202c; margin-bottom: 16px;">Live Tour Bookings for Your Properties</h3>
 
             @if (count($propertyBookings) > 0)
             @foreach ($propertyBookings as $property)
-            <div class="mb-6">
-                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $property['name'] }}</h4>
+            <div style="margin-bottom: 24px;">
+                <h4 style="font-size: 18px; font-weight: 600; color: #1a202c;">{{ $property['name'] }}</h4>
                 @if (count($property['bookings']) > 0)
-                <ul class="list-none space-y-4">
+                <ul style="list-style-type: none; padding-left: 0; margin-top: 16px;">
                     @foreach ($property['bookings'] as $booking)
-                    <li class="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-md shadow-md transition-transform duration-300 hover:-translate-y-1">
-                        <div class="flex items-center space-x-4 justify-between">
-                            <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
+                    <li style="display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; padding: 16px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); transition: transform 0.3s; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div style="width: 40px; height: 40px; background-color: #e6f4f7; color: #4c9f70; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                                 <i class="fas fa-calendar-alt"></i>
                             </div>
                             <div>
-                                <span class="block text-lg font-semibold text-gray-900 dark:text-white">
+                                <span style="display: block; font-size: 18px; font-weight: 600; color: #1a202c;">
                                     {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('Y-m-d H:i') }}
                                 </span>
-                                <span class="text-sm text-gray-600 dark:text-gray-400">Booked by {{ $booking->user->name }}</span>
+                                <span style="font-size: 14px; color: #718096;">Booked by {{ $booking->user->name }}</span>
                             </div>
                         </div>
                     </li>
                     @endforeach
                 </ul>
-                <!-- Start Live Button appears once after bookings -->
-                <div class="mt-4">
-                    <a href="{{ route('bookings.index', $property['id']) }}" class="btn btn-primary gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full transition-colors duration-200 ease-in-out">
-                        <i class="fas fa-video gap-2 mr-2"></i> Broadcast
+                <div style="margin-top: 16px;">
+                    <a href="{{ route('bookings.index', $property['id']) }}" style="display: inline-flex; align-items: center; background-color: #4299e1; color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; text-decoration: none; transition: background-color 0.2s;">
+                        <i class="fas fa-video" style="margin-right: 8px;"></i> Broadcast
                     </a>
                 </div>
                 @else
-                <p class="text-lg text-gray-500 dark:text-gray-400">No bookings yet.</p>
+                <p style="font-size: 18px; color: #4a5568;">No bookings yet.</p>
                 @endif
             </div>
             @endforeach
             @else
-            <p class="text-xl text-red-600 dark:text-red-400">You do not own any properties.</p>
+            <p style="font-size: 20px; color: #e53e3e;">You do not own any properties.</p>
             @endif
         </div>
     </div>
 
     @else
-    <div class="text-center p-8 bg-gradient-to-b from-gray-100 via-white to-white dark:bg-gradient-to-b dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 rounded-lg shadow-lg">
-        <p class="text-xl text-gray-600 dark:text-gray-300">Please log in to view your bookings.</p>
+    <div style="text-align: center; padding: 32px; background: linear-gradient(to bottom, #f3f4f6, #ffffff); border-radius: 8px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <p style="font-size: 20px; color: #4a5568;">Please log in to view your bookings.</p>
     </div>
     @endauth
 </div>

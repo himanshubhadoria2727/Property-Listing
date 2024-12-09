@@ -1,21 +1,24 @@
-
 <div
     id="streamBookingModal"
-    class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-11/12 md:w-2/3 lg:w-1/3 p-6">
-        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">Live Stream Bookings</h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">Manage your live stream bookings here.</p>
-        <div class="flex justify-end space-x-4">
+    class="dark:bg-gray-100"
+    style="position: fixed; inset: 0; z-index: 2000; display: none; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.5);">
+    <div class="dark:bg-gray-800"
+        style="background: white; color: #333; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); width: 90%; max-width: 600px; padding: 24px; max-height: 80vh; overflow: hidden;">
+        <h2 class="dark:text-white" style="font-size: 1.25rem; font-weight: bold; color: #333; margin-bottom: 16px; text-align: center;">Live Stream Bookings</h2>
+        <!-- Modal content in vertical order -->
+        <div style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto; max-height: calc(80vh - 100px);">
+
+            <!-- Include your booking details or show user here -->
+            @include('plugins/real-estate::user.show')
+
+            <!-- Close Button -->
             <button
-                class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md"
+                style="background: #e0e0e0; color: #555; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; align-self: flex-end;"
+                onmouseover="this.style.background='#d6d6d6'"
+                onmouseout="this.style.background='#e0e0e0'"
                 onclick="toggleModal('streamBookingModal')">
                 Close
             </button>
-            <a
-                href="{{ route('user.show') }}"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md">
-                View Bookings
-            </a>
         </div>
     </div>
 </div>

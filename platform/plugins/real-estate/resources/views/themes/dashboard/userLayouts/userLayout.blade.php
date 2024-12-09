@@ -44,19 +44,11 @@
 
 <body class="bg-gray-100 text-gray-800 w-full" @if (BaseHelper::isRtlEnabled()) dir="rtl" @endif>
     <!-- Main Body Section -->
-    <div class="min-h-screen  flex flex-col w-full">
+     
+    <div class="min-h-screen   flex flex-col w-full">
         @yield('body', view('plugins/real-estate::themes.dashboard.userLayouts.body'))
     </div>
-
-    <!-- Footer Section -->
-    @include('plugins/real-estate::themes.dashboard.layouts.footer')
-
-    {!! Assets::renderFooter() !!}
-
-    @stack('scripts')
-    @stack('footer')
-
-    {!! apply_filters(THEME_FRONT_FOOTER, null) !!}
+<link href="platform/plugins/real-estate/public/css/dashboard/body.css" rel="stylesheet">
 
     <!-- Success or Error Notifications -->
     @if (Session::has('success_msg') || Session::has('error_msg') || (isset($errors) && $errors->any()) || isset($error_msg))
