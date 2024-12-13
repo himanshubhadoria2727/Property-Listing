@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\RealEstate\Models\Account;
+use Carbon\Carbon;
 
 class BookingController extends BaseController
 {
@@ -58,5 +59,20 @@ class BookingController extends BaseController
 
         // Return the view with the property and bookings data
         return view('plugins/real-estate::bookings.show', compact('property', 'bookings'));
+    }
+
+    public function deleteExpiredBookings()
+    {
+        // Fetch bookings that are 1 hour past their scheduled time
+        $expiredBookings = Booking::where('scheduled_at', '<', Carbon::now()->subHour())->get();
+
+        foreach ($expiredBookings as $booking) {
+            Log::info('Deleting expired booking ID: ' . $booking->id);
+            $booking->delete();
+        }
+
+        return response()->json([
+            'message' => 'Expired bookings deleted successfully!',
+        ]);
     }
 }

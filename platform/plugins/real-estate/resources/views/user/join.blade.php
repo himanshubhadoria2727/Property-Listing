@@ -11,12 +11,15 @@
         </div>
     </nav>
 
-
     <!-- Video Container -->
-    <!-- Video Container -->
-    <!-- <h1 style="font-size: 1rem; font-weight: 700; text-align: center; margin-bottom: 6px; color: #1F2937;">Live Broadcast for {{ $property->name }}</h1> -->
-
     <div id="videoContainer" style="position: relative; width: 90vw; height: 35vmax; margin: 0 auto 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+        
+        <!-- Thumbnail and Loader -->
+        <div id="thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 1.5rem; font-weight: bold; z-index: 10;">
+            <div class="loader"> </div> <!-- Loader -->
+            <div class="" style="margin-left: 13px;font-size: 2vmax;"> Please wait while stream starts</div> <!-- Loader -->
+        </div>
+
         <video id="remoteVideo" style="width: 100%; height: 100%; background-color: #000;" autoplay controls></video>
 
         <!-- Control Buttons Container with Round Background -->
@@ -97,6 +100,8 @@
                 if (mediaType === 'video') {
                     remoteVideoTrack = user.videoTrack;
                     remoteVideoTrack.play('remoteVideo');
+                    // Hide thumbnail when video starts playing
+                    document.getElementById('thumbnail').style.display = 'none';
                 }
                 if (mediaType === 'audio') {
                     remoteAudioTrack = user.audioTrack;
@@ -123,7 +128,6 @@
     };
 
     // Audio Toggle Button
-    // Audio Toggle Button
     const toggleAudioButton = document.getElementById('toggleAudio');
     const audioIcon = document.getElementById('audioIcon');
     toggleAudioButton.addEventListener('click', () => {
@@ -140,7 +144,6 @@
             isAudioMuted = !isAudioMuted;
         }
     });
-
 
     // Fullscreen functionality
     document.getElementById('fullScreen').addEventListener('click', () => {
@@ -187,4 +190,21 @@
         }
     });
 </script>
+
+<style>
+    /* Loader Style */
+    .loader {
+        border: 4px solid #f3f3f3; /* Light gray */
+        border-top: 4px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
 @endsection

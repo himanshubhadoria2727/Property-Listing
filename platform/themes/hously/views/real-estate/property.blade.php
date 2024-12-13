@@ -272,7 +272,7 @@ RealEstateHelper::getReviewExtraData()
                             <input type="hidden" name="property_id" value="{{ $property->id }}">
                             <label class="dark:text-white" for="schedule" style="font-weight: bold; font-size: 16px; color: #1a202c;">Schedule Virtual Tour:</label>
                             <input class="dark:text-black-900" type="datetime-local" name="scheduled_at" required style="padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; font-size: 14px; color: #4a5568;">
-                            <button type="submit" style="margin-top: 12px; padding: 10px 20px; background-color: #3182ce; color: white; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; transition: background-color 0.3s;">
+                            <button class="bg-primary" type="submit" style="margin-top: 12px; padding: 10px 20px; color: white; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; transition: background-color 0.3s;">
                                 Book Tour
                             </button>
                         </form>

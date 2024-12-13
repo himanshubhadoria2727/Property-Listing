@@ -121,7 +121,7 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 Route::get('/join/{property}', [AgoraController::class, 'joinStream'])->name('broadcast.join');
                 Route::post('/agora/token', [AgoraController::class, 'token']);
                 // Route::get('/start-broadcast/{broadcastId}', [BroadcastController::class, 'startBroadcast'])->name('start.broadcast');
-    
+                Route::post('agora/check-stream-status', [AgoraController::class, 'checkStreamStatus']);
                 Route::get('properties/{property}/bookings',  [BookingController::class, 'viewBookings'])->name('bookings.index');
                 // Route::get('bookings', [BookingController::class, 'show'])
                 // ->name('bookings.show'); // Named route for bookings.show    
