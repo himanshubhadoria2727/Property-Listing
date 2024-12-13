@@ -55,7 +55,7 @@
             @endforeach
         </div>
 
-        <span style="margin-top: 30px; color: #4B5563; font-size: 0.8rem; line-height: 1.5;">
+        <span style="margin-top: 30px; color: #4B5563; font-size: 1rem; line-height: 1.5;">
             {!! $property->content !!}
         </span>
     </div>

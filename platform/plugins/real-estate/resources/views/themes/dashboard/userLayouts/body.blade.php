@@ -1,9 +1,11 @@
 <header class="w-full" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
     
-    <div class="header__center" style="flex: 1;">
+    <div class="header__center" style="flex: 1; display: flex; align-items: center; justify-content: center;">
         <a class="ps-logo" href="/">
             @if ($logo = theme_option('logo', theme_option('logo')))
             <img
+                width="100"
+                height="100"
                 src="{{ RvMedia::getImageUrl($logo) }}"
                 alt="{{ theme_option('site_title') }}">
             @endif

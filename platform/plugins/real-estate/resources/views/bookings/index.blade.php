@@ -18,17 +18,58 @@
             @endforeach
         </div>
     <!-- Buttons for controlling the broadcast -->
-    <div id="controls" class="controls">
-        <button id="startButton" class="btn btn-primary" onclick="startBroadcast()">Start Broadcast</button>
-        <button id="stopButton" class="btn btn-danger" style="display:none;" onclick="stopBroadcast()">Stop Broadcast</button>
-        <button id="muteAudioButton" class="btn btn-secondary" style="display:none;" onclick="toggleAudio()">Mute Audio</button>
-        <button id="toggleVideoButton" class="btn btn-secondary" style="display:none;" onclick="toggleVideo()">Turn Video Off</button>
-    </div>
+    <!-- Include FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+<div class="video-container" style="position: relative; width: 100%; height: 100%; background-color: black;">
     <!-- Video element for local stream -->
-    <div class="video-container">
-        <video id="localVideo" autoplay muted class="video-stream"></video>
-    </div>
+    <video id="localVideo" autoplay muted class="video-stream" 
+        style="width: 100%; height: 100%; object-fit: cover;">
+    </video>
+
+    <!-- Start button at the top -->
+    <!-- Start Button -->
+<button id="startButton" 
+    onclick="startBroadcast()" 
+    style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
+           background-color: #333; border: none; color: white; 
+           cursor: pointer; z-index: 10; border-radius: 50%; padding: 15px;">
+    <i class="fas fa-play-circle" style="font-size: 30px;"></i>
+</button>
+
+<!-- Bottom Controls Container -->
+<div id="controls" 
+    style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); 
+           background-color: #333; display: flex; gap: 20px; padding: 0.5vmax; 
+           border-radius: 15px 15px 0 0; z-index: 10;">
+    
+    <!-- Stop Button -->
+    <button id="stopButton" 
+        style="background-color: transparent; border: none; color: red; 
+               cursor: pointer; display: none; padding: 10px;" 
+        onclick="stopBroadcast()">
+        <i class="fas fa-stop-circle" style="font-size: 2vmax;"></i> <!-- Smaller icon size -->
+    </button>
+    
+    <!-- Mute/Unmute Audio Button -->
+    <button id="muteAudioButton" 
+        style="background-color: transparent; border: none; color: white; cursor: pointer; display: none; 
+               padding: 10px;" 
+        onclick="toggleAudio()">
+        <i class="fas fa-microphone" style="font-size: 2vmax;"></i> <!-- Smaller icon size -->
+    </button>
+
+    <!-- Turn Video On/Off Button -->
+    <button id="toggleVideoButton" 
+        style="background-color: transparent; border: none; color: white; cursor: pointer; display: none; 
+               padding: 10px;" 
+        onclick="toggleVideo()">
+        <i class="fas fa-video" style="font-size: 2vmax;"></i> <!-- Smaller icon size -->
+    </button>
+</div>
+
+</div>
+
 
     <!-- Shareable link for viewers to join -->
     <p id="broadcastLink" style="display:none;">
@@ -148,55 +189,64 @@
     }
 
     async function stopBroadcast() {
-        if (!isBroadcasting) {
-            console.log('No active broadcast to stop.');
-            return;
-        }
-
-        try {
-            await client.leave();
-            if (localTracks.videoTrack) {
-                localTracks.videoTrack.stop();
-                localTracks.videoTrack.close(); // Close the video track to turn off the camera
-            }
-            if (localTracks.audioTrack) localTracks.audioTrack.stop();
-            document.getElementById('startButton').style.display = 'inline-block';
-            document.getElementById('stopButton').style.display = 'none';
-            document.getElementById('muteAudioButton').style.display = 'none';
-            document.getElementById('toggleVideoButton').style.display = 'none';
-            document.getElementById('broadcastLink').style.display = 'none';
-
-            isBroadcasting = false;
-        } catch (error) {
-            console.error('Error stopping broadcast:', error);
-        }
+    if (!isBroadcasting) {
+        console.log('No active broadcast to stop.');
+        return;
     }
 
-    function toggleAudio() {
-        if (!localTracks.audioTrack) return;
-        audioMuted = !audioMuted;
-
-        if (audioMuted) {
-            localTracks.audioTrack.setEnabled(false);
-            document.getElementById('muteAudioButton').innerText = 'Unmute Audio';
-        } else {
-            localTracks.audioTrack.setEnabled(true);
-            document.getElementById('muteAudioButton').innerText = 'Mute Audio';
+    try {
+        await client.leave();
+        if (localTracks.videoTrack) {
+            localTracks.videoTrack.stop();
+            localTracks.videoTrack.close(); // Close the video track to turn off the camera
         }
-    }
+        if (localTracks.audioTrack) localTracks.audioTrack.stop();
 
-    function toggleVideo() {
-        if (!localTracks.videoTrack) return;
-        videoOff = !videoOff;
+        document.getElementById('startButton').style.display = 'inline-block';
+        document.getElementById('stopButton').style.display = 'none';
+        document.getElementById('muteAudioButton').style.display = 'none';
+        document.getElementById('toggleVideoButton').style.display = 'none';
+        document.getElementById('broadcastLink').style.display = 'none';
 
-        if (videoOff) {
-            localTracks.videoTrack.setEnabled(false);
-            document.getElementById('toggleVideoButton').innerText = 'Turn Video On';
-        } else {
-            localTracks.videoTrack.setEnabled(true);
-            document.getElementById('toggleVideoButton').innerText = 'Turn Video Off';
-        }
+        isBroadcasting = false;
+    } catch (error) {
+        console.error('Error stopping broadcast:', error);
     }
+}
+
+function toggleAudio() {
+    if (!localTracks.audioTrack) return;
+
+    audioMuted = !audioMuted;
+
+    const muteAudioButton = document.getElementById('muteAudioButton');
+    const muteAudioIcon = muteAudioButton.querySelector('i');
+
+    if (audioMuted) {
+        localTracks.audioTrack.setEnabled(false);
+        muteAudioIcon.className = 'fas fa-microphone-slash'; // Update to muted icon
+    } else {
+        localTracks.audioTrack.setEnabled(true);
+        muteAudioIcon.className = 'fas fa-microphone'; // Update to unmuted icon
+    }
+}
+
+function toggleVideo() {
+    if (!localTracks.videoTrack) return;
+
+    videoOff = !videoOff;
+
+    const toggleVideoButton = document.getElementById('toggleVideoButton');
+    const toggleVideoIcon = toggleVideoButton.querySelector('i');
+
+    if (videoOff) {
+        localTracks.videoTrack.setEnabled(false);
+        toggleVideoIcon.className = 'fas fa-video-slash'; // Update to video off icon
+    } else {
+        localTracks.videoTrack.setEnabled(true);
+        toggleVideoIcon.className = 'fas fa-video'; // Update to video on icon
+    }
+}
 
     // Handling viewer-side stream
     async function joinBroadcast() {

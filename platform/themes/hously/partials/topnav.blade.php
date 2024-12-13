@@ -67,7 +67,7 @@ $user = auth('account')->user();
                 </a>
             </li>
             @endif
-            @if($user)
+            @if($user && $user->role == 2)
             <li class="hidden mb-0 sm:inline mx-1 ps-1">
                 <a href="{{ route('public.account.properties.index') }}" style="border: 1.5px solid green;" class="text-black dark:text-white rounded-full btn px-4 border-2 border-primary dark:border-primary" aria-label="{{ __('Add your listing') }}">
                     {{ __('Add your listing') }}<i data-feather="plus" class="h-4 w-4 text-red-600 hover:bg-red-100 stroke-[3]"></i>
