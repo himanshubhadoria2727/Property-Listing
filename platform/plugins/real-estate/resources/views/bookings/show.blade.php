@@ -29,7 +29,7 @@
     $propertyBookings[] = [
     'id' => $property->id, // Include the property ID
     'name' => $property->name,
-    'bookings' => $property->bookings()->where('scheduled_at', '>', now())->with('user')->get() // Eager load user relationship
+    'bookings' => $property->bookings()->where('scheduled_at', '>', now())->where('live', true)->with('user')->get() // Eager load user relationship
     ];
     }
     @endphp

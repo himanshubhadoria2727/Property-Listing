@@ -122,7 +122,9 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 Route::post('/agora/token', [AgoraController::class, 'token']);
                 // Route::get('/start-broadcast/{broadcastId}', [BroadcastController::class, 'startBroadcast'])->name('start.broadcast');
                 Route::post('agora/check-stream-status', [AgoraController::class, 'checkStreamStatus']);
-                Route::get('properties/{property}/bookings',  [BookingController::class, 'viewBookings'])->name('bookings.index');
+                Route::get('{property}/live',  [BookingController::class, 'viewBookings'])->name('bookings.index');
+                Route::get('{property}/calls',  [BookingController::class, 'viewCallBookings'])->name('calls.show');
+                // Route::get('properties/{property}/bookings',  [BookingController::class, 'calls'])->name('calls.index');
                 // Route::get('bookings', [BookingController::class, 'show'])
                 // ->name('bookings.show'); // Named route for bookings.show    
                 // Signaling routes for WebRTC
@@ -153,6 +155,10 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                         Route::get('bookings', [
                             'as' => 'bookings.show',
                             'uses' => 'BookingController@show',
+                        ]);
+                        Route::get('calls', [
+                            'as' => 'calls.show',
+                            'uses' => 'BookingController@viewCallBookings',
                         ]);
 
                     Route::get('settings', [

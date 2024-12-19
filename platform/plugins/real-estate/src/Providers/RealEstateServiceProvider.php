@@ -378,7 +378,14 @@ class RealEstateServiceProvider extends ServiceProvider
                     'priority' => 4,
                     'name' => 'Live Tour Bookings',
                     'url' => fn () => route('public.account.bookings.show'),
-                    'icon' => 'ti ti-receipt',
+                    'icon' => 'ti ti-video',
+                ])
+                ->registerItem([
+                    'id' => 'cms-account-calls',
+                    'priority' => 4,
+                    'name' => 'Call Bookings',
+                    'url' => fn () => route('public.account.calls.show'),
+                    'icon' => 'ti ti-phone',
                 ])
                 ->registerItem([
                     'id' => 'cms-account-settings',
