@@ -13,6 +13,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // $schedule->command('inspire')->hourly();
+        $schedule->call(function () {
+            app(\Botble\RealEstate\Http\Controllers\Fronts\BookingController::class)->deleteExpiredBookings();
+        })->hourly();   
     }
 
     /**

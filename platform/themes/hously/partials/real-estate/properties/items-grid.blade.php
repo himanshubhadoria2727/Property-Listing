@@ -4,7 +4,7 @@
             <div class="overflow-hidden duration-500 ease-in-out bg-white shadow property-item group rounded-xl dark:bg-slate-800 hover:shadow-lg dark:shadow-gray-700 dark:hover:shadow-gray-700">
                 <div class="relative overflow-hidden">
                     <a href="{{ $property->url }}">
-                        <img src="{{ RvMedia::getImageUrl($property->image, 'small', false, RvMedia::getDefaultImage()) }}" alt="{{ $property->name }}" class="transition-all duration-500 hover:scale-110">
+                        <img src="{{ RvMedia::getImageUrl($property->image, 'large', false, RvMedia::getDefaultImage()) }}" alt="{{ $property->name }}" class="transition-all duration-500 hover:scale-110">
                     </a>
                     <div class="absolute top-6 end-6">
                         <button type="button" class="text-lg text-red-600 bg-white rounded-full shadow btn btn-icon dark:bg-slate-900 dark:shadow-gray-700 add-to-wishlist" aria-label="{{ __('Add to wishlist') }}" data-box-type="property" data-id="{{ $property->id }}">

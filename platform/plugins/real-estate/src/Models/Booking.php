@@ -15,6 +15,8 @@ class Booking extends BaseModel
         'property_id',
         'user_id',
         'scheduled_at',
+        'call',   
+        'live',
     ];
 
     public function property()

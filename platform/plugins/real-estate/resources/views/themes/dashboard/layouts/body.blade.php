@@ -86,6 +86,8 @@
                         @php $logo = theme_option('logo', theme_option('logo')); @endphp
                         @if ($logo)
                             <img
+                                width="100"
+                                height="100"
                                 src="{{ RvMedia::getImageUrl($logo) }}"
                                 alt="{{ theme_option('site_title') }}"
                                 height="40"

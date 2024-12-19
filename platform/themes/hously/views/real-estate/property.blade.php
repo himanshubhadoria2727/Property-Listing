@@ -236,7 +236,7 @@ RealEstateHelper::getReviewExtraData()
                             </div>
                         </div>
                     </div>
-                    <div class="mb-6 pb-4 pl-3 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700">
+                    <div class="mb-6 pb-4 pl-3 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700" style="padding: 20px; background-color: #f9fafb; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
                         @if (auth('account')->check()) <!-- Check if the user is logged in -->
                         @php
                         // Fetch the authenticated user's ID
@@ -257,29 +257,30 @@ RealEstateHelper::getReviewExtraData()
                         @endphp
 
                         @if ($futureBookings->isNotEmpty())
-                        <div class="mt-4 text-red-600">
-                            <p>Already booked for the following times:</p>
-                            <ul>
+                        <div class="mt-4 text-red-600" style="color: #e53e3e; font-size: 16px;">
+                            <p style="font-weight: bold;">Already booked for the following times:</p>
+                            <ul style="padding-left: 20px; margin-top: 10px;">
                                 @foreach ($futureBookings as $booking)
-                                <li>{{ \Carbon\Carbon::parse($booking->scheduled_at)->format('Y-m-d H:i') }}</li>
+                                <li class="dark:text-black" style="margin-bottom: 8px;">{{ \Carbon\Carbon::parse($booking->scheduled_at)->format('Y-m-d H:i') }}</li>
                                 @endforeach
                             </ul>
                         </div>
                         @else
                         <!-- Display booking form only if there are no future bookings -->
-                        <form method="POST" action="/book">
+                        <form method="POST" action="/book" style="margin-top: 20px;">
                             @csrf
                             <input type="hidden" name="property_id" value="{{ $property->id }}">
-                            <label for="schedule">Schedule Tour:</label>
-                            <input type="datetime-local" name="scheduled_at" required>
-                            <button type="submit">Book Tour</button>
+                            <label class="dark:text-white" for="schedule" style="font-weight: bold; font-size: 16px; color: #1a202c;">Schedule Virtual Tour:</label>
+                            <input class="dark:text-black-900" type="datetime-local" name="scheduled_at" required style="padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; font-size: 14px; color: #4a5568;">
+                            <button class="bg-primary" type="submit" style="margin-top: 12px; padding: 10px 20px; color: white; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; transition: background-color 0.3s;">
+                                Book Tour
+                            </button>
                         </form>
                         @endif
                         @else
-                        <p class="mt-4 text-gray-600">Please log in to book a tour.</p> <!-- Message for users not logged in -->
+                        <p class="mt-4 text-gray-600" style="color: #718096; font-size: 16px;">Please log in to book a tour.</p> <!-- Message for users not logged in -->
                         @endif
                     </div>
-
 
                     @endif
 

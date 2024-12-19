@@ -9,17 +9,66 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Botble\Base\Facades\Assets;
 use App\Providers\RtcTokenBuilder;
+use Illuminate\Support\Facades\Http;
 
 class AgoraController extends BaseController
 {
     private $appID;
     private $appCertificate;
+    private $restAPIBaseUrl;
+
 
     public function __construct()
     {
         $this->appID = env('AGORA_APP_ID');
         $this->appCertificate = env('AGORA_APP_CERTIFICATE');
+        $this->restAPIBaseUrl = 'https://api.agora.io/v1/apps/' . $this->appID . '/channels/';
     }
+
+    /**
+     * Check the stream status for a given channel.
+     *
+     * @param  string  $channelName
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkStreamStatus(Request $request)
+    {
+        $channelName = $request->input('channelName'); // Channel name from the request
+
+        // Construct the URL for Agora's channel status API
+        $url = $this->restAPIBaseUrl . $channelName . '/status';
+
+        try {
+            // Send GET request to Agora's API to get channel status
+            $response = Http::withHeaders([
+                'Authorization' => 'Basic ' . base64_encode($this->appID . ':' . $this->appCertificate)
+            ])->get($url);
+
+            // Check the response status
+            if ($response->successful()) {
+                $data = $response->json();
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $data
+                ]);
+            } else {
+                // Handle error if API call fails
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to retrieve channel status',
+                    'error' => $response->body()
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            // Handle any exceptions
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error while checking stream status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
 
     protected function token(Request $request)
 {
@@ -53,5 +102,12 @@ class AgoraController extends BaseController
 
         // Render the join stream view
         return view('plugins/real-estate::broadcast.join', compact('property'));
+    }
+    public function joinLive($property)
+    {
+        Assets::addScriptsDirectly('vendor/core/plugins/real-estate/js/join.js');
+
+        // Render the join stream view
+        return view('plugins/real-estate::user.join', compact('property'));
     }
 }

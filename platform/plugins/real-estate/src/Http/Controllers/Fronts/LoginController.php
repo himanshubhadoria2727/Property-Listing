@@ -56,9 +56,10 @@ class LoginController extends BaseController
         $request->merge([$this->username() => $request->input('email')]);
 
         $this->validateLogin($request);
-        if($request->input('role')==1) {
-            Log::info($request->input('role'));
-            $this->redirectTo = route('/');
+        if($request->has('role')) {
+            if($request->input('role') == 1){
+                $this->redirectTo = '/';
+            }
         }
 
         // If the class is using the ThrottlesLogins trait, we can automatically throttle

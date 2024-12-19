@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Redirector;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
@@ -80,7 +81,6 @@ trait AuthenticatesUsers
         return $request->only($this->username(), 'password');
     }
 
-
     protected function sendLoginResponse(Request $request): Response|RedirectResponse
     {
         $request->session()->regenerate();
@@ -89,9 +89,25 @@ trait AuthenticatesUsers
 
         $this->authenticated($request, $this->guard()->user());
 
-        return $request->wantsJson()
-            ? new Response('', 204)
-            : redirect()->intended($this->redirectPath());
+        $user = $this->guard()->user();
+
+        // Debugging: Check the role of the user
+        Log::info('Authenticated User Role: ' . $user->role_id);
+    
+        // Role-based redirection
+        if ($user->role == 1) {
+            // Role 1 should redirect to homepage
+            Log::info('Redirecting to homepage');
+            return redirect('/');
+        } elseif ($user->role == 2) {
+            // Role 2 should redirect to the dashboard
+            Log::info('Redirecting to dashboard');
+            return redirect()->route('public.account.dashboard');
+        }
+    
+        // Default fallback if the role does not match
+        Log::info('Role does not match, redirecting to default page');
+        return redirect('/');
     }
 
     protected function authenticated(Request $request, Authenticatable $user)

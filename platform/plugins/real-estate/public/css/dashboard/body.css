@@ -1,0 +1,46 @@
+<style>
+    /* For larger screens, display images vertically on the right side of the video */
+    @media screen and (min-width: 768px) {
+        #imageModal {
+            display: none;
+        }
+        
+        #audioContainer {
+            display: none; /* Hide audio container on desktop */
+        }
+
+        #videoContainer {
+            display: inline-block;
+            width: 60%; /* Occupy 60% of the container */
+            vertical-align: top;
+        }
+
+        .image-gallery {
+            display: inline-block;
+            width: 35%; /* Occupy 35% of the container */
+            vertical-align: top;
+            padding-left: 5%;
+            height: 100%;
+        }
+
+        .image-gallery img {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+    }
+
+    /* For mobile screens, keep the existing layout */
+    @media screen and (max-width: 767px) {
+        #videoContainer {
+            width: 100%; /* Take full width on mobile */
+        }
+
+        .image-gallery {
+            width: 100%; /* Make image gallery take full width */
+        }
+
+        #audioContainer {
+            display: block; /* Show audio container on mobile */
+        }
+    }
+</style>
