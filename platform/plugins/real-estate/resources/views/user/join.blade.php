@@ -1,4 +1,4 @@
-@extends('plugins/real-estate::themes.dashboard.UserLayouts.userLayout')
+@extends('plugins/real-estate::themes.dashboard.userLayouts.userLayout')
 
 @section('content')
 <div style="max-width: 100%; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
