@@ -34,8 +34,8 @@ class BookingController extends BaseController
         'property_id' => $request->property_id,
         'user_id' => $account->id, // Use the account ID instead of auth()->id()
         'scheduled_at' => $request->scheduled_at,
-        'call' => true,
-        'live' => false,
+        'call' => false,
+        'live' => true,
     ]);
 
     return redirect()->back()->with('message', 'Tour scheduled successfully!');
