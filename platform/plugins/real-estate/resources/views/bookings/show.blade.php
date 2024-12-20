@@ -13,7 +13,7 @@
 
     // Fetch future bookings for the authenticated user with property details
     $futureBookings = \Botble\RealEstate\Models\Booking::where('user_id', $userId)
-    ->where('scheduled_at', '>', now())
+    ->where('scheduled_at', '>', now()->addMinutes(30))
     ->with('property') // Eager load the property relationship
     ->get();
 

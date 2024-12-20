@@ -31,9 +31,9 @@
     <!-- Start Button -->
 <button id="startButton" 
     onclick="startBroadcast()" 
-    style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
+    style="position: absolute; top: 10vmax; left: 50%; transform: translateX(-50%); 
            background-color: #333; border: none; color: white; 
-           cursor: pointer; z-index: 10; border-radius: 50%; padding: 15px;">
+           cursor: pointer; z-index: 10; border-radius:1000%; padding: 15px;align-items: center;jusitfy-content: center;display: flex;">
     <i class="fas fa-play-circle" style="font-size: 30px;"></i>
 </button>
 
@@ -104,7 +104,7 @@
     const propertyId = `{{ $property->id }}`;
     const channel = `channel-${propertyId}`; // Ensure this is a valid channel name
     let token = null;
-
+    document.getElementById('controls').style.display = 'none';
     function fetchToken(channelName) {
         return axios.post(`/account/agora/token`, {
                 channelName,
@@ -131,7 +131,7 @@
             console.log('Broadcast already in progress.');
             return;
         }
-
+        
         // Validate channel name
         if (!isValidChannelName(channel)) {
             console.error('Invalid channel name:', channel);
@@ -172,6 +172,8 @@
             localTracks.audioTrack.play();
 
             // Show controls for broadcasting
+            document.getElementById('controls').style.display = 'inline-block';
+
             document.getElementById('startButton').style.display = 'none';
             document.getElementById('stopButton').style.display = 'inline-block';
             document.getElementById('muteAudioButton').style.display = 'inline-block';
@@ -189,6 +191,7 @@
     }
 
     async function stopBroadcast() {
+        document.getElementById('controls').style.display = 'none';
     if (!isBroadcasting) {
         console.log('No active broadcast to stop.');
         return;
@@ -216,7 +219,6 @@
 
 function toggleAudio() {
     if (!localTracks.audioTrack) return;
-
     audioMuted = !audioMuted;
 
     const muteAudioButton = document.getElementById('muteAudioButton');
