@@ -139,7 +139,7 @@
     // Start audio call (without video)
     async function startAudioCall(userId) {
     console.log('Starting audio call function...');
-    
+
     if (isCalling) {
         console.log('Already in a call, returning...');
         return;
@@ -164,34 +164,30 @@
         const token = await fetchToken(channel);
         console.log('Fetched Token:', token);
 
+        console.log('Notifying backend about the call...');
+        await axios.post('/account/call/notify', {
+            userId,
+            channel,
+        });
+
         console.log('Creating Agora client...');
         client = AgoraRTC.createClient({
             mode: 'rtc',
             codec: 'vp8',
-            role: 'host'
+            role: 'host',
         });
-        console.log('Agora Client:', client);
 
         console.log('Joining Agora channel...');
         const joinResult = await client.join(appId, channel, token, uid);
 
-        console.log('Join Result:', joinResult);
-        console.log('uid:', uid);
-
         console.log('Creating audio track...');
         const [audioTrack] = await AgoraRTC.createMicrophoneTracks();
-        console.log('Created Audio Track:', audioTrack);
-
-        console.log('Local Tracks before publishing:', localTracks);
-        localTracks.audioTrack = audioTrack;
 
         console.log('Publishing audio track...');
-        await client.publish([localTracks.audioTrack]);
-        console.log('Audio Track Published.');
+        await client.publish([audioTrack]);
 
-        console.log('Playing local audio track...');
+        localTracks.audioTrack = audioTrack;
         localTracks.audioTrack.play();
-        console.log('Audio Track Playing.');
 
         isCalling = true;
         console.log('Audio call started successfully.');
@@ -200,8 +196,7 @@
         console.error('Error starting audio call:', error);
     }
 }
-
-    // End the call
+ // End the call
     function endCall() {
         document.getElementById('callModal').style.display = 'none';
         stopCall();

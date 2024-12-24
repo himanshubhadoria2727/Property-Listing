@@ -12,9 +12,11 @@ use Botble\RealEstate\Models\Project;
 use Botble\RealEstate\Models\Property;
 use Botble\Slug\Facades\SlugHelper;
 use Botble\RealEstate\Http\Controllers\Fronts\BookingController;
+use Botble\RealEstate\Http\Controllers\Fronts\CallController;
 use Botble\RealEstate\Http\Controllers\AgoraController;
 use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 if (defined('THEME_MODULE_SCREEN_NAME')) {
     Route::group(['namespace' => 'Botble\RealEstate\Http\Controllers\Fronts'], function () {
@@ -109,7 +111,11 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                         ->name('confirm');
                 });
             });
-            Route::post('/book', [BookingController::class, 'book']);
+            Route::post('/bookCall', [CallController::class, 'bookCall']);
+            Route::post('/account/call/notify', [CallController::class, 'notifyCall']);
+            Route::get('/broadcasting/auth', function () {
+                return Auth::check();
+            });
 
             Route::group(['middleware' => ['web']], function () {
                 Route::get('/bookings', [BookingController::class, 'userBooking'])->name('user.show');
@@ -158,7 +164,7 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                         ]);
                         Route::get('calls', [
                             'as' => 'calls.show',
-                            'uses' => 'BookingController@viewCallBookings',
+                            'uses' => 'CallController@viewCallBookings',
                         ]);
 
                     Route::get('settings', [

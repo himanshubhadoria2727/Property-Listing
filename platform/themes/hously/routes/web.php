@@ -3,6 +3,7 @@
 use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Facades\Route;
 use Theme\Hously\Http\Controllers\HouslyController;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::group(
     ['controller' => HouslyController::class, 'as' => 'public.', 'middleware' => ['web', 'core']],
@@ -16,5 +17,9 @@ Route::group(
         });
     }
 );
+
+Broadcast::routes(['middleware' => ['auth:account']]);
+Route::get('/broadcasting/auth', function () {
+})->middleware(['web', 'auth:account']);
 
 Theme::routes();

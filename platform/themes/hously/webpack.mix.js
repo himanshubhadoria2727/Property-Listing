@@ -12,6 +12,7 @@ mix
         tailwindcss(source + '/tailwind.config.js'),
     ])
     .js(source + '/assets/js/app.js', dist + '/js')
+    .js(source + '/assets/js/calls.js', dist + '/js')
     .js(source + '/assets/js/wishlist.js', dist + '/js')
     .js(source + '/assets/js/filter.js', dist + '/js')
     .js(source + '/assets/js/review.js', dist + '/js')
@@ -22,6 +23,7 @@ if (mix.inProduction()) {
         .copy(dist + '/css/icons.css', source + '/public/css')
         .copy(dist + '/css/style.css', source + '/public/css')
         .copy(dist + '/js/app.js', source + '/public/js')
+        .copy(dist + '/js/calls.js', source + '/public/js')
         .copy(dist + '/js/wishlist.js', source + '/public/js')
         .copy(dist + '/js/filter.js', source + '/public/js')
         .copy(dist + '/js/review.js', source + '/public/js')

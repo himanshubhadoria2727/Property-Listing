@@ -40,6 +40,34 @@ class BookingController extends BaseController
 
     return redirect()->back()->with('message', 'Tour scheduled successfully!');
 }
+    public function bookCall(Request $request)
+{
+    $request->validate([
+        'property_id' => 'required|exists:re_properties,id',
+        'scheduled_at' => 'required|date|after:now',
+        'call' => 'boolean', // Validate the 'call' field as boolean
+        'live' => 'boolean', // Validate the 'live' field as boolean
+    ]);
+
+    $account = Account::query()->findOrFail(auth('account')->id());
+    Log::info('account info: ' . $account);
+
+    // Check if the account exists
+    if (!$account) {
+        return redirect()->back()->withErrors(['error' => 'Account not found.']);
+    }
+
+    // Create the booking with 'call' and 'live' fields
+    Booking::create([
+        'property_id' => $request->property_id,
+        'user_id' => $account->id, // Use the account ID instead of auth()->id()
+        'scheduled_at' => $request->scheduled_at,
+        'call' => true,
+        'live' => false,
+    ]);
+
+    return redirect()->back()->with('message', 'Call scheduled successfully!');
+}
 
 
     public function viewBookings(Property $property)
