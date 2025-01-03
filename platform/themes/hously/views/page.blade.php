@@ -7,33 +7,18 @@
 {!! apply_filters(PAGE_FILTER_FRONT_PAGE_CONTENT, Html::tag('div', BaseHelper::clean($page->content), ['class' => 'ck-content'])->toHtml(), 
 $page) !!}
 
+<script type="module">
+    let user = @json(auth('account')->user());
+    let userId = user ? user.id : null;
+    window.userId = userId !== null ? userId : 'defaultUserId'; // Replace 'defaultUserId' with a suitable default value
+</script>
+
+
 {{-- Load the external JS file --}}
 <script type="module" src="{{ asset('themes/hously/js/calls.js') }}"></script>
 
-@auth('account')
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Ensure the user is authenticated
-            @if(auth('account')->check())
-                console.log('User authenticated');
-                const userId = {{ auth('account')->id() }};
-                console.log('User ID:', userId);
 
-                if (typeof initialize === 'function') {
-                    try {
-                        // Pass the authenticated user's ID to the `initialize` function
-                        initialize(userId);
-                        console.log('Call initialized with ID:', userId);
-                    } catch (error) {
-                        console.error('Error initializing call:', error);
-                    }
-                } else {
-                    console.error('The "initialize" function is not defined in calls.js.');
-                }
-            @else
-                console.error('User is not authenticated.');
-            @endif
-        });
-    </script>
-@endauth
+
+
+
 

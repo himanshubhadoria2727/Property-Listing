@@ -37,15 +37,23 @@ return [
             'app_id' => env('PUSHER_APP_ID'),
             'options' => [
                 'cluster' => env('PUSHER_APP_CLUSTER'),
-                'host' => env('PUSHER_HOST') ?: 'api-'.env('PUSHER_APP_CLUSTER', 'mt1').'.pusher.com',
+                'host' => env('PUSHER_HOST') ?: 'api-' . env('PUSHER_APP_CLUSTER', 'mt1') . '.pusher.com',
                 'port' => env('PUSHER_PORT', 443),
                 'scheme' => env('PUSHER_SCHEME', 'https'),
                 'encrypted' => true,
                 'useTLS' => env('PUSHER_SCHEME', 'https') === 'https',
             ],
             'client_options' => [
+                'curl' => [
+                    // Use CA bundle in production
+                    CURLOPT_CAINFO => storage_path('cacert.pem'),
+                    // Optional: Disable SSL verification in local development (Not recommended for production)
+                    CURLOPT_SSL_VERIFYHOST => env('APP_ENV') === 'local' ? 0 : 2,
+                    CURLOPT_SSL_VERIFYPEER => env('APP_ENV') === 'local' ? 0 : 1,
+                ],
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
             ],
+
         ],
 
         'ably' => [

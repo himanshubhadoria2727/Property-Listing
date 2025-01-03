@@ -19,7 +19,9 @@ Route::group(
 );
 
 Broadcast::routes(['middleware' => ['auth:account']]);
-Route::get('/broadcasting/auth', function () {
-})->middleware(['web', 'auth:account']);
+
+// Route::post('/broadcasting/auth', function () {
+//     return Broadcast::auth(request());
+// });
 
 Theme::routes();

@@ -106,6 +106,7 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                         'register/confirm/resend',
                         'RegisterController@resendConfirmation'
                     )
+                    
                         ->name('resend_confirmation');
                     Route::get('register/confirm/{user}', 'RegisterController@confirm')
                         ->name('confirm');
@@ -113,10 +114,11 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
             });
             Route::post('/bookCall', [CallController::class, 'bookCall']);
             Route::post('/account/call/notify', [CallController::class, 'notifyCall']);
-            Route::get('/broadcasting/auth', function () {
-                return Auth::check();
-            });
-
+            // Route::get('/broadcasting/auth', function () {
+            //     return Auth::check();
+            // });
+            Route::post('/account/call/end', 'CallController@endCall')->name('call.end');
+            Route::post('/account/call/reject', 'CallController@rejectCall')->name('call.reject');
             Route::group(['middleware' => ['web']], function () {
                 Route::get('/bookings', [BookingController::class, 'userBooking'])->name('user.show');
                 Route::get('bookings/join/{property}', [AgoraController::class, 'joinLive'])->name('user.join');

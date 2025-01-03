@@ -103,128 +103,300 @@
 
 <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.22.0.js"></script>
 <script>
-    let client;
+    let client = null;
     let localTracks = {
         audioTrack: null
     };
+    let remoteUsers = {};
     let isCalling = false;
-    let audioMuted = false;
-    let uid = Math.floor(Math.random() * 1000);
+    let uid = Math.floor(Math.random() * 100000);
+    let currentCallChannel = null;
+    let currentCallUserId = null;
 
     // Fetch the token for Agora client
-    function fetchToken(channelName) {
-        return axios.post(`/account/agora/token`, {
+    async function fetchToken(channelName,userId) {
+        try {
+            const response = await axios.post('/account/agora/token', {
                 channelName,
                 uid
-            })
-            .then(response => {
-                const token = response.data;
-                console.log('token fetched', token);
-                return token;
-            })
-            .catch(error => {
-                console.error('Error fetching the token:', error);
-                throw error;
             });
+            console.log('Token fetched successfully:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching token:', error);
+            throw error;
+        }
     }
+
+    // Initialize Laravel Echo listener
+    window.Echo.channel(`user.${userId}`)
+        .listen('.incoming.call', (data) => {
+            console.log('Incoming call:', data);
+            handleIncomingCall(data);
+        })
+        .listen('.call.ended', (data) => {
+            console.log('Call ended by other party:', data);
+            if (data.channel === currentCallChannel) {
+                endCall();
+            }
+        })
+        .listen('.call.rejected', (data) => {
+            console.log('Call rejected:', data);
+            if (data.channel === currentCallChannel) {
+                handleCallRejected();
+            }
+        });
 
     // Start calling (audio-only)
     async function startCall(userName, userId, propertyId) {
-        document.getElementById('callModal').style.display = 'block';
-        document.getElementById('callUserName').innerText = userName;
-        await startAudioCall(userId);
-        fetchToken(`channel-${userId}`);
+        try {
+            currentCallUserId = userId;
+            currentCallChannel = `channel-${userId}`;
+            
+            document.getElementById('callModal').style.display = 'block';
+            document.getElementById('callUserName').innerText = `Calling ${userName}...`;
+            document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
+            
+            // Notify the backend about the call
+            await axios.post('/account/call/notify', {
+                userId,
+                channel: currentCallChannel,
+            });
+            
+            await startAudioCall(userId);
+        } catch (error) {
+            console.error('Error in startCall:', error);
+            document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
+        }
     }
 
     // Start audio call (without video)
     async function startAudioCall(userId) {
-    console.log('Starting audio call function...');
+        if (isCalling) {
+            console.log('Already in a call');
+            return;
+        }
 
-    if (isCalling) {
-        console.log('Already in a call, returning...');
-        return;
-    }
+        const channel = `channel-${userId}`;
+        const appId = '{{ env('AGORA_APP_ID') }}';
 
-    const channel = `channel-${userId}`;
-    const appId = `{{ env('AGORA_APP_ID') }}`;
+        try {
+            // Fetch token
+            const token = await fetchToken(channel,userId);
 
-    console.log('User ID:', userId);
-    console.log('Generated Channel:', channel);
-    console.log('Agora App ID:', appId);
+            // Create client if not exists
+            if (!client) {
+                client = AgoraRTC.createClient({
+                    mode: 'rtc',
+                    codec: 'h264'
+                });
 
-    if (!appId) {
-        console.error('Agora App ID is missing.');
-        return;
-    }
-
-    console.log(`Starting audio call for user: ${userId} on channel: ${channel}`);
-
-    try {
-        console.log('Fetching token...');
-        const token = await fetchToken(channel);
-        console.log('Fetched Token:', token);
-
-        console.log('Notifying backend about the call...');
+                console.log('Notifying backend about the call...');
         await axios.post('/account/call/notify', {
             userId,
             channel,
         });
+                // Set up remote user handling
+                client.on('user-published', async (remoteUser, mediaType) => {
+                    console.log('Remote user published:', remoteUser.uid, mediaType);
+                    
+                    await client.subscribe(remoteUser, mediaType);
+                    console.log('Subscribed to remote user:', remoteUser.uid);
 
-        console.log('Creating Agora client...');
-        client = AgoraRTC.createClient({
-            mode: 'rtc',
-            codec: 'vp8',
-            role: 'host',
-        });
+                    if (mediaType === 'audio') {
+                        remoteUsers[remoteUser.uid] = remoteUser;
+                        remoteUser.audioTrack.play();
+                        console.log('Playing remote audio');
+                        
+                        // Update UI to show connected state
+                        document.getElementById('callStatus').innerHTML = 
+                            '<p style="color: #48bb78;">Call Connected</p>';
+                    }
+                });
 
-        console.log('Joining Agora channel...');
-        const joinResult = await client.join(appId, channel, token, uid);
+                client.on('user-unpublished', (remoteUser, mediaType) => {
+                    if (mediaType === 'audio') {
+                        if (remoteUsers[remoteUser.uid]) {
+                            remoteUsers[remoteUser.uid].audioTrack.stop();
+                            delete remoteUsers[remoteUser.uid];
+                        }
+                    }
+                });
 
-        console.log('Creating audio track...');
-        const [audioTrack] = await AgoraRTC.createMicrophoneTracks();
+                client.on('user-left', (remoteUser) => {
+                    console.log('Remote user left:', remoteUser.uid);
+                    if (remoteUsers[remoteUser.uid]) {
+                        remoteUsers[remoteUser.uid].audioTrack.stop();
+                        delete remoteUsers[remoteUser.uid];
+                    }
+                });
+            }
 
-        console.log('Publishing audio track...');
-        await client.publish([audioTrack]);
+            // Join the channel
+            await client.join(appId, channel, token, uid);
+            console.log('Joined channel:', channel);
 
-        localTracks.audioTrack = audioTrack;
-        localTracks.audioTrack.play();
+            // Create and publish local audio track
+            localTracks.audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+                encoderConfig: {
+                    sampleRate: 48000,
+                    stereo: true,
+                    bitrate: 128
+                }
+            });
 
-        isCalling = true;
-        console.log('Audio call started successfully.');
+            await client.publish([localTracks.audioTrack]);
+            console.log('Published local audio track');
 
-    } catch (error) {
-        console.error('Error starting audio call:', error);
+            isCalling = true;
+
+        } catch (error) {
+            console.error('Error in startAudioCall:', error);
+            document.getElementById('callStatus').innerHTML = 
+                '<p style="color: #e53e3e;">Call Failed</p>';
+            throw error;
+        }
     }
-}
- // End the call
-    function endCall() {
-        document.getElementById('callModal').style.display = 'none';
-        stopCall();
+
+    // Toggle mute/unmute
+    async function toggleMute() {
+        if (!localTracks.audioTrack) return;
+
+        const muteButton = document.getElementById('muteButton');
+        const currentState = localTracks.audioTrack.enabled;
+
+        try {
+            await localTracks.audioTrack.setEnabled(!currentState);
+            
+            muteButton.innerHTML = currentState ? 
+                '<i class="fas fa-microphone"></i> Unmute' : 
+                '<i class="fas fa-microphone-slash"></i> Mute';
+            muteButton.style.backgroundColor = currentState ? '#f56565' : '#48bb78';
+        } catch (error) {
+            console.error('Error toggling mute:', error);
+        }
     }
 
-    // Stop audio call
+    // End the call
+    async function endCall() {
+        try {
+            if (currentCallUserId && currentCallChannel) {
+                await axios.post('/account/call/end', {
+                    userId: currentCallUserId,
+                    channel: currentCallChannel
+                });
+            }
+            
+            await stopCall();
+            document.getElementById('callModal').style.display = 'none';
+            
+            currentCallChannel = null;
+            currentCallUserId = null;
+        } catch (error) {
+            console.error('Error ending call:', error);
+        }
+    }
+
+    // Stop the call
     async function stopCall() {
         if (!isCalling) return;
 
         try {
-            await client.leave();
-            if (localTracks.audioTrack) localTracks.audioTrack.close();
+            // Stop and close local tracks
+            if (localTracks.audioTrack) {
+                localTracks.audioTrack.stop();
+                localTracks.audioTrack.close();
+            }
+
+            // Stop all remote audio tracks
+            Object.values(remoteUsers).forEach(user => {
+                if (user.audioTrack) {
+                    user.audioTrack.stop();
+                }
+            });
+
+            // Clear remote users
+            remoteUsers = {};
+
+            // Leave the channel
+            await client?.leave();
+            
             isCalling = false;
+            console.log('Call ended successfully');
+
         } catch (error) {
-            console.error('Error stopping audio call:', error);
+            console.error('Error stopping call:', error);
         }
     }
 
-    // Mute/unmute the audio
-    function toggleMute() {
-        const muteButton = document.getElementById('muteButton');
-        muteButton.classList.toggle('muted');
-        if (muteButton.classList.contains('muted')) {
-            muteButton.innerHTML = '<i class="fas fa-microphone"></i> Unmute';
-            muteButton.style.backgroundColor = '#f56565'; // Change to unmute color
-        } else {
-            muteButton.innerHTML = '<i class="fas fa-microphone-slash"></i> Mute';
-            muteButton.style.backgroundColor = '#48bb78'; // Change to mute color
+    // Clean up when leaving the page
+    window.addEventListener('beforeunload', async () => {
+        await stopCall();
+    });
+
+    // Clean up when leaving the page
+    window.addEventListener('beforeunload', async () => {
+        await stopCall();
+    });
+
+    function handleIncomingCall(data) {
+        const modal = document.getElementById('callModal');
+        const userName = data.userName || 'Unknown User';
+        
+        document.getElementById('callUserName').innerText = `Incoming call from ${userName}`;
+        document.getElementById('callControls').innerHTML = `
+            <button onclick="acceptCall('${data.channel}', ${data.userId})" 
+                style="background-color: #48bb78; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600;">
+                <i class="fas fa-phone-alt"></i> Accept
+            </button>
+            <button onclick="rejectCall('${data.channel}', ${data.userId})"
+                style="background-color: #e53e3e; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600;">
+                <i class="fas fa-phone-slash"></i> Reject
+            </button>
+        `;
+        
+        modal.style.display = 'block';
+    }
+
+    function handleCallRejected() {
+        document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Rejected</p>';
+        setTimeout(() => {
+            document.getElementById('callModal').style.display = 'none';
+        }, 2000);
+    }
+
+    async function acceptCall(channel, callerId) {
+        try {
+            currentCallChannel = channel;
+            currentCallUserId = callerId;
+            
+            document.getElementById('callControls').innerHTML = `
+                <button onclick="toggleMute()" id="muteButton"
+                    style="background-color: #48bb78; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600;">
+                    <i class="fas fa-microphone-slash"></i> Mute
+                </button>
+                <button onclick="endCall()"
+                    style="background-color: #e53e3e; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600;">
+                    <i class="fas fa-phone-alt"></i> End Call
+                </button>
+            `;
+            
+            await startAudioCall(callerId);
+        } catch (error) {
+            console.error('Error accepting call:', error);
+        }
+    }
+
+    async function rejectCall(channel, callerId) {
+        try {
+            await axios.post('/account/call/reject', {
+                userId: callerId,
+                channel: channel
+            });
+            
+            document.getElementById('callModal').style.display = 'none';
+        } catch (error) {
+            console.error('Error rejecting call:', error);
         }
     }
 </script>

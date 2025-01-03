@@ -10,6 +10,9 @@
                         <button type="button" class="text-lg text-red-600 bg-white rounded-full shadow btn btn-icon dark:bg-slate-900 dark:shadow-gray-700 add-to-wishlist" aria-label="{{ __('Add to wishlist') }}" data-box-type="property" data-id="{{ $property->id }}">
                             <i class="mdi mdi-heart-outline"></i>
                         </button>
+                        <button type="button" class="text-lg text-red-600 bg-white rounded-full shadow btn btn-icon dark:bg-slate-900 dark:shadow-gray-700 add-to-wishlist">
+                            <i class="mdi mdi-phone"></i>
+                        </button>
                     </div>
                     @if($property->images && $imagesCount = count($property->images))
                         <div class="absolute top-6 start-6">

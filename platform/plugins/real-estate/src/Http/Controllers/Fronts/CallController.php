@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\RealEstate\Models\Account;
+use App\Events\CallEnded;
+use App\Events\CallRejected;
 use Carbon\Carbon;
 
 class CallController extends BaseController
@@ -59,30 +61,54 @@ class CallController extends BaseController
     }
 
     public function notifyCall(Request $request)
-    {
-        $request->validate([
-            'userId' => 'required|exists:re_accounts,id',
-            'channel' => 'required|string'
+{
+    // Validate the input parameters
+    $validated = $request->validate([
+        'userId' => 'required|integer', // Adjust validation as needed
+        'channel' => 'required|string|max:255',
+    ]);
+
+    Log::info('notifyCall function started', ['userId' => $request->input('userId'), 'channel' => $request->input('channel')]);
+
+    try {
+        // Broadcast the event
+        broadcast(new AgentCalling(
+            $request->input('userId'),
+            $request->input('channel')
+        ))->toOthers();
+
+        Log::info('Call notification sent successfully', ['userId' => $request->input('userId'), 'channel' => $request->input('channel')]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Call notification sent successfully'
+        ]);
+    } catch (\Exception $e) {
+        // Log the full exception for better debugging
+        Log::error('Failed to send call notification', [
+            'error' => $e->getMessage(),
+            'stack' => $e->getTraceAsString(),
+            'userId' => $request->input('userId'),
+            'channel' => $request->input('channel')
         ]);
 
-        try {
-            broadcast(new AgentCalling(
-                $request->input('userId'),
-                $request->input('channel')
-            ))->toOthers();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Call notification sent successfully'
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to send call notification: ' . $e->getMessage());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to send call notification'
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to send call notification'
+        ], 500);
     }
+}
+
+public function endCall(Request $request)
+{
+    event(new CallEnded($request->userId, $request->channelName));
+    return response()->json(['message' => 'Call ended successfully']);
+}
+
+public function rejectCall(Request $request)
+{
+    event(new CallRejected($request->userId, $request->channelName));
+    return response()->json(['message' => 'Call rejected successfully']);
+}
 
 }

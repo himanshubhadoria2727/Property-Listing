@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -10,3 +13,9 @@
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+Broadcast::routes(['middleware' => ['auth:account']]);
+
+// Route::post('/broadcasting/auth', function () {
+//     return Broadcast::auth(request());
+// });
