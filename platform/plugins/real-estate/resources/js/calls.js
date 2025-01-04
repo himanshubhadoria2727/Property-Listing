@@ -136,6 +136,7 @@ async function notifyCallEnded(channelName) {
     try {
         const response = await axios.post("/account/call/end", {
             channelName,
+            userId: window.userId,
         });
         console.log("Call ended notification sent:", response.data);
     } catch (error) {
@@ -147,6 +148,7 @@ async function notifyCallRejected(channelName) {
     try {
         const response = await axios.post("/account/call/reject", {
             channelName,
+            userId: window.userId,
         });
         console.log("Call rejected notification sent:", response.data);
     } catch (error) {
@@ -197,6 +199,9 @@ async function toggleMute() {
 
 // Function to show the call popup
 function showCallPopup(channelName, token) {
+    // Play ringtone when showing popup
+    playRingtone();
+    
     const modal = document.createElement("div");
     modal.id = "incoming-call-popup";
     modal.style.cssText = `
@@ -284,6 +289,7 @@ function showCallPopup(channelName, token) {
     // Add event listeners
     modal.querySelector('#accept-call').onclick = async () => {
         try {
+            stopRingtone(); // Stop ringtone when call is accepted
             await joinAudioCall(channelName, token);
             // Hide call buttons and show controls
             modal.querySelector('#call-buttons').style.display = 'none';
@@ -297,7 +303,9 @@ function showCallPopup(channelName, token) {
     };
 
     modal.querySelector('#decline-call').onclick = async () => {
+        stopRingtone();
         try {
+            stopRingtone(); // Stop ringtone when call is declined
             await notifyCallRejected(channelName);
             modal.remove();
         } catch (error) {
@@ -350,11 +358,25 @@ console.log("hello");
     })
     .listen('.call.ended', (event) => {
         console.log('Call ended notification received:', event);
-        handleCallEnded();
+        const modal = document.querySelector("#incoming-call-popup");
+        if (modal) {
+            const statusText = modal.querySelector('p');
+            statusText.textContent = 'Call ended';
+            setTimeout(() => {
+                handleCallEnded();
+            }, 2000);
+        }
     })
     .listen('.call.rejected', (event) => {
         console.log('Call rejected notification received:', event);
-        handleCallRejected();
+        const modal = document.querySelector("#incoming-call-popup");
+        if (modal) {
+            const statusText = modal.querySelector('p');
+            statusText.textContent = 'Call rejected';
+            setTimeout(() => {
+                handleCallRejected();
+            }, 2000);
+        }
     })
     .error((error) => {
         console.error('Channel error:', error);
@@ -364,6 +386,7 @@ console.log("hello");
 
 }
 function removeUi() {
+    stopRingtone(); // Stop ringtone when removing UI
     const modal = document.querySelector("#incoming-call-popup");
     if (modal) {
         modal.remove();
@@ -457,10 +480,14 @@ async function startAudioCall(propertyId) {
         throw error;
     }
 }
-
+let ringtone=null;
 // Update the ringtone path to use the correct public path
+window.addEventListener('load', function() {
+    const dummyElement = document.getElementById('dummy-element');
+    dummyElement.click(); // Simulate a click event on the hidden element
+});
 function playRingtone() {
-    ringtone = new Audio('/themes/hously/audio/ringtone.mp3'); // Updated path
+    ringtone = new Audio('/media/ringtone.mp3'); // Updated path
     ringtone.loop = true;
     ringtone.play().catch(error => {
         console.log("Audio playback failed:", error);
@@ -490,4 +517,13 @@ async function cleanupClient() {
     }
 }
 
-export {stopCall}
+// Add function to stop ringtone
+function stopRingtone() {
+    if (ringtone) {
+        ringtone.pause();
+        ringtone.currentTime = 0;
+        ringtone = null;
+    }
+}
+
+export {stopCall}   

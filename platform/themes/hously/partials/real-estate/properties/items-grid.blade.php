@@ -116,7 +116,6 @@
 
         <button 
             onclick="endCallBtn()"
-            
             style="background-color: #e53e3e; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: background-color 0.2s, transform 0.2s;">
             <i class="mdi mdi-phone-alt" style="font-size: 18px;"></i> End Call
         </button>
@@ -165,6 +164,49 @@ let client = null;
             showCallModal();
             document.getElementById('callUserName').innerText = `Calling ${userName}...`;
             document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
+            
+            // Listen for call events
+            window.Echo.channel(`user.${userId}`)
+                .listen('.call.ended', (event) => {
+                    console.log('Call ended event received:', event);
+                    document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Ended</p>';
+                    setTimeout(() => {
+                        // Clean up and hide modal
+                        if (localTracks.audioTrack) {
+                            localTracks.audioTrack.stop();
+                            localTracks.audioTrack.close();
+                        }
+                        if (client) {
+                            client.leave();
+                        }
+                        localTracks.audioTrack = null;
+                        remoteUsers = {};
+                        isCalling = false;
+                        currentCallChannel = null;
+                        currentCallUserId = null;
+                        hideCallModal();
+                    }, 2000);
+                })
+                .listen('.call.rejected', (event) => {
+                    console.log('Call rejected event received:', event);
+                    document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Rejected</p>';
+                    setTimeout(() => {
+                        // Clean up and hide modal
+                        if (localTracks.audioTrack) {
+                            localTracks.audioTrack.stop();
+                            localTracks.audioTrack.close();
+                        }
+                        if (client) {
+                            client.leave();
+                        }
+                        localTracks.audioTrack = null;
+                        remoteUsers = {};
+                        isCalling = false;
+                        currentCallChannel = null;
+                        currentCallUserId = null;
+                        hideCallModal();
+                    }, 2000);
+                });
             
             // Notify the backend about the call
             await axios.post('/account/call/notify', {
@@ -269,6 +311,20 @@ let client = null;
 
 async function endCallBtn() {
     try {
+        // Use the currentCallUserId that was set during startCallNow
+        if (!currentCallUserId) {
+            console.error('No current call user ID found');
+            return;
+        }
+        
+        const channel = `channel-${currentCallUserId}`;
+        
+        // Notify backend about call ending
+        await axios.post('/account/call/end', {
+            channelName: channel,
+            userId: currentCallUserId
+        });
+
         // Stop and close local tracks
         if (localTracks.audioTrack) {
             localTracks.audioTrack.stop();
@@ -284,6 +340,8 @@ async function endCallBtn() {
         localTracks.audioTrack = null;
         remoteUsers = {};
         isCalling = false;
+        currentCallChannel = null;
+        currentCallUserId = null;
         
         hideCallModal();
     } catch (error) {
@@ -316,13 +374,7 @@ function hideCallModal() {
     document.body.style.overflow = 'auto'; // Restore scrolling
 }
 
-document.getElementById('callControls').querySelector('button[onclick="endCallBtn()"]').addEventListener('click', endCallBtn);
 
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape' && document.getElementById('callModal').style.display === 'block') {
-        endCallBtn();
-    }
-});
 </script>
 
 <style>

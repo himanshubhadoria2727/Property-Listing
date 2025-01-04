@@ -136,6 +136,7 @@ async function notifyCallEnded(channelName) {
     try {
         const response = await axios.post("/account/call/end", {
             channelName,
+            userId: window.userId,
         });
         console.log("Call ended notification sent:", response.data);
     } catch (error) {
@@ -147,6 +148,7 @@ async function notifyCallRejected(channelName) {
     try {
         const response = await axios.post("/account/call/reject", {
             channelName,
+            userId: window.userId,
         });
         console.log("Call rejected notification sent:", response.data);
     } catch (error) {
@@ -157,9 +159,9 @@ async function notifyCallRejected(channelName) {
 async function stopCall() {
     if (!isCalling) return;
 
-    const channelName = `channel-${window.userId}`;
     try {
-        await notifyCallEnded(channelName);
+        // Get the channel name before cleanup
+        const channelName = client?.channelName;
 
         if (localTracks.audioTrack) {
             await localTracks.audioTrack.stop();
@@ -169,14 +171,17 @@ async function stopCall() {
 
         await cleanupClient();
         isCalling = false;
-        console.log("Call ended successfully");
-
-        // Remove UI elements
+        
+        // Notify server about call ending if we have the channel name
+        if (channelName) {
+            await notifyCallEnded(channelName);
+        }
+        
+        console.log("Call stopped successfully");
         removeUi();
+
     } catch (error) {
         console.error("Error stopping call:", error);
-        await cleanupClient(); // Ensure cleanup even on error
-        removeUi(); // Ensure UI is cleaned up even on error
     }
 }
 
@@ -197,122 +202,127 @@ async function toggleMute() {
 
 // Function to show the call popup
 function showCallPopup(channelName, token) {
-        const modal = document.createElement("div");
-        modal.id = "call-popup"; // Add an ID to easily target the popup
-        modal.classList.add(
-            "fixed",
-            "top-0",
-            "left-0",
-            "w-full",
-            "h-full",
-            "bg-gray-900",
-            "bg-opacity-70",
-            "flex",
-            "items-center",
-            "justify-center",
-            "z-[9999]",
-            "transition",
-            "duration-300",
-            "ease-in-out"
-        );
+    // Play ringtone when showing call popup
+    playRingtone();
     
-        const modalContent = document.createElement("div");
-        modalContent.classList.add(
-            "bg-white",
-            "rounded-2xl",
-            "shadow-2xl",
-            "p-6",
-            "text-center",
-            "w-96",
-            "relative",
-            "animate-scale-in"
-        );
+    const modal = document.createElement("div");
+    modal.id = "call-popup"; // Add an ID to easily target the popup
+    modal.classList.add(
+        "fixed",
+        "top-0",
+        "left-0",
+        "w-full",
+        "h-full",
+        "bg-gray-900",
+        "bg-opacity-70",
+        "flex",
+        "items-center",
+        "justify-center",
+        "z-[9999]",
+        "transition",
+        "duration-300",
+        "ease-in-out"
+    );
     
-        const closeButton = document.createElement("button");
-        closeButton.textContent = "✕";
-        closeButton.classList.add(
-            "absolute",
-            "top-4",
-            "right-4",
-            "text-gray-500",
-            "hover:text-gray-800",
-            "text-xl",
-            "cursor-pointer"
-        );
-        closeButton.onclick = () => modal.remove();
+    const modalContent = document.createElement("div");
+    modalContent.classList.add(
+        "bg-white",
+        "rounded-2xl",
+        "shadow-2xl",
+        "p-6",
+        "text-center",
+        "w-96",
+        "relative",
+        "animate-scale-in"
+    );
     
-        const header = document.createElement("h2");
-        header.textContent = "Incoming Call";
-        header.classList.add("text-2xl", "font-bold", "text-gray-800", "mb-2");
+    const closeButton = document.createElement("button");
+    closeButton.textContent = "✕";
+    closeButton.classList.add(
+        "absolute",
+        "top-4",
+        "right-4",
+        "text-gray-500",
+        "hover:text-gray-800",
+        "text-xl",
+        "cursor-pointer"
+    );
+    closeButton.onclick = () => modal.remove();
     
-        const subHeader = document.createElement("p");
-        subHeader.textContent = "You have an incoming call. What would you like to do?";
-        subHeader.classList.add("text-sm", "text-gray-600", "mb-6");
+    const header = document.createElement("h2");
+    header.textContent = "Incoming Call";
+    header.classList.add("text-2xl", "font-bold", "text-gray-800", "mb-2");
     
-        const channelInfo = document.createElement("p");
-        channelInfo.textContent = `Channel: ${channelName}`;
-        channelInfo.classList.add("mb-4", "text-gray-700", "italic");
+    const subHeader = document.createElement("p");
+    subHeader.textContent = "You have an incoming call. What would you like to do?";
+    subHeader.classList.add("text-sm", "text-gray-600", "mb-6");
     
-        const acceptButton = document.createElement("button");
-        acceptButton.textContent = "Accept";
-        acceptButton.classList.add(
-            "bg-green-500",
-            "text-white",
-            "font-semibold",
-            "px-6",
-            "py-2",
-            "rounded-full",
-            "shadow-md",
-            "hover:bg-green-600",
-            "transition",
-            "duration-300",
-            "ease-in-out",
-            "mr-4"
-        );
-        acceptButton.onclick = async () => {
-            try {
-                await joinAudioCall(channelName, token);
-                modal.remove();
-                showCallControls();
-            } catch (error) {
-                console.error("Error accepting the call:", error);
-            }
-        };
+    const channelInfo = document.createElement("p");
+    channelInfo.textContent = `Channel: ${channelName}`;
+    channelInfo.classList.add("mb-4", "text-gray-700", "italic");
     
-        const declineButton = document.createElement("button");
-        declineButton.textContent = "Decline";
-        declineButton.classList.add(
-            "bg-red-500",
-            "text-white",
-            "font-semibold",
-            "px-6",
-            "py-2",
-            "rounded-full",
-            "shadow-md",
-            "hover:bg-red-600",
-            "transition",
-            "duration-300",
-            "ease-in-out"
-        );
-        declineButton.onclick = async () => {
-            try {
-                await notifyCallRejected(channelName);
-                removeUi();
-                handleCallRejected();
-            } catch (error) {
-                console.error("Error rejecting the call:", error);
-                removeUi(); // Ensure UI is cleaned up even on error
-            }
-        };
+    const acceptButton = document.createElement("button");
+    acceptButton.textContent = "Accept";
+    acceptButton.classList.add(
+        "bg-green-500",
+        "text-white",
+        "font-semibold",
+        "px-6",
+        "py-2",
+        "rounded-full",
+        "shadow-md",
+        "hover:bg-green-600",
+        "transition",
+        "duration-300",
+        "ease-in-out",
+        "mr-4"
+    );
+    acceptButton.onclick = async () => {
+        try {
+            stopRingtone(); // Stop ringtone when call is accepted
+            await joinAudioCall(channelName, token);
+            modal.remove();
+            showCallControls();
+        } catch (error) {
+            console.error("Error accepting the call:", error);
+        }
+    };
     
-        modalContent.appendChild(closeButton);
-        modalContent.appendChild(header);
-        modalContent.appendChild(subHeader);
-        modalContent.appendChild(channelInfo);
-        modalContent.appendChild(acceptButton);
-        modalContent.appendChild(declineButton);
-        modal.appendChild(modalContent);
-        document.body.appendChild(modal);
+    const declineButton = document.createElement("button");
+    declineButton.textContent = "Decline";
+    declineButton.classList.add(
+        "bg-red-500",
+        "text-white",
+        "font-semibold",
+        "px-6",
+        "py-2",
+        "rounded-full",
+        "shadow-md",
+        "hover:bg-red-600",
+        "transition",
+        "duration-300",
+        "ease-in-out"
+    );
+    declineButton.onclick = async () => {
+        try {
+            stopRingtone(); // Stop ringtone when call is declined
+            await notifyCallRejected(channelName);
+            removeUi();
+            handleCallRejected();
+        } catch (error) {
+            console.error("Error rejecting the call:", error);
+            removeUi();
+        }
+    };
+    
+    modalContent.appendChild(closeButton);
+    modalContent.appendChild(header);
+    modalContent.appendChild(subHeader);
+    modalContent.appendChild(channelInfo);
+    modalContent.appendChild(acceptButton);
+    modalContent.appendChild(declineButton);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
     
 }
 
@@ -442,8 +452,9 @@ function showCallControls() {
     };
 
     endCallButton.onclick = async () => {
+        stopCall();
         clearInterval(timer);
-         stopCall();
+        await stopCall(); // This will now handle the notification
         modalOverlay.remove();
     };
 
@@ -622,13 +633,51 @@ async function startAudioCall(propertyId) {
     }
 }
 
-// Update the ringtone path to use the correct public path
+// Add at the top with other global variables
+let ringtone = null;
+
+// Update the playRingtone function
 function playRingtone() {
-    ringtone = new Audio('/themes/hously/audio/ringtone.mp3'); // Updated path
-    ringtone.loop = true;
-    ringtone.play().catch(error => {
-        console.log("Audio playback failed:", error);
-    });
+    try {
+        // Stop any existing ringtone first
+        stopRingtone();
+        
+        // Create new Audio instance
+        ringtone = new Audio('/media/ringtone.mp3');
+        ringtone.loop = true;
+        
+        // Add error handling for loading
+        ringtone.addEventListener('error', (e) => {
+            console.error('Error loading ringtone:', e);
+        });
+
+        // Play with proper promise handling
+        const playPromise = ringtone.play();
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    console.log('Ringtone playing successfully');
+                })
+                .catch(error => {
+                    console.error('Ringtone playback failed:', error);
+                });
+        }
+    } catch (error) {
+        console.error('Error in playRingtone:', error);
+    }
+}
+
+// Update the stopRingtone function
+function stopRingtone() {
+    if (ringtone) {
+        try {
+            ringtone.pause();
+            ringtone.currentTime = 0;
+            ringtone = null;
+        } catch (error) {
+            console.error('Error stopping ringtone:', error);
+        }
+    }
 }
 
 // Add a function to check and cleanup client state

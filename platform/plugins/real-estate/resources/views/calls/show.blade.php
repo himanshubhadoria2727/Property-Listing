@@ -162,6 +162,48 @@
                 userId,
                 channel: currentCallChannel,
             });
+            window.Echo.channel(`user.${userId}`)
+                .listen('.call.ended', (event) => {
+                    console.log('Call ended event received:', event);
+                    document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Ended</p>';
+                    setTimeout(() => {
+                        // Clean up and hide modal
+                        if (localTracks.audioTrack) {
+                            localTracks.audioTrack.stop();
+                            localTracks.audioTrack.close();
+                        }
+                        if (client) {
+                            client.leave();
+                        }
+                        localTracks.audioTrack = null;
+                        remoteUsers = {};
+                        isCalling = false;
+                        currentCallChannel = null;
+                        currentCallUserId = null;
+                        endCall();
+                    }, 2000);
+                })
+                .listen('.call.rejected', (event) => {
+                    console.log('Call rejected event received:', event);
+                    document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Rejected</p>';
+                    setTimeout(() => {
+                        // Clean up and hide modal
+                        if (localTracks.audioTrack) {
+                            localTracks.audioTrack.stop();
+                            localTracks.audioTrack.close();
+                        }
+                        if (client) {
+                            client.leave();
+                        }
+                        localTracks.audioTrack = null;
+                        remoteUsers = {};
+                        isCalling = false;
+                        currentCallChannel = null;
+                        currentCallUserId = null;
+                        endCall();
+                    }, 2000);
+                });
+            
             
             await startAudioCall(userId);
         } catch (error) {

@@ -114,7 +114,6 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
             });
             Route::post('/bookCall', [CallController::class, 'bookCall']);
             Route::post('/account/call/notify', [CallController::class, 'notifyCall']);
-            Route::post('/account/call/notify/author', [CallController::class, 'notifyAuthor']);
             // Route::get('/broadcasting/auth', function () {
             //     return Auth::check();
             // });
