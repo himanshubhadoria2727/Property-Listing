@@ -66,27 +66,35 @@ class CallController extends BaseController
 {
     // Validate the input parameters
     $validated = $request->validate([
-        'userId' => 'required|integer', // Adjust validation as needed
+        'userId' => 'required|integer',
         'channel' => 'required|string|max:255',
     ]);
 
     Log::info('notifyCall function started', ['userId' => $request->input('userId'), 'channel' => $request->input('channel')]);
 
     try {
-        // Broadcast the event
+        // Get the caller's information from re_accounts table
+        $caller = Account::select('first_name', 'last_name')->findOrFail(auth('account')->id());
+        $callerName = trim($caller->first_name . ' ' . $caller->last_name);
+
+        // Broadcast the event with caller's name
         broadcast(new AgentCalling(
             $request->input('userId'),
-            $request->input('channel')
+            $request->input('channel'),
+            $callerName // Pass the caller's name to the event
         ))->toOthers();
 
-        Log::info('Call notification sent successfully', ['userId' => $request->input('userId'), 'channel' => $request->input('channel')]);
+        Log::info('Call notification sent successfully', [
+            'userId' => $request->input('userId'),
+            'channel' => $request->input('channel'),
+            'callerName' => $callerName
+        ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Call notification sent successfully'
         ]);
     } catch (\Exception $e) {
-        // Log the full exception for better debugging
         Log::error('Failed to send call notification', [
             'error' => $e->getMessage(),
             'stack' => $e->getTraceAsString(),

@@ -201,12 +201,12 @@ async function toggleMute() {
 }
 
 // Function to show the call popup
-function showCallPopup(channelName, token) {
+function showCallPopup(channelName, token, event) {
     // Play ringtone when showing call popup
     playRingtone();
     
     const modal = document.createElement("div");
-    modal.id = "call-popup"; // Add an ID to easily target the popup
+    modal.id = "call-popup";
     modal.classList.add(
         "fixed",
         "top-0",
@@ -252,6 +252,10 @@ function showCallPopup(channelName, token) {
     const header = document.createElement("h2");
     header.textContent = "Incoming Call";
     header.classList.add("text-2xl", "font-bold", "text-gray-800", "mb-2");
+    
+    const callerInfo = document.createElement("p");
+    callerInfo.textContent = `from ${event.callerName}`;
+    callerInfo.classList.add("text-lg", "text-gray-700", "mb-4");
     
     const subHeader = document.createElement("p");
     subHeader.textContent = "You have an incoming call. What would you like to do?";
@@ -317,13 +321,13 @@ function showCallPopup(channelName, token) {
     
     modalContent.appendChild(closeButton);
     modalContent.appendChild(header);
+    modalContent.appendChild(callerInfo);
     modalContent.appendChild(subHeader);
     modalContent.appendChild(channelInfo);
     modalContent.appendChild(acceptButton);
     modalContent.appendChild(declineButton);
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
-    
 }
 
 // Function to show call controls (Mute, End Call)
@@ -498,42 +502,55 @@ function updateMuteButton(button) {
     `;
 }
 
-// Export the initiateCall function to make it available for import
+// Add this at the top of the file with other global variables
+let currentChannel = null;
+
+// Update the initiateCall function to clean up existing listeners
 async function initiateCall(userId) {
-console.log("hello");
+    console.log("hello");
     if (!userId) {
         console.error('No userId provided to initiateCall');
         return;
     }   
-    const activeUserId = window.userId; // Active user ID
+    const activeUserId = window.userId;
     console.log("Active user ID:", activeUserId);
-    const channelName = `channel-${userId}`; // Dynamic channel name based on userId
+    const channelName = `channel-${userId}`;
     const token = await fetchToken(channelName);
+    
+    // Clean up existing channel subscription if it exists
+    if (currentChannel) {
+        currentChannel.stopListening('.incoming.call');
+        currentChannel.stopListening('.call.ended');
+        currentChannel.stopListening('.call.rejected');
+        currentChannel = null;
+    }
+
+    // Create new channel subscription
+    currentChannel = window.Echo.channel(`user.${userId}`);
+    
     console.log("Listening for incoming call notification on channel:", `user.${userId}`);
 
-    // Listen on the correct channel for the specific user
-    window.Echo.channel(`user.${userId}`)
-    .listen('.incoming.call', (event) => {
-        console.log('Incoming call event received:', event);
-        if (activeUserId === Number(event.userId)) {
-            showCallPopup(event.channel, token);
-        }
-    })
-    .listen('.call.ended', (event) => {
-        console.log('Call ended notification received:', event);
-        handleCallEnded();
-    })
-    .listen('.call.rejected', (event) => {
-        console.log('Call rejected notification received:', event);
-        handleCallRejected();
-    })
-    .error((error) => {
-        console.error('Channel error:', error);
-    });
-
-// Add new handler functions
-
+    // Set up new listeners
+    currentChannel
+        .listen('.incoming.call', (event) => {
+            console.log('Incoming call event received:', event);
+            if (activeUserId === Number(event.userId)) {
+                showCallPopup(event.channel, token, event);
+            }
+        })
+        .listen('.call.ended', (event) => {
+            console.log('Call ended notification received:', event);
+            handleCallEnded();
+        })
+        .listen('.call.rejected', (event) => {
+            console.log('Call rejected notification received:', event);
+            handleCallRejected();
+        })
+        .error((error) => {
+            console.error('Channel error:', error);
+        });
 }
+
 function removeUi(){
     const controlsDiv = document.querySelector("#call-controls");
     if (controlsDiv) {

@@ -208,12 +208,6 @@ let client = null;
                     }, 2000);
                 });
             
-            // Notify the backend about the call
-            await axios.post('/account/call/notify', {
-                userId,
-                channel: currentCallChannel,
-            });
-            
             await startAudioCallNow(userId);
         } catch (error) {
             console.error('Error in startCall:', error);

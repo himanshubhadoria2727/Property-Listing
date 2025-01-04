@@ -147,6 +147,19 @@
             }
         });
 
+    // Add this function to create/remove blur overlay
+    function toggleBackgroundBlur(show) {
+        const existingOverlay = document.getElementById('blur-overlay');
+        if (show && !existingOverlay) {
+            const overlay = document.createElement('div');
+            overlay.id = 'blur-overlay';
+            overlay.className = 'blur-background';
+            document.body.appendChild(overlay);
+        } else if (!show && existingOverlay) {
+            existingOverlay.remove();
+        }
+    }
+
     // Start calling (audio-only)
     async function startCall(userName, userId, propertyId) {
         try {
@@ -154,6 +167,8 @@
             currentCallChannel = `channel-${userId}`;
             
             document.getElementById('callModal').style.display = 'block';
+            toggleBackgroundBlur(true); // Add blur when call starts
+            
             document.getElementById('callUserName').innerText = `Calling ${userName}...`;
             document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
             
@@ -209,6 +224,7 @@
         } catch (error) {
             console.error('Error in startCall:', error);
             document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
+            toggleBackgroundBlur(false); // Remove blur if call fails
         }
     }
 
@@ -233,11 +249,7 @@
                     codec: 'h264'
                 });
 
-                console.log('Notifying backend about the call...');
-        await axios.post('/account/call/notify', {
-            userId,
-            channel,
-        });
+         
                 // Set up remote user handling
                 client.on('user-published', async (remoteUser, mediaType) => {
                     console.log('Remote user published:', remoteUser.uid, mediaType);
@@ -331,11 +343,13 @@
             
             await stopCall();
             document.getElementById('callModal').style.display = 'none';
+            toggleBackgroundBlur(false); // Remove blur when call ends
             
             currentCallChannel = null;
             currentCallUserId = null;
         } catch (error) {
             console.error('Error ending call:', error);
+            toggleBackgroundBlur(false); // Remove blur if error occurs
         }
     }
 
@@ -383,6 +397,8 @@
 
     function handleIncomingCall(data) {
         const modal = document.getElementById('callModal');
+        toggleBackgroundBlur(true); // Add blur for incoming calls
+        
         const userName = data.userName || 'Unknown User';
         
         document.getElementById('callUserName').innerText = `Incoming call from ${userName}`;
@@ -437,8 +453,10 @@
             });
             
             document.getElementById('callModal').style.display = 'none';
+            toggleBackgroundBlur(false); // Remove blur when call is rejected
         } catch (error) {
             console.error('Error rejecting call:', error);
+            toggleBackgroundBlur(false); // Remove blur if error occurs
         }
     }
 </script>
@@ -455,6 +473,18 @@
         }
     }
 
+    .blur-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        backdrop-filter: blur(3px);
+        background-color: rgba(0, 0, 0, 0.2);
+        z-index: 999;
+        pointer-events: all;
+    }
+
     #callModal {
         display: none;
         position: fixed;
@@ -468,6 +498,7 @@
         width: 450px;
         max-width: 100%;
         animation: fadeIn 0.5s ease-out;
+        z-index: 1000;
     }
 </style>
 

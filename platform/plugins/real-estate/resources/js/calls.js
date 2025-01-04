@@ -197,10 +197,31 @@ async function toggleMute() {
     muteButton.style.backgroundColor = isMuted ? "#4CAF50" : "#f44336";
 }
 
+// Add this function to create backdrop
+function createBackdrop() {
+    const backdrop = document.createElement("div");
+    backdrop.id = "call-backdrop";
+    backdrop.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+        z-index: 9998;
+    `;
+    return backdrop;
+}
+
 // Function to show the call popup
-function showCallPopup(channelName, token) {
-    // Play ringtone when showing popup
+function showCallPopup(channelName, token, callerName) {
     playRingtone();
+    
+    // Add backdrop
+    const backdrop = createBackdrop();
+    document.body.appendChild(backdrop);
     
     const modal = document.createElement("div");
     modal.id = "incoming-call-popup";
@@ -223,7 +244,7 @@ function showCallPopup(channelName, token) {
             <i class="fas fa-phone-volume fa-3x" style="color: #4CAF50;"></i>
         </div>
         <h3 style="margin: 0 0 10px; color: #333; font-size: 18px;">Incoming Call</h3>
-        <p style="margin: 0 0 20px; color: #666; font-size: 14px;">Someone is calling you</p>
+        <p style="margin: 0 0 20px; color: #666; font-size: 14px;">${callerName || 'Someone'} is calling you</p>
         <div id="call-buttons" style="display: flex; justify-content: center; gap: 10px;">
             <button id="accept-call" style="
                 padding: 10px 20px;
@@ -353,7 +374,7 @@ console.log("hello");
         console.log('Incoming call event received:', event);
         if (activeUserId === event.userId) {
             console.log('Showing call popup for channel:', event.channel);
-            showCallPopup(event.channel, token);
+            showCallPopup(event.channel, token, event.callerName);
         }
     })
     .listen('.call.ended', (event) => {
@@ -386,10 +407,15 @@ console.log("hello");
 
 }
 function removeUi() {
-    stopRingtone(); // Stop ringtone when removing UI
+    stopRingtone();
     const modal = document.querySelector("#incoming-call-popup");
+    const backdrop = document.querySelector("#call-backdrop");
+    
     if (modal) {
         modal.remove();
+    }
+    if (backdrop) {
+        backdrop.remove();
     }
 }
 function handleCallEnded() {
