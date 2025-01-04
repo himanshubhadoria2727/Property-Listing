@@ -52,7 +52,7 @@ console.log('Environment Variables:', {
 });
 
 // Add this to verify channel subscription
-const channel = window.Echo.channel(`user.${userId}`);
+const channel = window.Echo.channel(`author.${userId}`);
 console.log('Subscribed to channel:', channel);
 
 // Function to fetch Agora token from the server
@@ -187,288 +187,127 @@ async function toggleMute() {
     const muteButton = document.getElementById("muteButton");
     const isMuted = !localTracks.audioTrack.enabled;
 
-    await localTracks.audioTrack.setEnabled(isMuted);
-
+    localTracks.audioTrack.setEnabled(isMuted);
+    
     muteButton.innerHTML = isMuted
-        ? '<i class="fas fa-microphone"></i> Unmute'
-        : '<i class="fas fa-microphone-slash"></i> Mute';
-    muteButton.style.backgroundColor = isMuted ? "#f56565" : "#48bb78";
+        ? '<i class="fas fa-microphone"></i>'
+        : '<i class="fas fa-microphone-slash"></i>';
+    muteButton.style.backgroundColor = isMuted ? "#4CAF50" : "#f44336";
 }
 
 // Function to show the call popup
 function showCallPopup(channelName, token) {
-        const modal = document.createElement("div");
-        modal.id = "call-popup"; // Add an ID to easily target the popup
-        modal.classList.add(
-            "fixed",
-            "top-0",
-            "left-0",
-            "w-full",
-            "h-full",
-            "bg-gray-900",
-            "bg-opacity-70",
-            "flex",
-            "items-center",
-            "justify-center",
-            "z-[9999]",
-            "transition",
-            "duration-300",
-            "ease-in-out"
-        );
-    
-        const modalContent = document.createElement("div");
-        modalContent.classList.add(
-            "bg-white",
-            "rounded-2xl",
-            "shadow-2xl",
-            "p-6",
-            "text-center",
-            "w-96",
-            "relative",
-            "animate-scale-in"
-        );
-    
-        const closeButton = document.createElement("button");
-        closeButton.textContent = "✕";
-        closeButton.classList.add(
-            "absolute",
-            "top-4",
-            "right-4",
-            "text-gray-500",
-            "hover:text-gray-800",
-            "text-xl",
-            "cursor-pointer"
-        );
-        closeButton.onclick = () => modal.remove();
-    
-        const header = document.createElement("h2");
-        header.textContent = "Incoming Call";
-        header.classList.add("text-2xl", "font-bold", "text-gray-800", "mb-2");
-    
-        const subHeader = document.createElement("p");
-        subHeader.textContent = "You have an incoming call. What would you like to do?";
-        subHeader.classList.add("text-sm", "text-gray-600", "mb-6");
-    
-        const channelInfo = document.createElement("p");
-        channelInfo.textContent = `Channel: ${channelName}`;
-        channelInfo.classList.add("mb-4", "text-gray-700", "italic");
-    
-        const acceptButton = document.createElement("button");
-        acceptButton.textContent = "Accept";
-        acceptButton.classList.add(
-            "bg-green-500",
-            "text-white",
-            "font-semibold",
-            "px-6",
-            "py-2",
-            "rounded-full",
-            "shadow-md",
-            "hover:bg-green-600",
-            "transition",
-            "duration-300",
-            "ease-in-out",
-            "mr-4"
-        );
-        acceptButton.onclick = async () => {
-            try {
-                await joinAudioCall(channelName, token);
-                modal.remove();
-                showCallControls();
-            } catch (error) {
-                console.error("Error accepting the call:", error);
-            }
-        };
-    
-        const declineButton = document.createElement("button");
-        declineButton.textContent = "Decline";
-        declineButton.classList.add(
-            "bg-red-500",
-            "text-white",
-            "font-semibold",
-            "px-6",
-            "py-2",
-            "rounded-full",
-            "shadow-md",
-            "hover:bg-red-600",
-            "transition",
-            "duration-300",
-            "ease-in-out"
-        );
-        declineButton.onclick = async () => {
-            try {
-                await notifyCallRejected(channelName);
-                removeUi();
-                handleCallRejected();
-            } catch (error) {
-                console.error("Error rejecting the call:", error);
-                removeUi(); // Ensure UI is cleaned up even on error
-            }
-        };
-    
-        modalContent.appendChild(closeButton);
-        modalContent.appendChild(header);
-        modalContent.appendChild(subHeader);
-        modalContent.appendChild(channelInfo);
-        modalContent.appendChild(acceptButton);
-        modalContent.appendChild(declineButton);
-        modal.appendChild(modalContent);
-        document.body.appendChild(modal);
-    
-}
+    const modal = document.createElement("div");
+    modal.id = "incoming-call-popup";
+    modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 320px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 9999;
+        padding: 20px;
+        text-align: center;
+    `;
 
-// Function to show call controls (Mute, End Call)
-function showCallControls() {
-    // Create modal overlay with blur effect
-    const modalOverlay = document.createElement("div");
-    modalOverlay.id = "call-controls";
-    modalOverlay.classList.add(
-        "fixed",
-        "inset-0",
-        "bg-gray-900/50",
-        "backdrop-blur-sm",
-        "z-[9999]",
-        "flex",
-        "items-center",
-        "justify-center",
-        "animate-fade-in"
-    );
-
-    // Create modal container
-    const modalContent = document.createElement("div");
-    modalContent.classList.add(
-        "bg-white",
-        "rounded-2xl",
-        "shadow-2xl",
-        "p-8",
-        "max-w-md",
-        "w-full",
-        "mx-4",
-        "animate-scale-in",
-        "text-center"
-    );
-
-    // Call Status
-    const statusDiv = document.createElement("div");
-    statusDiv.classList.add("mb-6");
-    
-    const statusIcon = document.createElement("div");
-    statusIcon.innerHTML = `
-        <div class="w-16 h-16 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
+    modal.innerHTML = `
+        <div style="margin-bottom: 20px;">
+            <i class="fas fa-phone-volume fa-3x" style="color: #4CAF50;"></i>
+        </div>
+        <h3 style="margin: 0 0 10px; color: #333; font-size: 18px;">Incoming Call</h3>
+        <p style="margin: 0 0 20px; color: #666; font-size: 14px;">Someone is calling you</p>
+        <div id="call-buttons" style="display: flex; justify-content: center; gap: 10px;">
+            <button id="accept-call" style="
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                background-color: #4CAF50;
+                color: white;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            ">
+                <i class="fas fa-phone"></i> Accept
+            </button>
+            <button id="decline-call" style="
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                background-color: #f44336;
+                color: white;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            ">
+                <i class="fas fa-phone-slash"></i> Decline
+            </button>
+        </div>
+        <div id="call-controls" style="display: none; justify-content: center; gap: 10px; margin-top: 20px;">
+            <button id="muteButton" style="
+                width: 40px;
+                height: 40px;
+                border: none;
+                border-radius: 50%;
+                background-color: #4CAF50;
+                color: white;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button id="endCallButton" style="
+                width: 40px;
+                height: 40px;
+                border: none;
+                border-radius: 50%;
+                background-color: #f44336;
+                color: white;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+                <i class="fas fa-phone-slash"></i>
+            </button>
         </div>
     `;
-    
-    const statusText = document.createElement("h3");
-    statusText.textContent = "Call Connected";
-    statusText.classList.add("text-xl", "font-semibold", "text-gray-800", "mb-2");
 
-    // Call Timer
-    const timerDiv = document.createElement("div");
-    timerDiv.id = "call-timer";
-    timerDiv.classList.add(
-        "text-gray-600",
-        "font-medium",
-        "mb-8"
-    );
-    timerDiv.textContent = "00:00";
+    document.body.appendChild(modal);
 
-    // Start timer
-    let seconds = 0;
-    const timer = setInterval(() => {
-        seconds++;
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        timerDiv.textContent = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
-    }, 1000);
-
-    // Controls Container
-    const controlsDiv = document.createElement("div");
-    controlsDiv.classList.add(
-        "flex",
-        "items-center",
-        "justify-center",
-        "gap-6"
-    );
-
-    // Mute Button
-    const muteButton = document.createElement("button");
-    muteButton.id = "muteButton";
-    muteButton.classList.add(
-        "w-16",
-        "h-16",
-        "rounded-full",
-        "flex",
-        "items-center",
-        "justify-center",
-        "transition-all",
-        "duration-300",
-        "ease-in-out",
-        "focus:outline-none",
-        "focus:ring-2",
-        "focus:ring-offset-2"
-    );
-
-    // End Call Button
-    const endCallButton = document.createElement("button");
-    endCallButton.classList.add(
-        "w-16",
-        "h-16",
-        "bg-red-500",
-        "rounded-full",
-        "flex",
-        "items-center",
-        "justify-center",
-        "transition-all",
-        "duration-300",
-        "ease-in-out",
-        "hover:bg-red-600",
-        "focus:outline-none",
-        "focus:ring-2",
-        "focus:ring-offset-2",
-        "focus:ring-red-500"
-    );
-    endCallButton.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-        </svg>
-    `;
-
-    // Event Listeners
-    muteButton.onclick = async () => {
-        await toggleMute();
-        updateMuteButton(muteButton);
-    };
-
-    endCallButton.onclick = async () => {
-        clearInterval(timer);
-         stopCall();
-        modalOverlay.remove();
-    };
-
-    // Initial mute button state
-    updateMuteButton(muteButton);
-
-    // Append elements
-    statusDiv.appendChild(statusIcon);
-    statusDiv.appendChild(statusText);
-    controlsDiv.appendChild(muteButton);
-    controlsDiv.appendChild(endCallButton);
-    
-    modalContent.appendChild(statusDiv);
-    modalContent.appendChild(timerDiv);
-    modalContent.appendChild(controlsDiv);
-    modalOverlay.appendChild(modalContent);
-    document.body.appendChild(modalOverlay);
-
-    // Prevent clicking outside from closing the modal
-    modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) {
-            e.preventDefault();
-            e.stopPropagation();
+    // Add event listeners
+    modal.querySelector('#accept-call').onclick = async () => {
+        try {
+            await joinAudioCall(channelName, token);
+            // Hide call buttons and show controls
+            modal.querySelector('#call-buttons').style.display = 'none';
+            modal.querySelector('#call-controls').style.display = 'flex';
+            // Update modal title
+            modal.querySelector('h3').textContent = 'Ongoing Call';
+            modal.querySelector('p').textContent = 'Call in progress';
+        } catch (error) {
+            console.error("Error accepting call:", error);
         }
-    });
+    };
+
+    modal.querySelector('#decline-call').onclick = async () => {
+        try {
+            await notifyCallRejected(channelName);
+            modal.remove();
+        } catch (error) {
+            console.error("Error rejecting call:", error);
+        }
+    };
+
+    // Add event listeners for call controls
+    modal.querySelector('#muteButton').onclick = toggleMute;
+    modal.querySelector('#endCallButton').onclick = stopCall;
 }
 
 // Helper function to update mute button state
@@ -498,13 +337,14 @@ console.log("hello");
     console.log("Active user ID:", activeUserId);
     const channelName = `channel-${userId}`; // Dynamic channel name based on userId
     const token = await fetchToken(channelName);
-    console.log("Listening for incoming call notification on channel:", `user.${userId}`);
+    console.log("Listening for incoming call notification on channel:", `author.${userId}`);
 
     // Listen on the correct channel for the specific user
     window.Echo.channel(`user.${userId}`)
     .listen('.incoming.call', (event) => {
         console.log('Incoming call event received:', event);
-        if (activeUserId === Number(event.userId)) {
+        if (activeUserId === event.userId) {
+            console.log('Showing call popup for channel:', event.channel);
             showCallPopup(event.channel, token);
         }
     })
@@ -523,12 +363,8 @@ console.log("hello");
 // Add new handler functions
 
 }
-function removeUi(){
-    const controlsDiv = document.querySelector("#call-controls");
-    if (controlsDiv) {
-        controlsDiv.remove();
-    }
-    const modal = document.querySelector("#call-popup");
+function removeUi() {
+    const modal = document.querySelector("#incoming-call-popup");
     if (modal) {
         modal.remove();
     }

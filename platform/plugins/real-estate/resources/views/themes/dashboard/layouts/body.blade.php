@@ -55,6 +55,7 @@
                         />
                     </div>
                     <div class="ps-block__right">
+                        
                         <p>{{ __('Hello') }}, {{ auth('account')->user()->name }}</p>
                         <small>{{ __('Joined on :date', ['date' => auth('account')->user()->created_at->translatedFormat('M d, Y')]) }}</small>
                     </div>

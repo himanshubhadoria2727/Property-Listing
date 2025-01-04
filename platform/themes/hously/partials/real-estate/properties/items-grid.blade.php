@@ -10,7 +10,13 @@
                         <button type="button" class="text-lg text-red-600 bg-white rounded-full shadow btn btn-icon dark:bg-slate-900 dark:shadow-gray-700 add-to-wishlist" aria-label="{{ __('Add to wishlist') }}" data-box-type="property" data-id="{{ $property->id }}">
                             <i class="mdi mdi-heart-outline"></i>
                         </button>
-                        <button type="button" class="text-lg text-red-600 bg-white rounded-full shadow btn btn-icon dark:bg-slate-900 dark:shadow-gray-700 add-to-wishlist">
+                        <button 
+                            type="button" 
+                            class="text-lg text-red-600 bg-white rounded-full shadow btn btn-icon dark:bg-slate-900 dark:shadow-gray-700 start-call"
+                            data-property-id="{{ $property->id }}"
+                            data-user-id="{{ $property->author_id }}"
+                            onclick="startCallNow({{ json_encode(DB::table('re_accounts')->where('id', $property->author_id)->value(DB::raw("CONCAT(first_name, ' ', last_name)")) ?? 'User') }}, {{ $property->author_id }}, {{ $property->id }})"
+                        >
                             <i class="mdi mdi-phone"></i>
                         </button>
                     </div>
@@ -92,3 +98,256 @@
         <p class="mt-3 text-xl text-gray-500 dark:text-gray-300">{{ __('No properties found.') }}</p>
     </div>
 @endif
+
+<!-- Add this overlay div before the modal -->
+<div id="callModalOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); z-index: 9998;"></div>
+
+<!-- Update the modal styling -->
+<div id="callModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 32px; border-radius: 12px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); width: 450px; max-width: 90%; animation: fadeIn 0.5s ease; z-index: 9999;">
+    <h4 id="callUserName" style="font-size: 20px; font-weight: 600; margin-bottom: 16px; color: #1a202c; text-align: center;">User Name</h4>
+
+    <div id="callControls" style="display: flex; justify-content: space-around; align-items: center; gap: 16px; margin-top: 20px;">
+        <button 
+            onclick="toggleMutebtn()"
+            id="mutebtn"
+            style="background-color: #48bb78; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: background-color 0.2s, transform 0.2s">
+            <i class="mdi mdi-microphone" style="font-size: 18px;"></i> Mute
+        </button>
+
+        <button 
+            onclick="endCallBtn()"
+            
+            style="background-color: #e53e3e; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: background-color 0.2s, transform 0.2s;">
+            <i class="mdi mdi-phone-alt" style="font-size: 18px;"></i> End Call
+        </button>
+    </div>
+
+    <!-- Call Status (Optional) -->
+    <div id="callStatus" style="margin-top: 20px; text-align: center;">
+        <p style="font-size: 16px; color: #4a5568;">Connecting...</p>
+    </div>
+</div>
+
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.22.0.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+let client = null;
+    let localTracks = {
+        audioTrack: null
+    };
+    let remoteUsers = {};
+    let isCalling = false;
+    let uid = Math.floor(Math.random() * 100000);
+    let currentCallChannel = null;
+    let currentCallUserId = null;
+
+    async function fetchToken(channelName,userId) {
+        try {
+            const response = await axios.post('/account/agora/token', {
+                channelName,
+                uid
+            });
+            console.log('Token fetched successfully:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching token:', error);
+            throw error;
+        }
+    }
+
+    async function startCallNow(userName, userId, propertyId) {
+        try {
+            currentCallUserId = userId;
+            currentCallChannel = `channel-${userId}`;
+            
+            showCallModal();
+            document.getElementById('callUserName').innerText = `Calling ${userName}...`;
+            document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
+            
+            // Notify the backend about the call
+            await axios.post('/account/call/notify', {
+                userId,
+                channel: currentCallChannel,
+            });
+            
+            await startAudioCallNow(userId);
+        } catch (error) {
+            console.error('Error in startCall:', error);
+            document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
+        }
+    }
+
+    // Start audio call (without video)
+    async function startAudioCallNow(userId) {
+        if (isCalling) {
+            console.log('Already in a call');
+            return;
+        }
+
+        const channel = `channel-${userId}`;
+        const appId = '{{ env('AGORA_APP_ID') }}';
+
+        try {
+            // Fetch token
+            const token = await fetchToken(channel,userId);
+
+            // Create client if not exists
+            if (!client) {
+                client = AgoraRTC.createClient({
+                    mode: 'rtc',
+                    codec: 'h264'
+                });
+
+                console.log('Notifying backend about the call...');
+        await axios.post('/account/call/notify', {
+            userId,
+            channel,
+        });
+                // Set up remote user handling
+                client.on('user-published', async (remoteUser, mediaType) => {
+                    console.log('Remote user published:', remoteUser.uid, mediaType);
+                    
+                    await client.subscribe(remoteUser, mediaType);
+                    console.log('Subscribed to remote user:', remoteUser.uid);
+
+                    if (mediaType === 'audio') {
+                        remoteUsers[remoteUser.uid] = remoteUser;
+                        remoteUser.audioTrack.play();
+                        console.log('Playing remote audio');
+                        
+                        // Update UI to show connected state
+                        document.getElementById('callStatus').innerHTML = 
+                            '<p style="color: #48bb78;">Call Connected</p>';
+                    }
+                });
+
+                client.on('user-unpublished', (remoteUser, mediaType) => {
+                    if (mediaType === 'audio') {
+                        if (remoteUsers[remoteUser.uid]) {
+                            remoteUsers[remoteUser.uid].audioTrack.stop();
+                            delete remoteUsers[remoteUser.uid];
+                        }
+                    }
+                });
+
+                client.on('user-left', (remoteUser) => {
+                    console.log('Remote user left:', remoteUser.uid);
+                    if (remoteUsers[remoteUser.uid]) {
+                        remoteUsers[remoteUser.uid].audioTrack.stop();
+                        delete remoteUsers[remoteUser.uid];
+                    }
+                });
+            }
+
+            // Join the channel
+            await client.join(appId, channel, token, uid);
+            console.log('Joined channel:', channel);
+
+            // Create and publish local audio track
+            localTracks.audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+                encoderConfig: {
+                    sampleRate: 48000,
+                    stereo: true,
+                    bitrate: 128
+                }
+            });
+
+            await client.publish([localTracks.audioTrack]);
+            console.log('Published local audio track');
+
+            isCalling = true;
+
+        } catch (error) {
+            console.error('Error in startAudioCall:', error);
+            document.getElementById('callStatus').innerHTML = 
+                '<p style="color: #e53e3e;">Call Failed</p>';
+            throw error;
+        }
+    }
+
+async function endCallBtn() {
+    try {
+        // Stop and close local tracks
+        if (localTracks.audioTrack) {
+            localTracks.audioTrack.stop();
+            localTracks.audioTrack.close();
+        }
+        
+        // Leave the channel
+        if (client) {
+            await client.leave();
+        }
+
+        // Reset variables
+        localTracks.audioTrack = null;
+        remoteUsers = {};
+        isCalling = false;
+        
+        hideCallModal();
+    } catch (error) {
+        console.error('Error ending call:', error);
+    }
+}
+
+function toggleMutebtn() {
+    if (localTracks.audioTrack) {
+        const btn = document.getElementById('mutebtn');
+        if (localTracks.audioTrack.enabled) {
+            localTracks.audioTrack.setEnabled(false);
+            btn.innerHTML = '<i class="mdi mdi-microphone-off"></i> Unmute';
+        } else {
+            localTracks.audioTrack.setEnabled(true);
+            btn.innerHTML = '<i class="mdi mdi-microphone"></i> Mute';
+        }
+    }
+}
+
+function showCallModal() {
+    document.getElementById('callModalOverlay').style.display = 'block';
+    document.getElementById('callModal').style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+}
+
+function hideCallModal() {
+    document.getElementById('callModalOverlay').style.display = 'none';
+    document.getElementById('callModal').style.display = 'none';
+    document.body.style.overflow = 'auto'; // Restore scrolling
+}
+
+document.getElementById('callControls').querySelector('button[onclick="endCallBtn()"]').addEventListener('click', endCallBtn);
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && document.getElementById('callModal').style.display === 'block') {
+        endCallBtn();
+    }
+});
+</script>
+
+<style>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+#callModal {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    #callModal {
+        background: #1a1a1a;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+</style>

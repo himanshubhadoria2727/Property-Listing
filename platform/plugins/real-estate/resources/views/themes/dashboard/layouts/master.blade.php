@@ -37,6 +37,16 @@
     <body @if (BaseHelper::isRtlEnabled()) dir="rtl" @endif>
         {!! apply_filters('real_estate_dashboard_header', null) !!}
 
+        <script type="module">
+        let user = @json(auth('account')->user());
+        let userId = user ? user.id : null;
+        window.userId = userId !== null ? userId : 'defaultUserId'; // Replace 'defaultUserId' with a suitable default value
+    </script>
+
+
+    {{-- Load the external JS file --}}
+<script type="module" src="{{ asset('vendor/core/plugins/real-estate/js/calls.js') }}"></script>
+
         @yield('body', view('plugins/real-estate::themes.dashboard.layouts.body'))
 
         @include('plugins/real-estate::themes.dashboard.layouts.footer')

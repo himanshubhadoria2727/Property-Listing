@@ -3,6 +3,7 @@
 namespace Botble\RealEstate\Http\Controllers\Fronts;
 
 use App\Events\AgentCalling;
+use App\Events\UserCalling;
 use Botble\RealEstate\Models\Booking;
 use Botble\RealEstate\Models\Property;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Botble\Base\Http\Controllers\BaseController;
 use Botble\RealEstate\Models\Account;
 use App\Events\CallEnded;
 use App\Events\CallRejected;
+use App\Models\User;
 use Carbon\Carbon;
 
 class CallController extends BaseController
@@ -73,6 +75,44 @@ class CallController extends BaseController
     try {
         // Broadcast the event
         broadcast(new AgentCalling(
+            $request->input('userId'),
+            $request->input('channel')
+        ))->toOthers();
+
+        Log::info('Call notification sent successfully', ['userId' => $request->input('userId'), 'channel' => $request->input('channel')]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Call notification sent successfully'
+        ]);
+    } catch (\Exception $e) {
+        // Log the full exception for better debugging
+        Log::error('Failed to send call notification', [
+            'error' => $e->getMessage(),
+            'stack' => $e->getTraceAsString(),
+            'userId' => $request->input('userId'),
+            'channel' => $request->input('channel')
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to send call notification'
+        ], 500);
+    }
+}
+    public function notifyAuthor(Request $request)
+{
+    // Validate the input parameters
+    $validated = $request->validate([
+        'userId' => 'required|integer', // Adjust validation as needed
+        'channel' => 'required|string|max:255',
+    ]);
+
+    Log::info('notifyCall function started', ['userId' => $request->input('userId'), 'channel' => $request->input('channel')]);
+
+    try {
+        // Broadcast the event
+        broadcast(new UserCalling(
             $request->input('userId'),
             $request->input('channel')
         ))->toOthers();
