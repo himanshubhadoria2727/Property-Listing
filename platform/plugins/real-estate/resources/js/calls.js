@@ -217,7 +217,6 @@ function createBackdrop() {
 
 // Function to show the call popup
 function showCallPopup(channelName, token, callerName) {
-    playRingtone();
     
     // Add backdrop
     const backdrop = createBackdrop();
@@ -304,6 +303,7 @@ function showCallPopup(channelName, token, callerName) {
             </button>
         </div>
     `;
+    playRingtone();
 
     document.body.appendChild(modal);
 
@@ -322,6 +322,7 @@ function showCallPopup(channelName, token, callerName) {
             console.error("Error accepting call:", error);
         }
     };
+    
 
     modal.querySelector('#decline-call').onclick = async () => {
         stopRingtone();

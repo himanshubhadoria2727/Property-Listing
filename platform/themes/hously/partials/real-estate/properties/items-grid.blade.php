@@ -164,7 +164,10 @@ let client = null;
             showCallModal();
             document.getElementById('callUserName').innerText = `Calling ${userName}...`;
             document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
-            
+            await axios.post('/account/call/notify', {
+            userId:currentCallUserId,
+            channel:currentCallChannel,
+        });
             // Listen for call events
             window.Echo.channel(`user.${userId}`)
                 .listen('.call.ended', (event) => {
@@ -237,10 +240,7 @@ let client = null;
                 });
 
                 console.log('Notifying backend about the call...');
-        await axios.post('/account/call/notify', {
-            userId,
-            channel,
-        });
+        
                 // Set up remote user handling
                 client.on('user-published', async (remoteUser, mediaType) => {
                     console.log('Remote user published:', remoteUser.uid, mediaType);

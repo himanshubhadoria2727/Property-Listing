@@ -203,7 +203,6 @@ async function toggleMute() {
 // Function to show the call popup
 function showCallPopup(channelName, token, event) {
     // Play ringtone when showing call popup
-    playRingtone();
     
     const modal = document.createElement("div");
     modal.id = "call-popup";
@@ -261,9 +260,6 @@ function showCallPopup(channelName, token, event) {
     subHeader.textContent = "You have an incoming call. What would you like to do?";
     subHeader.classList.add("text-sm", "text-gray-600", "mb-6");
     
-    const channelInfo = document.createElement("p");
-    channelInfo.textContent = `Channel: ${channelName}`;
-    channelInfo.classList.add("mb-4", "text-gray-700", "italic");
     
     const acceptButton = document.createElement("button");
     acceptButton.textContent = "Accept";
@@ -281,6 +277,9 @@ function showCallPopup(channelName, token, event) {
         "ease-in-out",
         "mr-4"
     );
+
+    playRingtone();
+
     acceptButton.onclick = async () => {
         try {
             stopRingtone(); // Stop ringtone when call is accepted
@@ -323,7 +322,6 @@ function showCallPopup(channelName, token, event) {
     modalContent.appendChild(header);
     modalContent.appendChild(callerInfo);
     modalContent.appendChild(subHeader);
-    modalContent.appendChild(channelInfo);
     modalContent.appendChild(acceptButton);
     modalContent.appendChild(declineButton);
     modal.appendChild(modalContent);
@@ -552,6 +550,7 @@ async function initiateCall(userId) {
 }
 
 function removeUi(){
+    stopRingtone();
     const controlsDiv = document.querySelector("#call-controls");
     if (controlsDiv) {
         controlsDiv.remove();
