@@ -144,6 +144,7 @@ async function notifyCallEnded(channelName) {
     }
 }
 
+
 async function notifyCallRejected(channelName) {
     try {
         const response = await axios.post("/account/call/reject", {
@@ -155,6 +156,20 @@ async function notifyCallRejected(channelName) {
         console.error("Error sending call rejected notification:", error);
     }
 }
+
+// Add the notifyCallRinging function with the other notification functions
+async function notifyCallRinging(channelName) {
+    try {
+        const response = await axios.post("/account/call/ringing", {
+            channelName,
+            userId: window.userId,
+        });
+        console.log("Call ringing notification sent:", response.data);
+    } catch (error) {
+        console.error("Error sending call ringing notification:", error);
+    }
+}
+
 // Function to stop the call
 async function stopCall() {
     if (!isCalling) return;
@@ -371,9 +386,11 @@ console.log("hello");
 
     // Listen on the correct channel for the specific user
     window.Echo.channel(`user.${userId}`)
-    .listen('.incoming.call', (event) => {
+    .listen('.incoming.call', async (event) => {
         console.log('Incoming call event received:', event);
         if (activeUserId === event.userId) {
+            // Send ringing notification before showing call popup
+            await notifyCallRinging(event.channel);
             console.log('Showing call popup for channel:', event.channel);
             showCallPopup(event.channel, token, event.callerName);
         }

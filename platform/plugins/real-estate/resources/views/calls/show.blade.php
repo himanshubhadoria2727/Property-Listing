@@ -134,6 +134,13 @@
             console.log('Incoming call:', data);
             handleIncomingCall(data);
         })
+        .listen('.call.ringing', (data) => {
+            console.log('Call ringing:', data);
+            if (data.channel === currentCallChannel) {
+                document.getElementById('callStatus').innerHTML = 
+                    '<p style="color: #4299e1;">Ringing...</p>';
+            }
+        })
         .listen('.call.ended', (data) => {
             console.log('Call ended by other party:', data);
             if (data.channel === currentCallChannel) {
@@ -167,7 +174,7 @@
             currentCallChannel = `channel-${userId}`;
             
             document.getElementById('callModal').style.display = 'block';
-            toggleBackgroundBlur(true); // Add blur when call starts
+            toggleBackgroundBlur(true);
             
             document.getElementById('callUserName').innerText = `Calling ${userName}...`;
             document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
@@ -177,7 +184,16 @@
                 userId,
                 channel: currentCallChannel,
             });
+
+            // Listen for call events
             window.Echo.channel(`user.${userId}`)
+                .listen('.call.ringing', (event) => {
+                    console.log('Call ringing event received:', event);
+                    if (event.channel === currentCallChannel) {
+                        document.getElementById('callStatus').innerHTML = 
+                            '<p style="color: #4299e1;">Ringing...</p>';
+                    }
+                })
                 .listen('.call.ended', (event) => {
                     console.log('Call ended event received:', event);
                     document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Ended</p>';
@@ -219,12 +235,11 @@
                     }, 2000);
                 });
             
-            
             await startAudioCall(userId);
         } catch (error) {
             console.error('Error in startCall:', error);
             document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
-            toggleBackgroundBlur(false); // Remove blur if call fails
+            toggleBackgroundBlur(false);
         }
     }
 

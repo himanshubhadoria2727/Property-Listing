@@ -114,10 +114,9 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
             });
             Route::post('/bookCall', [CallController::class, 'bookCall']);
             Route::post('/account/call/notify', [CallController::class, 'notifyCall']);
-            // Route::get('/broadcasting/auth', function () {
-            //     return Auth::check();
-            // });
-            Route::post('/account/call/end', 'CallController@endCall')->name('call.end');
+            Route::post('account/call/ringing', 'CallController@ringing')->name('call.ringing');
+            Route::post('account/call/busy', action: 'CallController@busy')->name('call.busy');
+            Route::post('/account/call/end', action: 'CallController@endCall')->name('call.end');
             Route::post('/account/call/reject', 'CallController@rejectCall')->name('call.reject');
             Route::group(['middleware' => ['web']], function () {
                 Route::get('/bookings', [BookingController::class, 'userBooking'])->name('user.show');

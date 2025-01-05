@@ -3,6 +3,7 @@
 namespace Botble\RealEstate\Http\Controllers\Fronts;
 
 use App\Events\AgentCalling;
+use App\Events\CallBusy;
 use App\Events\UserCalling;
 use Botble\RealEstate\Models\Booking;
 use Botble\RealEstate\Models\Property;
@@ -12,6 +13,7 @@ use Botble\Base\Http\Controllers\BaseController;
 use Botble\RealEstate\Models\Account;
 use App\Events\CallEnded;
 use App\Events\CallRejected;
+use App\Events\CallRinging;
 use App\Models\User;
 use Carbon\Carbon;
 
@@ -157,6 +159,18 @@ public function rejectCall(Request $request)
 {
     event(new CallRejected($request->userId, $request->channelName));
     return response()->json(['message' => 'Call rejected successfully']);
+}
+
+public function ringing(Request $request)
+{
+    event(new CallRinging($request->userId, $request->channelName));
+    return response()->json(['message' => 'Call ringing status set successfully']);
+}
+
+public function busy(Request $request)
+{
+    event(new CallBusy($request->userId, $request->channelName));
+    return response()->json(['message' => 'Call busy status set successfully']);
 }
 
 }

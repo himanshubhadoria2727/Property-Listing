@@ -164,12 +164,21 @@ let client = null;
             showCallModal();
             document.getElementById('callUserName').innerText = `Calling ${userName}...`;
             document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
+            
             await axios.post('/account/call/notify', {
-            userId:currentCallUserId,
-            channel:currentCallChannel,
-        });
+                userId: currentCallUserId,
+                channel: currentCallChannel,
+            });
+
             // Listen for call events
             window.Echo.channel(`user.${userId}`)
+                .listen('.call.ringing', (event) => {
+                    console.log('Call ringing event received:', event);
+                    if (event.channel === currentCallChannel) {
+                        document.getElementById('callStatus').innerHTML = 
+                            '<p style="color: #4299e1;">Ringing...</p>';
+                    }
+                })
                 .listen('.call.ended', (event) => {
                     console.log('Call ended event received:', event);
                     document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Ended</p>';

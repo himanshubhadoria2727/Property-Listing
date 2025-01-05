@@ -155,6 +155,20 @@ async function notifyCallRejected(channelName) {
         console.error("Error sending call rejected notification:", error);
     }
 }
+
+// Add this function near other notification functions
+async function notifyCallRinging(channelName) {
+    try {
+        const response = await axios.post("/account/call/ringing", {
+            channelName,
+            userId: window.userId,
+        });
+        console.log("Call ringing notification sent:", response.data);
+    } catch (error) {
+        console.error("Error sending call ringing notification:", error);
+    }
+}
+
 // Function to stop the call
 async function stopCall() {
     if (!isCalling) return;
@@ -530,9 +544,11 @@ async function initiateCall(userId) {
 
     // Set up new listeners
     currentChannel
-        .listen('.incoming.call', (event) => {
+        .listen('.incoming.call', async (event) => {
             console.log('Incoming call event received:', event);
             if (activeUserId === Number(event.userId)) {
+                // Send ringing notification before showing call popup
+                await notifyCallRinging(event.channel);
                 showCallPopup(event.channel, token, event);
             }
         })
