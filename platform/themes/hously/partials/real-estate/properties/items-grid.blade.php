@@ -137,10 +137,15 @@ let client = null;
         audioTrack: null
     };
     let remoteUsers = {};
+    let isCallBusy = false;
     let isCalling = false;
     let uid = Math.floor(Math.random() * 100000);
     let currentCallChannel = null;
     let currentCallUserId = null;
+    window.addEventListener('DOMContentLoaded', () => {
+    // Remove a specific item from localStorage
+    localStorage.removeItem('onCall');
+});
 
     async function fetchToken(channelName,userId) {
         try {
@@ -218,12 +223,32 @@ let client = null;
                         currentCallUserId = null;
                         hideCallModal();
                     }, 2000);
+                })
+                .listen('.call.busy', (data) => {
+                    if (data.callerId === window.userId) {
+                        isCallBusy = true;
+
+                        // Update the busy status text
+                        document.getElementById('callStatus').innerHTML = 
+                            '<p style="color: #e53e3e;">Agent is busy on another call</p>';
+                            setTimeout(() => {
+                        // Show the modal and overlay to display the busy message
+                        document.getElementById('callModalOverlay').style.display = 'block'; // Ensure the overlay is visible
+                        document.getElementById('callModal').style.display = 'block'; // Ensure the modal is visible
+
+                        document.body.style.filter = 'none'; // Removes blur effect from the background
+                        
+                        
+                            document.getElementById('callModalOverlay').style.display = 'none'; // Hides the overlay
+                            document.getElementById('callModal').style.display = 'none'; // Hides the modal
+                        }, 3000); // Adjust the timeout duration (e.g., 3000ms for 3 seconds)
+                    }
                 });
-            
+
             await startAudioCallNow(userId);
         } catch (error) {
             console.error('Error in startCall:', error);
-            document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
+            // document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
         }
     }
 
@@ -252,6 +277,9 @@ let client = null;
         
                 // Set up remote user handling
                 client.on('user-published', async (remoteUser, mediaType) => {
+                    if (document.getElementById('callStatus').innerText.includes('busy')) {
+                        return;
+                    }
                     console.log('Remote user published:', remoteUser.uid, mediaType);
                     
                     await client.subscribe(remoteUser, mediaType);
@@ -265,6 +293,7 @@ let client = null;
                         // Update UI to show connected state
                         document.getElementById('callStatus').innerHTML = 
                             '<p style="color: #48bb78;">Call Connected</p>';
+                            localStorage.setItem('onCall', 'true');
                     }
                 });
 
@@ -284,6 +313,9 @@ let client = null;
                         delete remoteUsers[remoteUser.uid];
                     }
                 });
+            }
+            if (document.getElementById('callStatus').innerText.includes('busy')) {
+                throw new Error('User is busy');
             }
 
             // Join the channel
@@ -308,12 +340,16 @@ let client = null;
             console.error('Error in startAudioCall:', error);
             document.getElementById('callStatus').innerHTML = 
                 '<p style="color: #e53e3e;">Call Failed</p>';
+                
+                document.getElementById('callModalOverlay').style.display = 'none'; // Hides the overlay
+                document.getElementById('callModal').style.display = 'none';
             throw error;
         }
     }
 
 async function endCallBtn() {
     try {
+        console.log('Ending call...', currentCallUserId);
         // Use the currentCallUserId that was set during startCallNow
         if (!currentCallUserId) {
             console.error('No current call user ID found');
@@ -324,10 +360,10 @@ async function endCallBtn() {
         
         // Notify backend about call ending
         await axios.post('/account/call/end', {
-            channelName: channel,
+            channel: channel,
             userId: currentCallUserId
         });
-
+        localStorage.removeItem('onCall');
         // Stop and close local tracks
         if (localTracks.audioTrack) {
             localTracks.audioTrack.stop();
@@ -365,6 +401,16 @@ function toggleMutebtn() {
     }
 }
 
+function handleUserBusy() {
+    document.getElementById('callStatus').innerHTML = 
+        '<p style="color: #e53e3e;">Agent is busy on another call. Please try again later.</p>';
+    
+    // Remove the blur effect from the background
+    document.body.style.filter = 'none'; // Removes blur effect from the background
+    
+    // Make sure the modal overlay stays visible
+    document.getElementById('callModalOverlay').style.display = 'block'; // Ensures the modal remains visible
+}
 function showCallModal() {
     document.getElementById('callModalOverlay').style.display = 'block';
     document.getElementById('callModal').style.display = 'block';

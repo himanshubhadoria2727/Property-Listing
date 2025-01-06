@@ -9,9 +9,14 @@ let localTracks = {
 };
 let remoteUsers = [];
 let isCalling = false;
+let isInCall = false;
 let isMuted = false;
 let uid = Math.floor(Math.random() * 100000); // Fixed userId 23 as per your requirement
 const agoraAppId = process.env.AGORA_APP_ID; // Replace with your Agora App ID
+window.addEventListener('DOMContentLoaded', () => {
+    // Remove a specific item from localStorage
+    localStorage.removeItem('onCall');
+});
 window.userId = userId;
 window.Pusher = Pusher;
 window.Echo = new Echo({
@@ -119,13 +124,16 @@ async function joinAudioCall(channelName, token) {
 
         await client.join(appId, channelName, token, uid);
         console.log("Successfully joined Agora channel:", channelName);
-
+        localStorage.setItem('onCall', 'true');
+        isInCall = true;    
+        isCalling = true;
         localTracks.audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
         await client.publish([localTracks.audioTrack]);
         console.log("Local audio track published.");
 
-        isCalling = true;
     } catch (error) {
+        isInCall = false;
+        isCalling = false;
         console.error("Error joining audio call:", error);
         await cleanupClient();
         alert("Failed to join the call. Please try again.");
@@ -138,12 +146,25 @@ async function notifyCallEnded(channelName) {
             channelName,
             userId: window.userId,
         });
+        localStorage.removeItem('onCall');
         console.log("Call ended notification sent:", response.data);
     } catch (error) {
         console.error("Error sending call ended notification:", error);
     }
 }
 
+async function notifyCallBusy(channelName,callerId) {
+    try {
+        const response = await axios.post("/account/call/busy", {
+            channelName,
+            userId: window.userId,
+            callerId: callerId
+        });
+        console.log("Call busy notification sent:", response.data);
+    } catch (error) {
+        console.error("Error sending call busy notification:", error);
+    }
+}
 
 async function notifyCallRejected(channelName) {
     try {
@@ -172,7 +193,7 @@ async function notifyCallRinging(channelName) {
 
 // Function to stop the call
 async function stopCall() {
-    if (!isCalling) return;
+    if (!isCalling && !isInCall) return;
 
     const channelName = `channel-${window.userId}`;
     try {
@@ -186,14 +207,16 @@ async function stopCall() {
 
         await cleanupClient();
         isCalling = false;
+        isInCall = false;
         console.log("Call ended successfully");
 
-        // Remove UI elements
         removeUi();
     } catch (error) {
         console.error("Error stopping call:", error);
-        await cleanupClient(); // Ensure cleanup even on error
-        removeUi(); // Ensure UI is cleaned up even on error
+        isCalling = false;
+        isInCall = false;
+        await cleanupClient();
+        removeUi();
     }
 }
 
@@ -231,12 +254,12 @@ function createBackdrop() {
 }
 
 // Function to show the call popup
-function showCallPopup(channelName, token, callerName) {
+function showCallPopup(channelName, token, event) {
     
     // Add backdrop
     const backdrop = createBackdrop();
     document.body.appendChild(backdrop);
-    
+    const callerName = event.callerName;
     const modal = document.createElement("div");
     modal.id = "incoming-call-popup";
     modal.style.cssText = `
@@ -388,11 +411,19 @@ console.log("hello");
     window.Echo.channel(`user.${userId}`)
     .listen('.incoming.call', async (event) => {
         console.log('Incoming call event received:', event);
-        if (activeUserId === event.userId) {
-            // Send ringing notification before showing call popup
+        if (activeUserId === Number(event.userId)) {
+            console.log('Call status check - isInCall:', isInCall, 'isCalling:', isCalling);
+    
+            // Check if user is already in a call
+            if (localStorage.getItem('onCall') && localStorage.getItem('onCall') === 'true') {
+                console.log('Already in a call, sending busy notification');
+                await notifyCallBusy(event.channel, event.callerId);
+                return;
+            }
+    
+            // Continue with normal call flow if not busy
             await notifyCallRinging(event.channel);
-            console.log('Showing call popup for channel:', event.channel);
-            showCallPopup(event.channel, token, event.callerName);
+            showCallPopup(event.channel, token, event);
         }
     })
     .listen('.call.ended', (event) => {
@@ -542,22 +573,23 @@ function playRingtone() {
 async function cleanupClient() {
     try {
         if (client) {
-            // Check if client is in connected state
             if (client.connectionState === 'CONNECTED') {
                 await client.leave();
             }
-            // Check if client is in connecting state
             else if (client.connectionState === 'CONNECTING') {
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 await client.leave();
             }
             client.removeAllListeners();
             client = null;
+            isCalling = false;
+            isInCall = false;
         }
     } catch (error) {
         console.error("Error cleaning up client:", error);
-        // Force cleanup even if there's an error
         client = null;
+        isCalling = false;
+        isInCall = false;
     }
 }
 

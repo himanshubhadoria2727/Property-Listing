@@ -108,10 +108,16 @@
         audioTrack: null
     };
     let remoteUsers = {};
+    let isCallBusy = false;
     let isCalling = false;
     let uid = Math.floor(Math.random() * 100000);
     let currentCallChannel = null;
     let currentCallUserId = null;
+    let currentCallId = null;
+    window.addEventListener('DOMContentLoaded', () => {
+    // Remove a specific item from localStorage
+    localStorage.removeItem('onCall');
+});
 
     // Fetch the token for Agora client
     async function fetchToken(channelName,userId) {
@@ -130,10 +136,6 @@
 
     // Initialize Laravel Echo listener
     window.Echo.channel(`user.${userId}`)
-        .listen('.incoming.call', (data) => {
-            console.log('Incoming call:', data);
-            handleIncomingCall(data);
-        })
         .listen('.call.ringing', (data) => {
             console.log('Call ringing:', data);
             if (data.channel === currentCallChannel) {
@@ -180,13 +182,31 @@
             document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
             
             // Notify the backend about the call
-            await axios.post('/account/call/notify', {
+            const response = await axios.post('/account/call/notify', {
                 userId,
                 channel: currentCallChannel,
+                callerId:window.userId,
             });
+
+            // Store the call ID
+            currentCallId = response.data.callId;
+            console.log('Call ID:', currentCallId);
 
             // Listen for call events
             window.Echo.channel(`user.${userId}`)
+                .listen('.call.busy', (event) => {
+                    if (event.callerId === window.userId) {
+                        isCallBusy = true;
+                        document.getElementById('callStatus').innerHTML = 
+                            '<p style="color: #e53e3e;">User is busy</p>';
+                            
+                        setTimeout(() =>{
+                        document.getElementById('callModal').style.display = 'none';
+                        toggleBackgroundBlur(false); // Remove blur when call ends
+                        stopCall();
+                    }, 2000);
+                    }
+                })
                 .listen('.call.ringing', (event) => {
                     console.log('Call ringing event received:', event);
                     if (event.channel === currentCallChannel) {
@@ -237,8 +257,18 @@
             
             await startAudioCall(userId);
         } catch (error) {
-            console.error('Error in startCall:', error);
-            document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
+            if (error.response && error.response.status === 409) {
+                document.getElementById('callStatus').innerHTML = 
+                    '<p style="color: #e53e3e;">User is busy</p>';
+                setTimeout(() => {
+                    document.getElementById('callModal').style.display = 'none';
+                    toggleBackgroundBlur(false);
+                }, 2000);
+            } else {
+                console.error('Error in startCall:', error);
+                document.getElementById('callStatus').innerHTML = 
+                    '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
+            }
             toggleBackgroundBlur(false);
         }
     }
@@ -277,9 +307,7 @@
                         remoteUser.audioTrack.play();
                         console.log('Playing remote audio');
                         
-                        // Update UI to show connected state
-                        document.getElementById('callStatus').innerHTML = 
-                            '<p style="color: #48bb78;">Call Connected</p>';
+                        
                     }
                 });
 
@@ -304,8 +332,8 @@
             // Join the channel
             await client.join(appId, channel, token, uid);
             console.log('Joined channel:', channel);
-
-            // Create and publish local audio track
+            // Update UI to show connected state
+            
             localTracks.audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
                 encoderConfig: {
                     sampleRate: 48000,
@@ -316,8 +344,11 @@
 
             await client.publish([localTracks.audioTrack]);
             console.log('Published local audio track');
-
+            
             isCalling = true;
+            if(!isCallBusy){
+                document.getElementById('callStatus').innerHTML = '<p style="color: #48bb78;">Call Connected</p>';
+            }
 
         } catch (error) {
             console.error('Error in startAudioCall:', error);
@@ -355,7 +386,7 @@
                     channel: currentCallChannel
                 });
             }
-            
+            localStorage.removeItem('onCall');
             await stopCall();
             document.getElementById('callModal').style.display = 'none';
             toggleBackgroundBlur(false); // Remove blur when call ends
@@ -378,7 +409,7 @@
                 localTracks.audioTrack.stop();
                 localTracks.audioTrack.close();
             }
-
+            
             // Stop all remote audio tracks
             Object.values(remoteUsers).forEach(user => {
                 if (user.audioTrack) {
@@ -394,6 +425,7 @@
             
             isCalling = false;
             console.log('Call ended successfully');
+            
 
         } catch (error) {
             console.error('Error stopping call:', error);
@@ -441,7 +473,7 @@
     async function acceptCall(channel, callerId) {
         try {
             currentCallChannel = channel;
-            currentCallUserId = callerId;
+            currentCallUserId = userId;
             
             document.getElementById('callControls').innerHTML = `
                 <button onclick="toggleMute()" id="muteButton"

@@ -16,7 +16,8 @@ final class CallBusy implements ShouldBroadcastNow
 
     public function __construct(
         public readonly int|string $userId,
-        public readonly string $channel
+        public readonly string $channel,
+        public readonly int $callerId
     ) {}
 
     public function broadcastOn(): Channel

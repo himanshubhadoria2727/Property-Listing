@@ -66,42 +66,44 @@ class CallController extends BaseController
 
     public function notifyCall(Request $request)
 {
-    // Validate the input parameters
     $validated = $request->validate([
         'userId' => 'required|integer',
         'channel' => 'required|string|max:255',
     ]);
 
-    Log::info('notifyCall function started', ['userId' => $request->input('userId'), 'channel' => $request->input('channel')]);
-
     try {
-        // Get the caller's information from re_accounts table
-        $caller = Account::select('first_name', 'last_name')->findOrFail(auth('account')->id());
+        $caller = Account::select('first_name', 'last_name', 'id')->findOrFail(auth('account')->id());
         $callerName = trim($caller->first_name . ' ' . $caller->last_name);
+        $callerId = $caller->id;
 
-        // Broadcast the event with caller's name
+        // Add timestamp to the event data
+        $eventData = [
+            'userId' => $request->input('userId'),
+            'channel' => $request->input('channel'),
+            'callerName' => $callerName,
+            'callerId' => $callerId,  // Explicitly include callerId
+            'timestamp' => now()->toIso8601String()
+        ];
+
+        Log::info('Broadcasting call notification with data:', $eventData);
+
         broadcast(new AgentCalling(
             $request->input('userId'),
             $request->input('channel'),
-            $callerName // Pass the caller's name to the event
+            $callerName,
+            $callerId
         ))->toOthers();
-
-        Log::info('Call notification sent successfully', [
-            'userId' => $request->input('userId'),
-            'channel' => $request->input('channel'),
-            'callerName' => $callerName
-        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Call notification sent successfully'
+            'message' => 'Call notification sent successfully',
+            'callerId' => $callerId,
+            'eventData' => $eventData  // Include full event data in response for debugging
         ]);
     } catch (\Exception $e) {
         Log::error('Failed to send call notification', [
             'error' => $e->getMessage(),
-            'stack' => $e->getTraceAsString(),
-            'userId' => $request->input('userId'),
-            'channel' => $request->input('channel')
+            'stack' => $e->getTraceAsString()
         ]);
 
         return response()->json([
@@ -151,8 +153,22 @@ class CallController extends BaseController
 
 public function endCall(Request $request)
 {
-    event(new CallEnded($request->userId, $request->channelName));
-    return response()->json(['message' => 'Call ended successfully']);
+    $validated = $request->validate([
+        'userId' => 'required',
+        'channel' => 'required|string'
+    ]);
+
+    Log::info('Call end triggered', [
+        'userId' => $request->userId,
+        'channel' => $request->channel
+    ]);
+
+    event(new CallEnded($request->userId, $request->channel));
+    
+    return response()->json([
+        'message' => 'Call ended successfully',
+        'channel' => $request->channel
+    ]);
 }
 
 public function rejectCall(Request $request)
@@ -169,8 +185,28 @@ public function ringing(Request $request)
 
 public function busy(Request $request)
 {
-    event(new CallBusy($request->userId, $request->channelName));
-    return response()->json(['message' => 'Call busy status set successfully']);
+    $validated = $request->validate([
+        'userId' => 'required|integer',
+        'channelName' => 'required|string',
+        'callerId' => 'required|integer'
+    ]);
+
+    Log::info('Call busy status triggered', [
+        'userId' => $request->userId,
+        'channelName' => $request->channelName,
+        'callerId' => $request->callerId
+    ]);
+
+    event(new CallBusy(
+        $request->userId, 
+        $request->channelName,
+        $request->callerId
+    ));
+
+    return response()->json([
+        'message' => 'Call busy status set successfully',
+        'callerId' => $request->callerId
+    ]);
 }
 
 }

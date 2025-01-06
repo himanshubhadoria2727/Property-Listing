@@ -6,12 +6,18 @@ import Pusher from "pusher-js";
 let client;
 let localTracks = {
     audioTrack: null,
+    videoTrack: null
 };
 let remoteUsers = [];
 let isCalling = false;
+let isInCall = false;
 let isMuted = false;
 let uid = Math.floor(Math.random() * 100000); // Fixed userId 23 as per your requirement
 const agoraAppId = process.env.AGORA_APP_ID; // Replace with your Agora App ID
+window.addEventListener('DOMContentLoaded', () => {
+    // Remove a specific item from localStorage
+    localStorage.removeItem('onCall');
+});
 window.userId = userId;
 window.Pusher = Pusher;
 window.Echo = new Echo({
@@ -119,14 +125,18 @@ async function joinAudioCall(channelName, token) {
 
         await client.join(appId, channelName, token, uid);
         console.log("Successfully joined Agora channel:", channelName);
+        isInCall = true;
+        isCalling = true;
 
+        console.log("isInCall:", isInCall, "isCalling:", isCalling);
         localTracks.audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
         await client.publish([localTracks.audioTrack]);
         console.log("Local audio track published.");
-
-        isCalling = true;
+        
     } catch (error) {
         console.error("Error joining audio call:", error);
+        isInCall = false;
+        isCalling = false;
         await cleanupClient();
         alert("Failed to join the call. Please try again.");
     }
@@ -135,12 +145,26 @@ async function joinAudioCall(channelName, token) {
 async function notifyCallEnded(channelName) {
     try {
         const response = await axios.post("/account/call/end", {
-            channelName,
+            channel: channelName,
             userId: window.userId,
         });
+        localStorage.removeItem('onCall');
         console.log("Call ended notification sent:", response.data);
     } catch (error) {
         console.error("Error sending call ended notification:", error);
+    }
+}
+
+async function notifyCallBusy(channelName,callerId) {
+    try {
+        const response = await axios.post("/account/call/busy", {
+            channelName,
+            userId: window.userId,
+            callerId: callerId
+        });
+        console.log("Call busy notification sent:", response.data);
+    } catch (error) {
+        console.error("Error sending call busy notification:", error);
     }
 }
 
@@ -345,6 +369,8 @@ function showCallPopup(channelName, token, event) {
 // Function to show call controls (Mute, End Call)
 function showCallControls() {
     // Create modal overlay with blur effect
+    isCalling = true;
+    isInCall = true;
     const modalOverlay = document.createElement("div");
     modalOverlay.id = "call-controls";
     modalOverlay.classList.add(
@@ -388,6 +414,7 @@ function showCallControls() {
     
     const statusText = document.createElement("h3");
     statusText.textContent = "Call Connected";
+    localStorage.setItem('onCall', 'true');
     statusText.classList.add("text-xl", "font-semibold", "text-gray-800", "mb-2");
 
     // Call Timer
@@ -544,16 +571,26 @@ async function initiateCall(userId) {
 
     // Set up new listeners
     currentChannel
-        .listen('.incoming.call', async (event) => {
-            console.log('Incoming call event received:', event);
-            if (activeUserId === Number(event.userId)) {
-                // Send ringing notification before showing call popup
-                await notifyCallRinging(event.channel);
-                showCallPopup(event.channel, token, event);
+    .listen('.incoming.call', async (event) => {
+        console.log('Incoming call event received:', event);
+    
+        if (activeUserId === Number(event.userId)) {
+            console.log('Call status check - isInCall:', isInCall, 'isCalling:', isCalling);
+            // Check if user is already in a call
+            if (localStorage.getItem('onCall') && localStorage.getItem('onCall') === 'true') {
+                console.log('Already in a call, sending busy notification');
+                await notifyCallBusy(event.channel, event.callerId);
+                return;
             }
-        })
+    
+            // Continue with normal call flow if not busy
+            await notifyCallRinging(event.channel);
+            showCallPopup(event.channel, token, event);
+        }
+    }) 
         .listen('.call.ended', (event) => {
             console.log('Call ended notification received:', event);
+            localStorage.removeItem('onCall');
             handleCallEnded();
         })
         .listen('.call.rejected', (event) => {
@@ -588,82 +625,6 @@ function handleCallRejected() {
 
 initiateCall(userId);
 // Start the process of initiating the call
-async function startAudioCall(propertyId) {
-    if (!userId) {
-        console.error("No userId provided to startAudioCall");
-        return;
-    }
-
-    console.log("Starting audio call function...");
-
-    if (isCalling) {
-        console.log("Already in a call, returning...");
-        return;
-    }
-
-    const channel = `channel-${userId}`;
-    const appId = process.env.MIX_AGORA_APP_ID;
-    console.log("appId:", appId);
-
-    try {
-        // Ensure client is properly cleaned up before creating a new one
-        if (client) {
-            await client.leave();
-            client.removeAllListeners();
-            client = null;
-        }
-
-        console.log("Creating Agora client...");
-        client = AgoraRTC.createClient({
-            mode: "rtc",
-            codec: "vp8",
-            enableAudioVolumeIndicator: true,
-            forceSafariHTTPS: false,
-            security: false
-        });
-
-        // Request permissions explicitly
-        try {
-            await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (err) {
-            console.error("Failed to get user media permission:", err);
-            throw new Error("Microphone permission denied");
-        }
-
-        // Add event listeners for remote users before joining
-        client.on("user-published", async (user, mediaType) => {
-            console.log("Remote user published:", user.uid, mediaType);
-            await client.subscribe(user, mediaType);
-
-            if (mediaType === "audio") {
-                console.log("Playing remote audio track");
-                user.audioTrack.play();
-            }
-        });
-
-        client.on("user-unpublished", async (user, mediaType) => {
-            console.log("Remote user unpublished:", user.uid, mediaType);
-            if (mediaType === "audio") {
-                user.audioTrack.stop();
-            }
-        });
-
-        console.log("Joining Agora channel...");
-        await client.join(appId, channel, token, uid);
-
-        console.log("Creating audio track...");
-        localTracks.audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-
-        console.log("Publishing audio track...");
-        await client.publish([localTracks.audioTrack]);
-
-        isCalling = true;
-        console.log("Audio call started successfully.");
-    } catch (error) {
-        console.error("Error starting audio call:", error);
-        throw error;
-    }
-}
 
 // Add at the top with other global variables
 let ringtone = null;

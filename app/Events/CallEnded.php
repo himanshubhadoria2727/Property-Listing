@@ -30,4 +30,12 @@ class CallEnded implements ShouldBroadcastNow
     {
         return 'call.ended';
     }
+
+    public function broadcastWith()
+    {
+        return [
+            'userId' => $this->userId,
+            'channel' => $this->channel
+        ];
+    }
 } 

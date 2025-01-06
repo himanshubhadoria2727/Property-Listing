@@ -18,17 +18,20 @@ class AgentCalling implements ShouldBroadcastNow
     public $userId;
     public $channel;
     public $callerName;
+    public $callerId;
 
-    public function __construct($userId, $channel, $callerName)
+    public function __construct($userId, $channel, $callerName, $callerId)
     {
         $this->userId = $userId;
         $this->channel = $channel;
         $this->callerName = $callerName;
+        $this->callerId = $callerId;
 
         Log::info('AgentCalling event triggered', [
             'userId' => $this->userId,
             'channel' => $this->channel,
             'callerName' => $this->callerName,
+            'callerId' => $this->callerId,
             'timestamp' => now()->toIso8601String(),
         ]);
     }
@@ -45,6 +48,7 @@ class AgentCalling implements ShouldBroadcastNow
             'userId' => $this->userId,
             'channel' => $this->channel,
             'callerName' => $this->callerName,
+            'callerId' => $this->callerId,
             'timestamp' => now()->toIso8601String(),
         ]);
 
@@ -52,6 +56,7 @@ class AgentCalling implements ShouldBroadcastNow
             'userId' => $this->userId,
             'channel' => $this->channel,
             'callerName' => $this->callerName,
+            'callerId' => $this->callerId,
             'timestamp' => now()->toIso8601String(),
         ];
     }
