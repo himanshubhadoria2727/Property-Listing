@@ -143,7 +143,7 @@ async function joinAudioCall(channelName, token) {
 async function notifyCallEnded(channelName) {
     try {
         const response = await axios.post("/account/call/end", {
-            channelName,
+            channel: channelName,
             userId: window.userId,
         });
         localStorage.removeItem('onCall');

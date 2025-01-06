@@ -227,23 +227,27 @@ let client = null;
                 .listen('.call.busy', (data) => {
                     if (data.callerId === window.userId) {
                         isCallBusy = true;
-
+                        console.log('Call rejected event received:', event);
+                        document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Agent is busy on another call</p>';
                         // Update the busy status text
-                        document.getElementById('callStatus').innerHTML = 
-                            '<p style="color: #e53e3e;">Agent is busy on another call</p>';
-                            setTimeout(() => {
-                        // Show the modal and overlay to display the busy message
-                        document.getElementById('callModalOverlay').style.display = 'block'; // Ensure the overlay is visible
-                        document.getElementById('callModal').style.display = 'block'; // Ensure the modal is visible
-
-                        document.body.style.filter = 'none'; // Removes blur effect from the background
-                        
-                        
-                            document.getElementById('callModalOverlay').style.display = 'none'; // Hides the overlay
-                            document.getElementById('callModal').style.display = 'none'; // Hides the modal
-                        }, 3000); // Adjust the timeout duration (e.g., 3000ms for 3 seconds)
-                    }
-                });
+                        setTimeout(() => {
+                        // Clean up and hide modal
+                        if (localTracks.audioTrack) {
+                            localTracks.audioTrack.stop();
+                            localTracks.audioTrack.close();
+                        }
+                        if (client) {
+                            client.leave();
+                        }
+                        localTracks.audioTrack = null;
+                        remoteUsers = {};
+                        isCalling = false;
+                        currentCallChannel = null;
+                        currentCallUserId = null;
+                        hideCallModal();
+                    }, 2000);
+                }
+                })
 
             await startAudioCallNow(userId);
         } catch (error) {
@@ -340,7 +344,7 @@ let client = null;
             console.error('Error in startAudioCall:', error);
             document.getElementById('callStatus').innerHTML = 
                 '<p style="color: #e53e3e;">Call Failed</p>';
-                
+
                 document.getElementById('callModalOverlay').style.display = 'none'; // Hides the overlay
                 document.getElementById('callModal').style.display = 'none';
             throw error;
@@ -401,16 +405,6 @@ function toggleMutebtn() {
     }
 }
 
-function handleUserBusy() {
-    document.getElementById('callStatus').innerHTML = 
-        '<p style="color: #e53e3e;">Agent is busy on another call. Please try again later.</p>';
-    
-    // Remove the blur effect from the background
-    document.body.style.filter = 'none'; // Removes blur effect from the background
-    
-    // Make sure the modal overlay stays visible
-    document.getElementById('callModalOverlay').style.display = 'block'; // Ensures the modal remains visible
-}
 function showCallModal() {
     document.getElementById('callModalOverlay').style.display = 'block';
     document.getElementById('callModal').style.display = 'block';

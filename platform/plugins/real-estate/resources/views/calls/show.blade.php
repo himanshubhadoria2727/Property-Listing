@@ -348,6 +348,7 @@
             isCalling = true;
             if(!isCallBusy){
                 document.getElementById('callStatus').innerHTML = '<p style="color: #48bb78;">Call Connected</p>';
+                localStorage.setItem('onCall', 'true');
             }
 
         } catch (error) {
