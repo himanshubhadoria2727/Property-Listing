@@ -45,7 +45,7 @@
 
 
     {{-- Load the external JS file --}}
-<script type="module" src="{{ asset('vendor/core/plugins/real-estate/js/calls.js') }}"></script>
+        <script type="module" src="{{ asset('vendor/core/plugins/real-estate/js/calls.js') }}"></script>
 
         @yield('body', view('plugins/real-estate::themes.dashboard.layouts.body'))
 

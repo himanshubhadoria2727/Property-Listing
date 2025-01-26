@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
+use App\Http\Controllers\AgentSessionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,3 +20,5 @@ Broadcast::routes(['middleware' => ['auth:account']]);
 // Route::post('/broadcasting/auth', function () {
 //     return Broadcast::auth(request());
 // });
+
+Route::post('/agent/session/create/{agentId}', [AgentSessionController::class, 'createSession']);

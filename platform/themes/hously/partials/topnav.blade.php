@@ -110,7 +110,7 @@ $user = auth('account')->user();
                             onclick="toggleModal('streamBookingModal')">
                             Live Stream Bookings
                         </a>
-                        <a href="#" target="_blank" class="block px-4 py-2 text-base text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-all duration-150 ease-in-out" role="menuitem">
+                        <a href="javascript:void(0);" onclick="toggleModal('chatsModal')"  class="block px-4 py-2 text-base text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-all duration-150 ease-in-out" role="menuitem">
                             Chats
                         </a>
                         <a
@@ -151,10 +151,18 @@ $user = auth('account')->user();
 
     </div>
 </nav>
+<script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+<script type="module" src="{{ asset('themes/hously/js/chat.js') }}"></script>
+
 
 <div id="streamBookingModal" class="hidden">
     {!! Theme::partial('bookingsModal') !!}
 </div>
+<div id="chatsModal" class="hidden">
+    {!! Theme::partial('chatsModal') !!}
+</div>
+
 <script>
     function toggleModal(modalId) {
         const modal = document.getElementById(modalId);

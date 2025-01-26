@@ -75,7 +75,7 @@ class CallController extends BaseController
         $caller = Account::select('first_name', 'last_name', 'id')->findOrFail(auth('account')->id());
         $callerName = trim($caller->first_name . ' ' . $caller->last_name);
         $callerId = $caller->id;
-
+        
         // Add timestamp to the event data
         $eventData = [
             'userId' => $request->input('userId'),

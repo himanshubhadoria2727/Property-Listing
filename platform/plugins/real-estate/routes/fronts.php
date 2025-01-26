@@ -14,6 +14,7 @@ use Botble\Slug\Facades\SlugHelper;
 use Botble\RealEstate\Http\Controllers\Fronts\BookingController;
 use Botble\RealEstate\Http\Controllers\Fronts\CallController;
 use Botble\RealEstate\Http\Controllers\AgoraController;
+use Botble\RealEstate\Http\Controllers\Fronts\ChatController;
 use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -119,6 +120,9 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
             Route::post('/account/call/end', action: 'CallController@endCall')->name('call.end');
             Route::post('/account/call/reject', 'CallController@rejectCall')->name('call.reject');
             Route::group(['middleware' => ['web']], function () {
+                Route::get('/chats{author_id}', [ChatController::class, 'showChatModal'])->name('chat.show');
+                Route::get('/chats', [ChatController::class, 'getChats']);
+                Route::post('/chat/create', [ChatController::class, 'createChat']);
                 Route::get('/bookings', [BookingController::class, 'userBooking'])->name('user.show');
                 Route::get('bookings/join/{property}', [AgoraController::class, 'joinLive'])->name('user.join');
             }); 
