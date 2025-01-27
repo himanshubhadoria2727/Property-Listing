@@ -3,6 +3,7 @@
 use Botble\Base\Facades\AdminHelper;
 use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Facades\Route;
+use Botble\Location\Http\Controllers\CityController;
 
 Route::group(['namespace' => 'Botble\Location\Http\Controllers'], function () {
     AdminHelper::registerRoutes(function () {
@@ -97,5 +98,9 @@ Route::group(['namespace' => 'Botble\Location\Http\Controllers'], function () {
             ->name('ajax.states-by-country');
         Route::get('ajax/cities-by-state', 'CityController@ajaxGetCities')
             ->name('ajax.cities-by-state');
+        Route::get('ajax/region-by-city', 'CityController@getRegionsByCity')
+            ->name('ajax.region-by-city');
+        Route::get('ajax/regions-by-city', 'CityController@ajaxGetRegions')
+            ->name('ajax.region-by-city');
     });
 });

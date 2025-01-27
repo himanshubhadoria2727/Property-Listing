@@ -21,7 +21,12 @@ class CityForm extends FormAbstract
 {
     public function setup(): void
     {
-        Assets::addScriptsDirectly('vendor/core/plugins/location/js/location.js');
+
+        Assets::addScriptsDirectly([
+            'vendor/core/plugins/location/js/location.js',
+            'vendor/core/core/base/libraries/tagify/tagify.min.js', // Add Tagify library
+        ]);
+        Assets::addStylesDirectly('vendor/core/core/base/libraries/tagify/tagify.css');
 
         $countries = Country::query()->pluck('name', 'id')->all();
 
@@ -67,10 +72,23 @@ class CityForm extends FormAbstract
                         :
                         [0 => trans('plugins/location::city.select_state')]) + $states,
             ])
+            ->add('regions', 'text', [
+                'label' => trans('plugins/location::city.regions'),
+                'attr' => [
+                    'id' => 'regions-input',
+                    'placeholder' => __('Add regions and press Enter'),
+                    'class' => 'regions-input form-control',
+                    'data-role' => 'tagsinput', // Enable tagify
+                ],
+                'wrapper' => [
+                    'class' => 'form-group regions-wrapper',
+                ],
+            ])
             ->add('order', NumberField::class, SortOrderFieldOption::make()->toArray())
             ->add('is_default', OnOffField::class, IsDefaultFieldOption::make()->toArray())
             ->add('status', SelectField::class, StatusFieldOption::make()->toArray())
             ->add('image', MediaImageField::class)
             ->setBreakFieldPoint('status');
+            
     }
 }

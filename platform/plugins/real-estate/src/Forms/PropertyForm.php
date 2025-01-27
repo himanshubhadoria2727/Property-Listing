@@ -32,6 +32,8 @@ use Botble\RealEstate\Models\Project;
 use Botble\RealEstate\Models\Property;
 use Illuminate\Support\Facades\Blade;
 use stdClass;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 
 class PropertyForm extends FormAbstract
 {
@@ -136,6 +138,8 @@ class PropertyForm extends FormAbstract
                     SelectLocationField::class,
                     SelectLocationFieldOption::make()->toArray()
                 );
+                $selectedCity = Arr::get($form->getModel()->toArray(), 'city_id');
+                Log::info('Selected city: ' . $selectedCity);
             })
             ->add('location', 'text', [
                 'label' => trans('plugins/real-estate::property.form.location'),
