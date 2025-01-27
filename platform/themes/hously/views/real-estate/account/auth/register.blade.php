@@ -84,7 +84,7 @@
                             </div>
                         </div>
 
-                        <div class="mb-4">
+                        <!-- <div class="mb-4">
                             <label class="font-medium" for="phone">{{ __('Phone:') }}</label>
                             <input id="phone" name="phone" type="text" @class(['form-control form-input dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('phone')]) placeholder="{{ __('Phone') }}">
                             @error('phone')
@@ -92,7 +92,7 @@
                                     <strong>{{ $message }}</strong>
                                 </span>
                             @enderror
-                        </div>
+                        </div> -->
 
                         <div class="grid grid-cols-2 gap-2">
                             <div class="mb-4">

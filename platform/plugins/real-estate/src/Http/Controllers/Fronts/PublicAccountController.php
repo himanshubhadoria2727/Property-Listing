@@ -47,13 +47,13 @@ class PublicAccountController extends BaseController
     public function getDashboard()
     {
         $user = auth('account')->user();
-
+        $sessionId = session("session_id");
         $this->pageTitle(auth('account')->user()->name);
 
         Assets::usingVueJS()
             ->addScriptsDirectly('vendor/core/plugins/real-estate/js/components.js');
 
-        return view('plugins/real-estate::themes.dashboard.index', compact('user'));
+        return view('plugins/real-estate::themes.dashboard.index', compact('user', 'sessionId'));
     }
 
     public function getSettings()

@@ -49,4 +49,8 @@ class City extends BaseModel
     {
         return $this->belongsTo(Country::class)->withDefault();
     }
+     public function subcities()
+    {
+        return $this->hasMany(City::class, 'parent_id');
+    }
 }

@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
@@ -31,8 +33,10 @@ trait AuthenticatesUsers
         // If the class is using the ThrottlesLogins trait, we can automatically throttle
         // the login attempts for this application. We'll key this by the username and
         // the IP address of the client making these requests into this application.
-        if (method_exists($this, 'hasTooManyLoginAttempts') &&
-            $this->hasTooManyLoginAttempts($request)) {
+        if (
+            method_exists($this, 'hasTooManyLoginAttempts') &&
+            $this->hasTooManyLoginAttempts($request)
+        ) {
             $this->fireLockoutEvent($request);
 
             $this->sendLockoutResponse($request);
@@ -93,7 +97,7 @@ trait AuthenticatesUsers
 
         // Debugging: Check the role of the user
         Log::info('Authenticated User Role: ' . $user->role_id);
-    
+
         // Role-based redirection
         if ($user->role == 1) {
             // Role 1 should redirect to homepage
@@ -102,13 +106,31 @@ trait AuthenticatesUsers
         } elseif ($user->role == 2) {
             // Role 2 should redirect to the dashboard
             Log::info('Redirecting to dashboard');
-            return redirect()->route('public.account.dashboard');
+            $sessionId = $this->getSessionId($user->id);
+
+            // Update the agent_sessions table with the new session_id
+            DB::table('agent_sessions')->insert([
+                'agent_id' => $user->id,
+                'session_id' => $sessionId
+            ]);
+
+            return redirect()->route('public.account.dashboard')->with("session_id", $sessionId);
         }
-    
+
         // Default fallback if the role does not match
         Log::info('Role does not match, redirecting to default page');
         return redirect('/');
     }
+
+    private function getSessionId(int $userId): string
+    {
+        // Generate a random string
+        $randomString = Str::random(8); // Generates a random 8-character string
+
+        // Concatenate with user ID and return
+        return $userId . '-' . $randomString;
+    }
+
 
     protected function authenticated(Request $request, Authenticatable $user)
     {

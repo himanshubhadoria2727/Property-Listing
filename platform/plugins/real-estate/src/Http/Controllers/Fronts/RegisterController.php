@@ -163,7 +163,7 @@ class RegisterController extends BaseController
             'username' => 'required|max:60|min:2|unique:re_accounts,username',
             'email' => 'required|email|max:255|unique:re_accounts',
             'password' => 'required|min:6|confirmed',
-            'phone' => 'required|' . BaseHelper::getPhoneValidationRule(),
+            // 'phone' => 'required|' . BaseHelper::getPhoneValidationRule(),
         ];
 
         if (
@@ -184,7 +184,7 @@ class RegisterController extends BaseController
             'last_name' => $data['last_name'],
             'username' => $data['username'],
             'email' => $data['email'],
-            'phone' => $data['phone'],
+            // 'phone' => $data['phone'],
             'password' => Hash::make($data['password']),
         ]);
     }

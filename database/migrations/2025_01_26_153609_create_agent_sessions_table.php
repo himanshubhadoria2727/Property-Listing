@@ -21,7 +21,7 @@ class CreateAgentSessionsTable extends Migration
             $table->timestamps(); // Tracks created_at and updated_at
 
             // Optional: Define foreign key constraint
-            $table->foreign('agent_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('agent_id')->references('id')->on('re_accounts')->onDelete('cascade');
         });
     }
 

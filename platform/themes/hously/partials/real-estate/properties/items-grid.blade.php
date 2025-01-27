@@ -199,12 +199,13 @@
             document.getElementById('callUserName').innerText = `Calling ${userName}...`;
             document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
 
-            await axios.post('/account/call/notify', {
+            const response =await axios.post('/account/call/notify', {
                 userId: currentCallUserId,
                 channel: currentCallChannel,
+                sessionId: localStorage.getItem('sessionId'),
             });
-            
-            // Listen for call events
+            const sessionId = response.data.sessionId;  
+            console.log('Session ID:', sessionId);          // Listen for call events
             window.Echo.channel(`user.${userId}`)
                 .listen('.call.ringing', (event) => {
                     console.log('Call ringing event received:', event);
@@ -278,7 +279,7 @@
                     }
                 })
 
-            await startAudioCallNow(userId);
+            await startAudioCallNow(userId,sessionId);
         } catch (error) {
             console.error('Error in startCall:', error);
             // document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
@@ -286,13 +287,13 @@
     }
 
     // Start audio call (without video)
-    async function startAudioCallNow(userId) {
+    async function startAudioCallNow(userId,sessionId) {
         if (isCalling) {
             console.log('Already in a call');
             return;
         }
 
-        const channel = `channel-${userId}`;
+        const channel = `channel-${sessionId}`;
         const appId = '{{ env('AGORA_APP_ID') }}' || '84220a4dc86144bb9457af1cd9965016'; // Replace 'fallback_app_id' with a valid ID for testing
         if (!appId) {
             console.error('Agora App ID is not set. Please check your environment configuration.');

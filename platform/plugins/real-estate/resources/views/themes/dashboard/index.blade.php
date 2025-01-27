@@ -108,3 +108,10 @@
         </div>
     </activity-log-component>
 @stop
+
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        let sessionId = @json($sessionId);
+        localStorage.setItem('sessionId', sessionId);
+    });
+</script>

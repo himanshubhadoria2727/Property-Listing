@@ -14,6 +14,7 @@ use Botble\RealEstate\Models\Account;
 use App\Events\CallEnded;
 use App\Events\CallRejected;
 use App\Events\CallRinging;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Carbon\Carbon;
 
@@ -65,53 +66,66 @@ class CallController extends BaseController
     }
 
     public function notifyCall(Request $request)
-{
-    $validated = $request->validate([
-        'userId' => 'required|integer',
-        'channel' => 'required|string|max:255',
-    ]);
-
-    try {
-        $caller = Account::select('first_name', 'last_name', 'id')->findOrFail(auth('account')->id());
-        $callerName = trim($caller->first_name . ' ' . $caller->last_name);
-        $callerId = $caller->id;
-        
-        // Add timestamp to the event data
-        $eventData = [
-            'userId' => $request->input('userId'),
-            'channel' => $request->input('channel'),
-            'callerName' => $callerName,
-            'callerId' => $callerId,  // Explicitly include callerId
-            'timestamp' => now()->toIso8601String()
-        ];
-
-        Log::info('Broadcasting call notification with data:', $eventData);
-
-        broadcast(new AgentCalling(
-            $request->input('userId'),
-            $request->input('channel'),
-            $callerName,
-            $callerId
-        ))->toOthers();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Call notification sent successfully',
-            'callerId' => $callerId,
-            'eventData' => $eventData  // Include full event data in response for debugging
+    {
+        $validated = $request->validate([
+            'userId' => 'required|integer',
+            'channel' => 'required|string|max:255',
         ]);
-    } catch (\Exception $e) {
-        Log::error('Failed to send call notification', [
-            'error' => $e->getMessage(),
-            'stack' => $e->getTraceAsString()
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to send call notification'
-        ], 500);
+    
+        try {
+            $caller = Account::select('first_name', 'last_name', 'id')->findOrFail(auth('account')->id());
+            $callerName = trim($caller->first_name . ' ' . $caller->last_name);
+            $callerId = $caller->id;
+    
+            // Check for an available session and get only one row
+            $session = DB::table('agent_sessions')
+                ->where('agent_id', $validated['userId'])
+                ->where('is_available', 1)
+                ->first();
+    
+            $sessionId = $session ? $session->session_id : null;
+    
+            // Add timestamp to the event data
+            $eventData = [
+                'userId' => $validated['userId'],
+                'channel' => $validated['channel'],
+                'callerName' => $callerName,
+                'callerId' => $callerId,
+                'timestamp' => now()->toIso8601String(),
+                'sessionId' => $sessionId,
+                'sessionData' => $session
+            ];
+    
+            Log::info('Broadcasting call notification with data:', $eventData);
+    
+            // Modify the event to include sessionId
+            broadcast(new AgentCalling(
+                $validated['userId'],
+                $validated['channel'],
+                $callerName,
+                $callerId,
+                $sessionId  // Add sessionId as a new parameter
+            ))->toOthers();
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Call notification sent successfully',
+                'callerId' => $callerId,
+                'eventData' => $eventData,
+                'sessionId' => $sessionId,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send call notification', [
+                'error' => $e->getMessage(),
+                'stack' => $e->getTraceAsString()
+            ]);
+    
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send call notification'
+            ], 500);
+        }
     }
-}
     public function notifyAuthor(Request $request)
 {
     // Validate the input parameters
@@ -207,6 +221,65 @@ public function busy(Request $request)
         'message' => 'Call busy status set successfully',
         'callerId' => $request->callerId
     ]);
+}
+
+public function createSession(Request $request)
+{
+    $validated = $request->validate([
+        'agentId' => 'required|integer',
+    ]);
+
+    Log::info('Creating session for agent ID:', ['agentId' => $validated['agentId']]);
+
+    // Check if the agent exists
+    $agent = Account::find($validated['agentId']);
+    if (!$agent) {
+        Log::error('Agent not found for ID:', ['agentId' => $validated['agentId']]);
+        return response()->json(['message' => 'Agent not found.'], 404);
+    }
+
+    // Check if a session already exists for the agent
+    $existingSession = DB::table('agent_sessions')
+        ->where('agent_id', $validated['agentId'])
+        ->where('session_id', session()->getId())
+        ->first();
+
+    if ($existingSession) {
+        // If the session exists, update it instead of creating a new one
+        return $this->updateSession($request);
+    }
+
+    // Insert a new agent session
+    DB::table('agent_sessions')->insert([
+        'agent_id' => $validated['agentId'],
+        'session_id' => session()->getId(),
+        'is_available' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    Log::info('Session created successfully for agent ID:', ['agentId' => $validated['agentId']]);
+
+    return response()->json(['message' => 'Session created successfully.']);
+}
+
+public function updateSession(Request $request)
+{
+    $validated = $request->validate([
+        'agentId' => 'required|integer',
+        'is_available' => 'required|boolean',
+        'session_id' => 'required|string'
+    ]);
+
+    Log::info('Updating session for agent ID:', ['agentId' => $validated['agentId']]);
+    // Update the is_available status
+    DB::table('agent_sessions')
+        ->where('id', $validated['session_id'])
+        ->update(['is_available' => $validated['is_available'], 'updated_at' => now()]);
+
+    Log::info('Session updated successfully for agent ID:', ['agentId' => $validated['agentId']]);
+
+    return response()->json(['message' => 'Session updated successfully.']);
 }
 
 }

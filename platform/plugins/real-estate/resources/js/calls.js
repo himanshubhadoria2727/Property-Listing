@@ -79,10 +79,9 @@ function fetchToken(channelName) {
 }
 
 // Function to join an Agora audio call
-async function joinAudioCall(channelName, token) {
+async function joinAudioCall(channelName, token, activeUserId) {
     console.log("Joining audio call on channel:", channelName);
     const appId = process.env.MIX_AGORA_APP_ID;
-    console.log("appId:", appId);
     
     try {
         // Ensure cleanup before joining
@@ -97,12 +96,7 @@ async function joinAudioCall(channelName, token) {
         });
         
         // Request permissions explicitly before joining
-        try {
-            await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (err) {
-            console.error("Failed to get user media permission:", err);
-            throw new Error("Microphone permission denied");
-        }
+        await navigator.mediaDevices.getUserMedia({ audio: true });
 
         // Set up event listeners
         client.on("user-published", async (user, mediaType) => {
@@ -110,15 +104,6 @@ async function joinAudioCall(channelName, token) {
             if (mediaType === "audio") {
                 user.audioTrack.play();
                 remoteUsers.push(user);
-                console.log("Playing remote user audio.");
-            }
-        });
-
-        client.on("user-unpublished", (user) => {
-            if (user.audioTrack) {
-                user.audioTrack.stop();
-                remoteUsers = remoteUsers.filter((u) => u !== user);
-                console.log("Remote user stopped audio.");
             }
         });
 
@@ -131,6 +116,14 @@ async function joinAudioCall(channelName, token) {
         await client.publish([localTracks.audioTrack]);
         console.log("Local audio track published.");
 
+        // Call the createSession API
+        const response = await axios.post("/agent/session/update", {
+            agentId: activeUserId,
+            is_available: false,
+            sessionId: axios.defaults.headers.common['X-Session-Id'],
+        });
+        console.log("Agent call session activated:", response.data);
+        
     } catch (error) {
         isInCall = false;
         isCalling = false;
@@ -147,9 +140,19 @@ async function notifyCallEnded(channelName) {
             userId: window.userId,
         });
         localStorage.removeItem('onCall');
+        
         console.log("Call ended notification sent:", response.data);
     } catch (error) {
         console.error("Error sending call ended notification:", error);
+    }
+    try {
+        const response = await axios.post('/agent/session/update', {
+            agentId: window.userId,
+            is_available: true,
+        });
+        console.log(response.data.message);
+    } catch (error) {
+        console.error("Error updating agent session:", error);
     }
 }
 
@@ -254,7 +257,7 @@ function createBackdrop() {
 }
 
 // Function to show the call popup
-function showCallPopup(channelName, token, event) {
+function showCallPopup(channelName, token, event,activeUserId) {
     
     // Add backdrop
     const backdrop = createBackdrop();
@@ -349,7 +352,7 @@ function showCallPopup(channelName, token, event) {
     modal.querySelector('#accept-call').onclick = async () => {
         try {
             stopRingtone(); // Stop ringtone when call is accepted
-            await joinAudioCall(channelName, token);
+            await joinAudioCall(channelName, token,activeUserId);
             // Hide call buttons and show controls
             modal.querySelector('#call-buttons').style.display = 'none';
             modal.querySelector('#call-controls').style.display = 'flex';
@@ -403,15 +406,19 @@ console.log("hello");
     }   
     const activeUserId = window.userId; // Active user ID
     console.log("Active user ID:", activeUserId);
-    const channelName = `channel-${userId}`; // Dynamic channel name based on userId
+    const sessionId = localStorage.getItem('sessionId');
+    console.log("Session ID:", sessionId);
+    const channelName = `channel-${sessionId}`; // Dynamic channel name based on userId
+    console.log("Channel name:", channelName);
     const token = await fetchToken(channelName);
     console.log("Listening for incoming call notification on channel:", `author.${userId}`);
 
     // Listen on the correct channel for the specific user
     window.Echo.channel(`user.${userId}`)
     .listen('.incoming.call', async (event) => {
+        console.log("user",userId);
         console.log('Incoming call event received:', event);
-        if (activeUserId === Number(event.userId)) {
+        if (activeUserId === Number(event.userId) && sessionId === event.sessionId) {
             console.log('Call status check - isInCall:', isInCall, 'isCalling:', isCalling);
     
             // Check if user is already in a call
@@ -420,10 +427,9 @@ console.log("hello");
                 await notifyCallBusy(event.channel, event.callerId);
                 return;
             }
-    
             // Continue with normal call flow if not busy
             await notifyCallRinging(event.channel);
-            showCallPopup(event.channel, token, event);
+            showCallPopup(channelName, token, event,activeUserId);
         }
     })
     .listen('.call.ended', (event) => {
@@ -438,6 +444,7 @@ console.log("hello");
         }
     })
     .listen('.call.rejected', (event) => {
+        notifyCallEnded(channelName);
         console.log('Call rejected notification received:', event);
         const modal = document.querySelector("#incoming-call-popup");
         if (modal) {
