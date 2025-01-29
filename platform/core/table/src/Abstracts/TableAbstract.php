@@ -231,6 +231,8 @@ abstract class TableAbstract extends DataTable implements ExtensibleContract
                 ],
                 'pageLength' => $this->pageLength,
                 'processing' => true,
+                'serverSide' => true,
+                'bServerSide' => true,
                 'bDeferRender' => true,
                 'bProcessing' => true,
                 'language' => [
