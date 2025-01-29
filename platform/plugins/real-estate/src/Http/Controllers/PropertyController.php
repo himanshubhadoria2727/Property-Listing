@@ -19,6 +19,7 @@ use Botble\RealEstate\Tables\PropertyTable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PropertyController extends BaseController
 {
@@ -83,13 +84,30 @@ class PropertyController extends BaseController
 
     public function edit(int|string $id, Request $request)
     {
-        $property = Property::query()->with(['features', 'author'])->findOrFail($id);
+        $decodedId = json_decode($id, true);
+        $propertyId = $decodedId['id'];
+        Log::info('Edit property', [
+            'user_id' => auth('account')->id(),
+            'property_id' => $id,
+        ]);
+
+        $property = Property::query()->with(['features', 'author'])->findOrFail($propertyId);
+
+        Log::info('Property found', [
+            'user_id' => auth('account')->id(),
+            'property_id' => $id,
+        ]);
 
         Assets::addScriptsDirectly(['vendor/core/plugins/real-estate/js/duplicate-property.js']);
 
         $this->pageTitle(trans('plugins/real-estate::property.edit') . ' "' . $property->name . '"');
 
         event(new BeforeEditContentEvent($request, $property));
+
+        Log::info('Dispatch BeforeEditContentEvent', [
+            'user_id' => auth('account')->id(),
+            'property_id' => $id,
+        ]);
 
         return PropertyForm::createFromModel($property)->renderForm();
     }
@@ -100,7 +118,10 @@ class PropertyController extends BaseController
         StorePropertyCategoryService $propertyCategoryService,
         SaveFacilitiesService $saveFacilitiesService
     ) {
-        $property = Property::query()->findOrFail($id);
+        $decodedId = json_decode($id, true);
+        $propertyId = $decodedId['id'];
+
+        $property = Property::query()->findOrFail($propertyId);
         $property->fill($request->except(['expire_date']));
 
         $property->author_type = Account::class;
@@ -132,15 +153,41 @@ class PropertyController extends BaseController
     public function destroy(int|string $id, Request $request)
     {
         try {
-            $property = Property::query()->findOrFail($id);
+            $decodedId = json_decode($id, true);
+            $propertyId = $decodedId['id'];
+            $property = Property::query()->find($propertyId);
+
+            if (!$property) {
+                Log::warning('Attempted to delete a non-existent property', [
+                    'property_id' => $id,
+                    'user_id' => auth('account')->id(),
+                ]);
+
+                return $this
+                    ->httpResponse()
+                    ->setError()
+                    ->setMessage(trans('core/base::notices.not_found_message'));
+            }
+
             $property->delete();
 
             event(new DeletedContentEvent(PROPERTY_MODULE_SCREEN_NAME, $request, $property));
+
+            Log::info('Property deleted successfully', [
+                'property_id' => $property->id,
+                'user_id' => auth('account')->id(),
+            ]);
 
             return $this
                 ->httpResponse()
                 ->setMessage(trans('core/base::notices.delete_success_message'));
         } catch (Exception $exception) {
+            Log::error('Error deleting property', [
+                'property_id' => $id,
+                'user_id' => auth('account')->id(),
+                'error' => $exception->getMessage(),
+            ]);
+
             return $this
                 ->httpResponse()
                 ->setError()

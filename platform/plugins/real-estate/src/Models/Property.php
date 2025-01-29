@@ -52,6 +52,7 @@ class Property extends BaseModel
         'latitude',
         'longitude',
         'unique_id',
+        'region',
     ];
 
     protected $casts = [

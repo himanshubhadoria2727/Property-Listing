@@ -7,7 +7,9 @@ use Botble\Location\Repositories\Interfaces\CityInterface;
 use Botble\RealEstate\Repositories\Interfaces\ProjectInterface;
 use Botble\RealEstate\Repositories\Interfaces\PropertyInterface;
 use Botble\Theme\Facades\Theme;
+use Illuminate\Support\Facades\Log;
 use Botble\Theme\Http\Controllers\PublicController;
+use Botble\Location\Models\City;
 use Illuminate\Http\Request;
 use Theme\Hously\Http\Resources\ProjectResource;
 use Theme\Hously\Http\Resources\PropertyResource;
@@ -27,6 +29,56 @@ class HouslyController extends PublicController
 
         return $response->setData(Theme::partial('filters.location-suggestion', compact('locations')));
     }
+
+    public function getAjaxRegions(Request $request)
+{
+    Log::info('Fetching regions for city in api: ' . $request->query('city'));
+
+    try {
+        $cityName = $request->query('city');
+
+        // Check if the city parameter is provided
+        if (!$cityName) {
+            Log::warning('City parameter is required');
+            return response()->json([
+                'success' => false,
+                'message' => 'City parameter is required',
+                'regions' => []
+            ], 400);
+        }
+
+        // Find the city by name
+        $city = City::where('name', $cityName)->first();
+
+        // Check if the city exists
+        if (!$city) {
+            Log::warning('City not found');
+            return response()->json([
+                'success' => false,
+                'message' => 'City not found',
+                'regions' => []
+            ], 404);
+        }
+
+        // Assuming the regions are stored in a column named 'regions' as a JSON array
+        $regions = $city->regions;
+
+        Log::info('Regions fetched successfully');
+
+        return response()->json([
+            'success' => true,
+            'regions' => $regions
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error fetching regions: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching regions',
+            'regions' => []
+        ], 500);
+    }
+}
 
     public function ajaxGetPropertiesFeaturedForMap(BaseHttpResponse $response)
     {

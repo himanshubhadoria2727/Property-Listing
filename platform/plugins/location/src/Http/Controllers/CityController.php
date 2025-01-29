@@ -12,6 +12,8 @@ use Botble\Location\Http\Resources\CityResource;
 use Botble\Location\Models\City;
 use Botble\Location\Tables\CityTable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
 
 class CityController extends BaseController
 {
@@ -38,26 +40,68 @@ class CityController extends BaseController
 
     public function store(CityRequest $request)
     {
-        $form = CityForm::create()->setRequest($request);
-        $form->save();
+        try {
+            $form = CityForm::create()->setRequest($request);
+            $city = $form->save();
 
-        return $this
-            ->httpResponse()
-            ->setPreviousRoute('city.index')
-            ->setNextRoute('city.edit', $form->getModel()->getKey())
-            ->withCreatedSuccessMessage();
+
+            if (!$city || !$city->exists) {  // Check if city exists in DB
+                throw new \Exception('Failed to create city');
+            }
+
+            // Directly assign the regions from the request
+            $city->regions = $request->input('regions', []);
+            $city->save();
+
+            return $this
+                ->httpResponse()
+                ->setPreviousRoute('city.index')
+                ->setNextRoute('city.edit', $city->getKey())
+                ->withCreatedSuccessMessage();
+        } catch (\Exception $e) {
+            return $this->httpResponse()
+                ->setError()
+                ->setMessage(__('Failed to create city. Please try again.'));
+        }
     }
 
     public function edit(City $city)
     {
         $this->pageTitle(trans('core/base::forms.edit_item', ['name' => $city->name]));
 
+        // Ensure regions are always an array
+        $city->regions = $this->ensureRegionsIsArray($city->regions);
+
+        // Convert the regions array to a JSON string for the form input
+        $city->regions = json_encode($city->regions);
+
         return CityForm::createFromModel($city)->renderForm();
+    }
+
+    protected function ensureRegionsIsArray($regions): array
+    {
+        if (is_array($regions)) {
+            return $regions;
+        }
+
+        if (is_string($regions)) {
+            $decoded = json_decode($regions, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $decoded;
+            }
+        }
+
+        return [];
     }
 
     public function update(City $city, CityRequest $request)
     {
         CityForm::createFromModel($city)->setRequest($request)->save();
+
+        // Sync regions
+        $regions = array_map('trim', explode(',', $request->input('regions', ''))); // Trim whitespace
+        $city->regions = $regions; // Save regions directly in the city model
+        $city->save(); // Save the city model again to persist regions
 
         return $this
             ->httpResponse()
@@ -136,5 +180,28 @@ class CityController extends BaseController
         return $this
             ->httpResponse()
             ->setData(CityResource::collection($data));
+    }
+
+    public function ajaxGetRegions(Request $request)
+    {
+        $cityId = $request->input('city_id');
+
+        if (!$cityId) {
+            return $this
+                ->httpResponse()
+                ->setData([])
+                ->setMessage(__('City ID is required.'));
+        }
+
+        $regions = City::query()
+            ->where('id', $cityId)
+            ->value('regions'); // Get the 'regions' column directly
+
+        // Ensure $regions is an array (if it's stored as JSON or serialized in the database)
+        $regions = is_string($regions) ? json_decode($regions, true) : (array) $regions;
+
+        return $this
+            ->httpResponse()
+            ->setData($regions);
     }
 }

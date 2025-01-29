@@ -57,10 +57,51 @@ class Location {
         })
     }
 
+    static getRegions($el, cityId, $button = null) {
+        $.ajax({
+            url: $el.data('url'),
+            data: {
+                city_id: cityId,
+            },
+            type: 'GET',
+            beforeSend: () => {
+                $button && $button.prop('disabled', true)
+            },
+            success: (res) => {
+                if (res.error) {
+                    Botble.showError(res.message)
+                } else {
+                    let options = '<option value="">Select region</option>'
+                    // Handle array of strings
+                    if (Array.isArray(res.data)) {
+                        res.data.forEach(region => {
+                            options += `<option value="${region}">${region}</option>`
+                        })
+                    } else {
+                        // Fallback for object format if needed
+                        $.each(res.data, (index, item) => {
+                            if (typeof item === 'string') {
+                                options += `<option value="${item}">${item}</option>`
+                            } else {
+                                options += `<option value="${item.id || ''}">${item.name}</option>`
+                            }
+                        })
+                    }
+                    $el.html(options)
+                    $el.trigger('change')
+                }
+            },
+            complete: () => {
+                $button && $button.prop('disabled', false)
+            },
+        })
+    }
+
     init() {
         const country = 'select[data-type="country"]'
         const state = 'select[data-type="state"]'
         const city = 'select[data-type="city"]'
+        const region = 'select[data-type="region"]'
 
         $(document).on('change', country, function (e) {
             e.preventDefault()
@@ -69,9 +110,13 @@ class Location {
 
             const $state = $parent.find(state)
             const $city = $parent.find(city)
+            const $region = $parent.find(region)
 
             $state.find('option:not([value=""]):not([value="0"])').remove()
             $city.find('option:not([value=""]):not([value="0"])').remove()
+            if ($region.length) {
+                $region.html('<option value="">Select region</option>')
+            }
 
             const $button = $(e.currentTarget).closest('form').find('button[type=submit], input[type=submit]')
             const countryId = $(e.currentTarget).val()
@@ -91,9 +136,13 @@ class Location {
 
             const $parent = getParent($(e.currentTarget))
             const $city = $parent.find(city)
+            const $region = $parent.find(region)
 
             if ($city.length) {
                 $city.find('option:not([value=""]):not([value="0"])').remove()
+                if ($region.length) {
+                    $region.html('<option value="">Select region</option>')
+                }
                 const stateId = $(e.currentTarget).val()
                 const $button = $(e.currentTarget).closest('form').find('button[type=submit], input[type=submit]')
 
@@ -101,11 +150,28 @@ class Location {
                     Location.getCities($city, stateId, $button)
                 } else {
                     const countryId = $parent.find(country).val()
-
                     Location.getCities($city, null, $button, countryId)
                 }
 
                 stateFieldUsingSelect2()
+            }
+        })
+
+        $(document).on('change', city, function (e) {
+            e.preventDefault()
+
+            const $parent = getParent($(e.currentTarget))
+            const $region = $parent.find(region)
+
+            if ($region.length) {
+                const cityId = $(e.currentTarget).val()
+                const $button = $(e.currentTarget).closest('form').find('button[type=submit], input[type=submit]')
+
+                if (cityId) {
+                    Location.getRegions($region, cityId, $button)
+                } else {
+                    $region.html('<option value="">Select region</option>')
+                }
             }
         })
 

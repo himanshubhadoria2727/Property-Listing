@@ -9,6 +9,7 @@ use Botble\Base\Forms\FormField;
 use Botble\Location\Models\City;
 use Botble\Location\Models\Country;
 use Botble\Location\Models\State;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
 use Illuminate\Support\HtmlString;
 
@@ -24,6 +25,7 @@ class SelectLocationField extends FormField
             'country' => 'country_id',
             'state' => 'state_id',
             'city' => 'city_id',
+            'region' => 'region',
         ];
 
         $this->locationKeys = array_filter(array_merge($default, Arr::get($options, 'locationKeys', [])));
@@ -143,22 +145,17 @@ class SelectLocationField extends FormField
         $cities = [];
         $cityKey = Arr::get($this->locationKeys, 'city');
         $stateId = Arr::get($this->getValue(), 'state');
-        $countryId = Arr::get($this->getValue(), 'country');
         $value = Arr::get($this->getValue(), 'city');
+
         if ($stateId) {
             $cities = City::query()
                 ->where('state_id', $stateId)
-                ->select('name', 'id')->get()
-                ->mapWithKeys(fn ($item) => [$item->getKey() => $item->name])
-                ->all();
-        } elseif ($countryId) {
-            $cities = City::query()
-                ->where('country_id', $countryId)
                 ->select('name', 'id')
                 ->get()
                 ->mapWithKeys(fn ($item) => [$item->getKey() => $item->name])
                 ->all();
         }
+        Log::info("Cities: " . json_encode($cities));
 
         $attr = array_merge($this->getOption('attr', []), [
             'id' => $cityKey,
@@ -174,6 +171,38 @@ class SelectLocationField extends FormField
             'selected' => $value,
             'empty_value' => null,
         ], $this->getOption('attrs.city', []));
+    }
+
+    public function getRegionOptions(): array
+    {
+        $regions = [];
+        $regionKey = Arr::get($this->locationKeys, 'region');
+        $cityId = Arr::get($this->getValue(), 'city');
+        $value = Arr::get($this->getValue(), 'region');
+
+        if ($cityId) {
+            $regions = City::query()
+                ->where('id', $cityId)
+                ->value('regions'); // Assuming 'regions' is a JSON or array column
+        }
+
+        // Convert regions to key-value pairs for the select options
+        $regions = collect($regions)->mapWithKeys(fn($region) => [$region => $region])->all();
+
+        $attr = array_merge($this->getOption('attr', []), [
+            'id' => $regionKey,
+            'data-url' => route('ajax.region-by-city'),
+            'class' => 'select-search-full',
+            'data-type' => 'region',
+        ]);
+
+        return array_merge([
+            'label' => trans('Regions'),
+            'attr' => $attr,
+            'choices' => ['' => trans('plugins/location::city.select_region')] + $regions,
+            'selected' => $value,
+            'empty_value' => null,
+        ], $this->getOption('attrs.region', []));
     }
 
     public function render(
@@ -206,15 +235,15 @@ class SelectLocationField extends FormField
             switch ($k) {
                 case 'country':
                     $options = $this->getCountryOptions();
-
                     break;
                 case 'state':
                     $options = $this->getStateOptions();
-
                     break;
                 case 'city':
                     $options = $this->getCityOptions();
-
+                    break;
+                case 'region':
+                    $options = $this->getRegionOptions();
                     break;
             }
 

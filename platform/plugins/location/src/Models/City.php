@@ -24,6 +24,7 @@ class City extends BaseModel
         'order',
         'is_default',
         'status',
+        'regions',
     ];
 
     protected $casts = [
@@ -31,6 +32,7 @@ class City extends BaseModel
         'name' => SafeContent::class,
         'is_default' => 'bool',
         'order' => 'int',
+        'regions' => 'array',
     ];
 
     protected static function booted(): void

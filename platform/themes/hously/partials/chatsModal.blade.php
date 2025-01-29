@@ -25,7 +25,6 @@
                 Close
             </button>
             <!-- Debugging statement -->
-            <p>Debug: Author ID is {{ $author_id}}</p>
         </div>
     </div>
 </div>
