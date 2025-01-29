@@ -10,11 +10,13 @@ let localTracks = {
 let remoteUsers = [];
 let isCalling = false;
 let isInCall = false;
+let channelName;
 let isMuted = false;
 let uid = Math.floor(Math.random() * 100000); // Fixed userId 23 as per your requirement
 const agoraAppId = process.env.AGORA_APP_ID; // Replace with your Agora App ID
 window.addEventListener('DOMContentLoaded', () => {
     // Remove a specific item from localStorage
+    notifyCallEnded(channelName);
     localStorage.removeItem('onCall');
 });
 window.userId = userId;
@@ -120,7 +122,7 @@ async function joinAudioCall(channelName, token, activeUserId) {
         const response = await axios.post("/agent/session/update", {
             agentId: activeUserId,
             is_available: false,
-            sessionId: axios.defaults.headers.common['X-Session-Id'],
+            session_id: localStorage.getItem('sessionId'),
         });
         console.log("Agent call session activated:", response.data);
         
@@ -138,6 +140,7 @@ async function notifyCallEnded(channelName) {
         const response = await axios.post("/account/call/end", {
             channel: channelName,
             userId: window.userId,
+            sessionId: localStorage.getItem('sessionId'),
         });
         localStorage.removeItem('onCall');
         
@@ -149,6 +152,7 @@ async function notifyCallEnded(channelName) {
         const response = await axios.post('/agent/session/update', {
             agentId: window.userId,
             is_available: true,
+            session_id: localStorage.getItem('sessionId'),
         });
         console.log(response.data.message);
     } catch (error) {
@@ -156,12 +160,13 @@ async function notifyCallEnded(channelName) {
     }
 }
 
-async function notifyCallBusy(channelName,callerId) {
+async function notifyCallBusy(channelName, callerId) {
     try {
         const response = await axios.post("/account/call/busy", {
             channelName,
             userId: window.userId,
-            callerId: callerId
+            callerId: callerId,
+            sessionId: localStorage.getItem('sessionId'),
         });
         console.log("Call busy notification sent:", response.data);
     } catch (error) {
@@ -174,6 +179,7 @@ async function notifyCallRejected(channelName) {
         const response = await axios.post("/account/call/reject", {
             channelName,
             userId: window.userId,
+            sessionId: localStorage.getItem('sessionId'),
         });
         console.log("Call rejected notification sent:", response.data);
     } catch (error) {
@@ -187,6 +193,7 @@ async function notifyCallRinging(channelName) {
         const response = await axios.post("/account/call/ringing", {
             channelName,
             userId: window.userId,
+            sessionId: localStorage.getItem('sessionId'),
         });
         console.log("Call ringing notification sent:", response.data);
     } catch (error) {
@@ -408,7 +415,7 @@ console.log("hello");
     console.log("Active user ID:", activeUserId);
     const sessionId = localStorage.getItem('sessionId');
     console.log("Session ID:", sessionId);
-    const channelName = `channel-${sessionId}`; // Dynamic channel name based on userId
+    channelName = `channel-${sessionId}`; // Dynamic channel name based on userId
     console.log("Channel name:", channelName);
     const token = await fetchToken(channelName);
     console.log("Listening for incoming call notification on channel:", `author.${userId}`);
@@ -418,7 +425,7 @@ console.log("hello");
     .listen('.incoming.call', async (event) => {
         console.log("user",userId);
         console.log('Incoming call event received:', event);
-        if (activeUserId === Number(event.userId) && sessionId === event.sessionId) {
+        if (activeUserId === Number(event.userId) && sessionId === String(event.sessionId)) {
             console.log('Call status check - isInCall:', isInCall, 'isCalling:', isCalling);
     
             // Check if user is already in a call
@@ -433,26 +440,36 @@ console.log("hello");
         }
     })
     .listen('.call.ended', (event) => {
-        console.log('Call ended notification received:', event);
-        const modal = document.querySelector("#incoming-call-popup");
-        if (modal) {
-            const statusText = modal.querySelector('p');
-            statusText.textContent = 'Call ended';
-            setTimeout(() => {
-                handleCallEnded();
-            }, 2000);
+        if (sessionId === String(event.sessionId)) {
+            console.log('Call ended notification received:', event);
+            const modal = document.querySelector("#incoming-call-popup");
+            if (modal) {
+                const statusText = modal.querySelector('p');
+                statusText.textContent = 'Call ended';
+                setTimeout(() => {
+                    handleCallEnded();
+                }, 2000);
+            }
         }
     })
     .listen('.call.rejected', (event) => {
-        notifyCallEnded(channelName);
-        console.log('Call rejected notification received:', event);
-        const modal = document.querySelector("#incoming-call-popup");
-        if (modal) {
-            const statusText = modal.querySelector('p');
-            statusText.textContent = 'Call rejected';
-            setTimeout(() => {
-                handleCallRejected();
-            }, 2000);
+        if (sessionId === String(event.sessionId)) {
+            console.log('Call rejected notification received:', event);
+            notifyCallEnded(channelName);
+            const modal = document.querySelector("#incoming-call-popup");
+            if (modal) {
+                const statusText = modal.querySelector('p');
+                statusText.textContent = 'Call rejected';
+                setTimeout(() => {
+                    handleCallRejected();
+                }, 2000);
+            }
+        }
+    })
+    .listen('.call.busy', (event) => {
+        if (sessionId === String(event.sessionId)) {
+            console.log('Call busy notification received:', event);
+            notifyCallBusy(event.channel, event.callerId);
         }
     })
     .error((error) => {
@@ -610,3 +627,129 @@ function stopRingtone() {
 }
 
 export {stopCall}   
+
+async function startCallNow(userName, userId, propertyId) {
+    try {
+        currentCallUserId = userId;
+        currentCallChannel = `channel-${userId}`;
+
+        showCallModal();
+        document.getElementById('callUserName').innerText = `Calling ${userName}...`;
+        document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
+
+        // Notify the backend about the call and get the session ID
+        const response = await axios.post('/account/call/notify', {
+            userId: currentCallUserId,
+            channel: currentCallChannel,
+            sessionId: localStorage.getItem('sessionId'),
+        });
+        
+        const sessionId = response.data.sessionId;  // Capture the session ID
+        console.log('Session ID:', sessionId);         
+
+        // Listen for call events
+        window.Echo.channel(`user.${userId}`)
+            .listen('.call.ringing', (event) => {
+                console.log('Call ringing event received:', event);
+                if (event.channel === currentCallChannel && event.sessionId === sessionId) { // Check session ID
+                    document.getElementById('callStatus').innerHTML =
+                        '<p style="color: #4299e1;">Ringing...</p>';
+                }
+            })
+            .listen('.call.ended', (event) => {
+                if (event.sessionId === sessionId) { // Check session ID
+                    console.log('Call ended event received:', event);
+                    document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Ended</p>';
+                    setTimeout(() => {
+                        // Clean up and hide modal
+                        if (localTracks.audioTrack) {
+                            localTracks.audioTrack.stop();
+                            localTracks.audioTrack.close();
+                        }
+                        if (client) {
+                            client.leave();
+                        }
+                        localTracks.audioTrack = null;
+                        remoteUsers = {};
+                        isCalling = false;
+                        currentCallChannel = null;
+                        currentCallUserId = null;
+                        hideCallModal();
+                    }, 2000);
+                }
+            })
+            .listen('.call.rejected', (event) => {
+                if (event.sessionId === sessionId) { // Check session ID
+                    console.log('Call rejected event received:', event);
+                    document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Rejected</p>';
+                    setTimeout(() => {
+                        // Clean up and hide modal
+                        if (localTracks.audioTrack) {
+                            localTracks.audioTrack.stop();
+                            localTracks.audioTrack.close();
+                        }
+                        if (client) {
+                            client.leave();
+                        }
+                        localTracks.audioTrack = null;
+                        remoteUsers = {};
+                        isCalling = false;
+                        currentCallChannel = null;
+                        currentCallUserId = null;
+                        hideCallModal();
+                    }, 2000);
+                }
+            })
+            .listen('.call.busy', (data) => {
+                if (data.callerId === window.userId && data.sessionId === sessionId) { // Check session ID
+                    isCallBusy = true;
+                    console.log('Call busy event received:', data);
+                    document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Agent is busy on another call</p>';
+                    // Update the busy status text
+                    setTimeout(() => {
+                        // Clean up and hide modal
+                        if (localTracks.audioTrack) {
+                            localTracks.audioTrack.stop();
+                            localTracks.audioTrack.close();
+                        }
+                        if (client) {
+                            client.leave();
+                        }
+                        localTracks.audioTrack = null;
+                        remoteUsers = {};
+                        isCalling = false;
+                        currentCallChannel = null;
+                        currentCallUserId = null;
+                        hideCallModal();
+                    }, 2000);
+                }
+            });
+
+        await startAudioCallNow(userId, sessionId);
+    } catch (error) {
+        console.error('Error in startCall:', error);
+    }
+}   
+
+function logout() {
+    const sessionId = localStorage.getItem('session_id'); // Retrieve session_id from local storage
+
+    fetch('/api/logout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        },
+        body: JSON.stringify({ session_id: sessionId }), // Send session_id with the request
+    })
+    .then(response => {
+        if (response.ok) {
+            // Handle successful logout
+        } else {
+            // Handle logout error
+        }
+    })
+    .catch(error => {
+        console.error('Logout error:', error);
+    });
+}   

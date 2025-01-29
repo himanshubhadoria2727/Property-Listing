@@ -152,6 +152,9 @@ trait AuthenticatesUsers
 
         $request->session()->regenerateToken();
 
+        // Clear the sessionId stored in localStorage
+        $request->session()->forget('sessionId');
+
         $this->loggedOut($request);
 
         return $request->wantsJson()

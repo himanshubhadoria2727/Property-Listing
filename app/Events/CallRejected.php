@@ -14,11 +14,13 @@ class CallRejected implements ShouldBroadcastNow
 
     public $userId;
     public $channel;
+    public $sessionId;
 
-    public function __construct($userId, $channel)
+    public function __construct($userId, $channel, $sessionId)
     {
         $this->userId = $userId;
         $this->channel = $channel;
+        $this->sessionId = $sessionId;
     }
 
     public function broadcastOn()
@@ -29,5 +31,14 @@ class CallRejected implements ShouldBroadcastNow
     public function broadcastAs()
     {
         return 'call.rejected';
+    }
+
+    public function broadcastWith()
+    {
+        return [
+            'userId' => $this->userId,
+            'channel' => $this->channel,
+            'sessionId' => $this->sessionId,
+        ];
     }
 } 

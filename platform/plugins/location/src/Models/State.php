@@ -9,7 +9,7 @@ use Botble\Base\Models\Concerns\HasSlug;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class zState extends BaseModel
+class State extends BaseModel
 {
     use HasSlug;
 

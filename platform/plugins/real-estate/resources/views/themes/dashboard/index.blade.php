@@ -111,7 +111,14 @@
 
 <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function() {
-        let sessionId = @json($sessionId);
-        localStorage.setItem('sessionId', sessionId);
+        // Ensure a fallback value for sessionId
+        let sessionId = @json($sessionId ?? 'default-session-id');
+        
+        if (sessionId && sessionId !== 'default-session-id') {
+            console.log("Session ID:", sessionId);
+            localStorage.setItem('sessionId', sessionId);
+        } else {
+            console.warn("Session ID is not set or invalid.");
+        }
     });
 </script>

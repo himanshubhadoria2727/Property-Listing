@@ -28,7 +28,7 @@
                     class="text-lg text-red-600 bg-white rounded-full shadow btn btn-icon dark:bg-slate-900 dark:shadow-gray-700 start-call"
                     data-property-id="{{ $property->id }}"
                     data-user-id="{{ $property->author_id }}"
-                    onclick="startCallNow({{ json_encode(DB::table('re_accounts')->where('id', $property->author_id)->value(DB::raw("CONCAT(first_name, ' ', last_name)")) ?? 'User') }}, {{ $property->author_id }}, {{ $property->id }})">
+                    onclick="startCall({{ json_encode(DB::table('re_accounts')->where('id', $property->author_id)->value(DB::raw("CONCAT(first_name, ' ', last_name)")) ?? 'User') }}, {{ $property->author_id }}, {{ $property->id }})">
                     <i class="mdi mdi-phone"></i>
                 </button>
                 
@@ -141,24 +141,8 @@
 </div>
 
 <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.22.0.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-
-<script>
-    function toggleModal(modalId, authorId) {
-        const modal = document.getElementById(modalId);
-        const isHidden = modal.classList.contains('hidden');
-        console.log('authorId in items', authorId);
-        // if (authorId) {
-        //     localStorage.setItem('authorId', authorId);
-        // }
-        // Toggle visibility
-        modal.classList.toggle('hidden', !isHidden);
-        modal.classList.toggle('flex', isHidden);
-        modal.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
-    }
-</script>
 <script>
     let client = null;
     let localTracks = {
@@ -170,9 +154,16 @@
     let uid = Math.floor(Math.random() * 100000);
     let currentCallChannel = null;
     let currentCallUserId = null;
+    let sessionId; // Declare a global variable for sessionId
     window.addEventListener('DOMContentLoaded', () => {
         // Remove a specific item from localStorage
-        localStorage.removeItem('onCall');
+        
+            axios.post('/account/call/end', {
+                channel: channel,
+                userId: currentCallUserId,
+                sessionId: sessionId
+            });
+            localStorage.removeItem('onCall');    
     });
 
     async function fetchToken(channelName, userId) {
@@ -189,7 +180,7 @@
         }
     }
 
-    async function startCallNow(userName, userId, propertyId) {
+    async function startCall(userName, userId, propertyId) {
         try {
             currentCallUserId = userId;
             currentCallChannel = `channel-${userId}`;
@@ -198,65 +189,72 @@
             document.getElementById('callUserName').innerText = `Calling ${userName}...`;
             document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
 
-            const response =await axios.post('/account/call/notify', {
+            // Notify the backend about the call and get the session ID
+            const response = await axios.post('/account/call/notify', {
                 userId: currentCallUserId,
                 channel: currentCallChannel,
-                sessionId: localStorage.getItem('sessionId'),
             });
-            const sessionId = response.data.sessionId;  
-            console.log('Session ID:', sessionId);          // Listen for call events
+            
+            sessionId = response.data.sessionId;  // Capture the session ID
+            console.log('Session ID:', sessionId);         
+
+            // Listen for call events
             window.Echo.channel(`user.${userId}`)
                 .listen('.call.ringing', (event) => {
                     console.log('Call ringing event received:', event);
-                    if (event.channel === currentCallChannel) {
+                    if (event.channel === currentCallChannel && event.sessionId === sessionId) { // Check session ID
                         document.getElementById('callStatus').innerHTML =
                             '<p style="color: #4299e1;">Ringing...</p>';
                     }
                 })
                 .listen('.call.ended', (event) => {
-                    console.log('Call ended event received:', event);
-                    document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Ended</p>';
-                    setTimeout(() => {
-                        // Clean up and hide modal
-                        if (localTracks.audioTrack) {
-                            localTracks.audioTrack.stop();
-                            localTracks.audioTrack.close();
-                        }
-                        if (client) {
-                            client.leave();
-                        }
-                        localTracks.audioTrack = null;
-                        remoteUsers = {};
-                        isCalling = false;
-                        currentCallChannel = null;
-                        currentCallUserId = null;
-                        hideCallModal();
-                    }, 2000);
+                    if (event.sessionId === sessionId) { // Check session ID
+                        console.log('Call ended event received:', event);
+                        document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Ended</p>';
+                        setTimeout(() => {
+                            // Clean up and hide modal
+                            if (localTracks.audioTrack) {
+                                localTracks.audioTrack.stop();
+                                localTracks.audioTrack.close();
+                            }
+                            if (client) {
+                                client.leave();
+                            }
+                            localTracks.audioTrack = null;
+                            remoteUsers = {};
+                            isCalling = false;
+                            currentCallChannel = null;
+                            currentCallUserId = null;
+                            hideCallModal();
+                        }, 2000);
+                    }
                 })
                 .listen('.call.rejected', (event) => {
-                    console.log('Call rejected event received:', event);
-                    document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Rejected</p>';
-                    setTimeout(() => {
-                        // Clean up and hide modal
-                        if (localTracks.audioTrack) {
-                            localTracks.audioTrack.stop();
-                            localTracks.audioTrack.close();
-                        }
-                        if (client) {
-                            client.leave();
-                        }
-                        localTracks.audioTrack = null;
-                        remoteUsers = {};
-                        isCalling = false;
-                        currentCallChannel = null;
-                        currentCallUserId = null;
-                        hideCallModal();
-                    }, 2000);
+                    if (event.sessionId === sessionId) { // Check session ID
+                        console.log('Call rejected event received:', event);
+                        document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Rejected</p>';
+                        setTimeout(() => {
+                            // Clean up and hide modal
+                            if (localTracks.audioTrack) {
+                                localTracks.audioTrack.stop();
+                                localTracks.audioTrack.close();
+                            }
+                            if (client) {
+                                client.leave();
+                            }
+                            localTracks.audioTrack = null;
+                            remoteUsers = {};
+                            isCalling = false;
+                            currentCallChannel = null;
+                            currentCallUserId = null;
+                            hideCallModal();
+                        }, 2000);
+                    }
                 })
                 .listen('.call.busy', (data) => {
-                    if (data.callerId === window.userId) {
+                    if (data.callerId === window.userId && data.sessionId === sessionId) { // Check session ID
                         isCallBusy = true;
-                        console.log('Call rejected event received:', event);
+                        console.log('Call busy event received:', data);
                         document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Agent is busy on another call</p>';
                         // Update the busy status text
                         setTimeout(() => {
@@ -276,12 +274,11 @@
                             hideCallModal();
                         }, 2000);
                     }
-                })
+                });
 
-            await startAudioCallNow(userId,sessionId);
+            await startAudioCallNow(userId, sessionId);
         } catch (error) {
             console.error('Error in startCall:', error);
-            // document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
         }
     }
 
@@ -398,7 +395,8 @@
             // Notify backend about call ending
             await axios.post('/account/call/end', {
                 channel: channel,
-                userId: currentCallUserId
+                userId: currentCallUserId,
+                sessionId: sessionId
             });
             localStorage.removeItem('onCall');
             // Stop and close local tracks
@@ -450,7 +448,20 @@
         document.body.style.overflow = 'auto'; // Restore scrolling
     }
 </script>
-
+<script>
+    function toggleModal(modalId, authorId) {
+        const modal = document.getElementById(modalId);
+        const isHidden = modal.classList.contains('hidden');
+        console.log('authorId in items', authorId);
+        // if (authorId) {
+        //     localStorage.setItem('authorId', authorId);
+        // }
+        // Toggle visibility
+        modal.classList.toggle('hidden', !isHidden);
+        modal.classList.toggle('flex', isHidden);
+        modal.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
+    }
+</script>
 <style>
     @keyframes fadeIn {
         from {

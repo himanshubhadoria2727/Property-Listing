@@ -16,7 +16,8 @@ final class CallRinging implements ShouldBroadcastNow
 
     public function __construct(
         public readonly int|string $userId,
-        public readonly string $channel
+        public readonly string $channel,
+        public readonly string $sessionId
     ) {}
 
     public function broadcastOn(): Channel
@@ -27,5 +28,14 @@ final class CallRinging implements ShouldBroadcastNow
     public function broadcastAs(): string
     {
         return 'call.ringing';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'userId' => $this->userId,
+            'channel' => $this->channel,
+            'sessionId' => $this->sessionId,
+        ];
     }
 } 

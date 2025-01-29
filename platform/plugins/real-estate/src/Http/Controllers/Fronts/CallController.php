@@ -169,7 +169,8 @@ public function endCall(Request $request)
 {
     $validated = $request->validate([
         'userId' => 'required',
-        'channel' => 'required|string'
+        'channel' => 'required|string',
+        'sessionId' => 'required|string'
     ]);
 
     Log::info('Call end triggered', [
@@ -177,7 +178,7 @@ public function endCall(Request $request)
         'channel' => $request->channel
     ]);
 
-    event(new CallEnded($request->userId, $request->channel));
+    event(new CallEnded($request->userId, $request->channel, $request->sessionId));
     
     return response()->json([
         'message' => 'Call ended successfully',
@@ -187,13 +188,13 @@ public function endCall(Request $request)
 
 public function rejectCall(Request $request)
 {
-    event(new CallRejected($request->userId, $request->channelName));
+    event(new CallRejected($request->userId, $request->channelName, $request->sessionId));
     return response()->json(['message' => 'Call rejected successfully']);
 }
 
 public function ringing(Request $request)
 {
-    event(new CallRinging($request->userId, $request->channelName));
+    event(new CallRinging($request->userId, $request->channelName, $request->sessionId));
     return response()->json(['message' => 'Call ringing status set successfully']);
 }
 
@@ -202,7 +203,8 @@ public function busy(Request $request)
     $validated = $request->validate([
         'userId' => 'required|integer',
         'channelName' => 'required|string',
-        'callerId' => 'required|integer'
+        'callerId' => 'required|integer',
+        'sessionId' => 'required|string'
     ]);
 
     Log::info('Call busy status triggered', [
@@ -214,7 +216,8 @@ public function busy(Request $request)
     event(new CallBusy(
         $request->userId, 
         $request->channelName,
-        $request->callerId
+        $request->callerId,
+        $request->sessionId
     ));
 
     return response()->json([
@@ -274,7 +277,7 @@ public function updateSession(Request $request)
     Log::info('Updating session for agent ID:', ['agentId' => $validated['agentId']]);
     // Update the is_available status
     DB::table('agent_sessions')
-        ->where('id', $validated['session_id'])
+        ->where('session_id', $validated['session_id'])
         ->update(['is_available' => $validated['is_available'], 'updated_at' => now()]);
 
     Log::info('Session updated successfully for agent ID:', ['agentId' => $validated['agentId']]);

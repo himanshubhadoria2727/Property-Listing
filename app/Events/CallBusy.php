@@ -17,7 +17,8 @@ final class CallBusy implements ShouldBroadcastNow
     public function __construct(
         public readonly int|string $userId,
         public readonly string $channel,
-        public readonly int $callerId
+        public readonly int $callerId,
+        public readonly string $sessionId
     ) {}
 
     public function broadcastOn(): Channel
@@ -28,5 +29,15 @@ final class CallBusy implements ShouldBroadcastNow
     public function broadcastAs(): string
     {
         return 'call.busy';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'userId' => $this->userId,
+            'channel' => $this->channel,
+            'callerId' => $this->callerId,
+            'sessionId' => $this->sessionId,
+        ];
     }
 } 

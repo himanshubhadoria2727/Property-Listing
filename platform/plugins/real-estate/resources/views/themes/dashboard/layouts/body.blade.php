@@ -7,10 +7,9 @@
     <div class="header__center">
         <a class="ps-logo" href="{{ route('public.account.dashboard') }}">
             @if ($logo = theme_option('logo', theme_option('logo')))
-                <img
-                    src="{{ RvMedia::getImageUrl($logo) }}"
-                    alt="{{ theme_option('site_title') }}"
-                >
+            <img
+                src="{{ RvMedia::getImageUrl($logo) }}"
+                alt="{{ theme_option('site_title') }}">
             @endif
         </a>
     </div>
@@ -18,8 +17,7 @@
         <a
             href="{{ route('public.account.logout') }}"
             title="{{ trans('plugins/real-estate::dashboard.header_logout_link') }}"
-            onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-        >
+            onclick="handleLogout(event)">
             <x-core::icon name="ti ti-logout" />
         </a>
 
@@ -51,20 +49,17 @@
                         <img
                             src="{{ auth('account')->user()->avatar_url }}"
                             alt="{{ auth('account')->user()->name }}"
-                            class="avatar avatar-lg"
-                        />
+                            class="avatar avatar-lg" />
                     </div>
                     <div class="ps-block__right">
-                        
+
                         <p>{{ __('Hello') }}, {{ auth('account')->user()->name }}</p>
                         <small>{{ __('Joined on :date', ['date' => auth('account')->user()->created_at->translatedFormat('M d, Y')]) }}</small>
                     </div>
                     <div class="ps-block__action">
-                        <a
-                            href="{{ route('public.account.logout') }}"
+                        <a href="{{ route('public.account.logout') }}"
                             title="{{ trans('plugins/real-estate::dashboard.header_logout_link') }}"
-                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-                        >
+                            onclick="handleLogout(event)">
                             <x-core::icon name="ti ti-logout" />
                         </a>
                     </div>
@@ -86,13 +81,12 @@
                     <div class="ps-copyright">
                         @php $logo = theme_option('logo', theme_option('logo')); @endphp
                         @if ($logo)
-                            <img
-                                width="100"
-                                height="100"
-                                src="{{ RvMedia::getImageUrl($logo) }}"
-                                alt="{{ theme_option('site_title') }}"
-                                height="40"
-                            >
+                        <img
+                            width="100"
+                            height="100"
+                            src="{{ RvMedia::getImageUrl($logo) }}"
+                            alt="{{ theme_option('site_title') }}"
+                            height="40">
                         @endif
                         <p>{!! BaseHelper::clean(theme_option('copyright')) !!}</p>
                     </div>
@@ -102,34 +96,65 @@
     </div>
     <div
         class="ps-main__wrapper"
-        id="vendor-dashboard"
-    >
+        id="vendor-dashboard">
         <header class="d-flex justify-content-between align-items-center mb-3">
             <h3 class="fs-1">{{ PageTitle::getTitle(false) }}</h3>
 
             @if (auth('account')->user()->store && auth('account')->user()->id)
-                <div class="d-flex align-items-center gap-4">
-                    @if (is_plugin_active('language'))
-                        @include(MarketplaceHelper::viewPath('vendor-dashboard.partials.language-switcher'))
-                    @endif
-                    <a href="{{ auth('account')->user()->url }}" target="_blank" class="d-flex align-items-center gap-2 text-uppercase">
-                        {{ __('View your store') }}
-                        <i class="icon-exit-right"></i>
-                    </a>
-                </div>
+            <div class="d-flex align-items-center gap-4">
+                @if (is_plugin_active('language'))
+                @include(MarketplaceHelper::viewPath('vendor-dashboard.partials.language-switcher'))
+                @endif
+                <a href="{{ auth('account')->user()->url }}" target="_blank" class="d-flex align-items-center gap-2 text-uppercase">
+                    {{ __('View your store') }}
+                    <i class="icon-exit-right"></i>
+                </a>
+            </div>
             @endif
         </header>
 
         <div id="app">
             @if (auth('account')->check() && !auth('account')->user()->canPost())
-                <x-core::alert :title="trans('plugins/real-estate::package.add_credit_warning')">
-                    <a href="{{ route('public.account.packages') }}">
-                        {{ trans('plugins/real-estate::package.add_credit') }}
-                    </a>
-                </x-core::alert>
+            <x-core::alert :title="trans('plugins/real-estate::package.add_credit_warning')">
+                <a href="{{ route('public.account.packages') }}">
+                    {{ trans('plugins/real-estate::package.add_credit') }}
+                </a>
+            </x-core::alert>
             @endif
 
             @yield('content')
         </div>
     </div>
 </main>
+<script>
+    function handleLogout(event) {
+        event.preventDefault();
+
+        const sessionId = localStorage.getItem('sessionId');
+        
+        if (sessionId) {
+            fetch('{{ route('public.account.logout') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ session_id: sessionId })
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Remove session_id from localStorage
+                    localStorage.removeItem('sessionId');
+                    document.getElementById('logout-form').submit();
+                } else {
+                    console.error('Logout request failed.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        } else {
+            document.getElementById('logout-form').submit();
+        }
+    }
+</script>

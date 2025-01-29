@@ -98,10 +98,6 @@ class CityController extends BaseController
     {
         CityForm::createFromModel($city)->setRequest($request)->save();
 
-        // Sync regions
-        $regions = array_map('trim', explode(',', $request->input('regions', ''))); // Trim whitespace
-        $city->regions = $regions; // Save regions directly in the city model
-        $city->save(); // Save the city model again to persist regions
 
         return $this
             ->httpResponse()

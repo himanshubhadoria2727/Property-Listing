@@ -12,6 +12,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class LoginController extends BaseController
 {
@@ -114,7 +115,7 @@ class LoginController extends BaseController
     public function logout(Request $request)
     {
         do_action(AUTH_ACTION_AFTER_LOGOUT_SYSTEM, $request, $request->user());
-
+        Log::info('User ' . $request->user()->username . ' logged out at ' . Carbon::now());
         $this->guard()->logout();
 
         $request->session()->invalidate();

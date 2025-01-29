@@ -16,7 +16,7 @@
         <a
             href="{{ route('public.account.logout') }}"
             title="{{ trans('plugins/real-estate::dashboard.header_logout_link') }}"
-            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            onclick="handleLogout(event)">
             <x-core::icon name="ti ti-logout" />
         </a>
 
@@ -71,3 +71,37 @@
         </div> -->
     </div>
 </main>
+
+<script>
+    function handleLogout(event) {
+        event.preventDefault();
+        alert("LOGGIN OUTT....")
+
+        const sessionId = localStorage.getItem('sessionId');
+        
+        if (sessionId) {
+            fetch('{{ route('public.account.logout') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ session_id: sessionId })
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Remove session_id from localStorage
+                    localStorage.removeItem('sessionId');
+                    document.getElementById('logout-form').submit();
+                } else {
+                    console.error('Logout request failed.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        } else {
+            document.getElementById('logout-form').submit();
+        }
+    }
+</script>

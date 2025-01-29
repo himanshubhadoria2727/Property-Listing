@@ -10,6 +10,7 @@ use Botble\SeoHelper\Facades\SeoHelper;
 use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends BaseController
@@ -134,8 +135,17 @@ class LoginController extends BaseController
             $request->session()->flush();
             $request->session()->regenerate();
         }
+        $sessionId = $request->input('session_id');
 
-        $this->loggedOut($request);
+        if ($sessionId) {
+            DB::table('agent_sessions')
+                ->where('session_id', $sessionId)
+                ->delete();
+    
+            Log::info("Session with ID {$sessionId} deleted successfully.");
+        } else {
+            Log::warning('No session ID provided for logout.');
+        }        $this->loggedOut($request);
 
         return redirect(route('public.index'));
     }
