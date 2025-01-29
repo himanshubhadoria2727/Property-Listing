@@ -25,7 +25,7 @@ class SelectLocationField extends FormField
             'country' => 'country_id',
             'state' => 'state_id',
             'city' => 'city_id',
-            'region' => 'region_id',
+            'region' => 'region',
         ];
 
         $this->locationKeys = array_filter(array_merge($default, Arr::get($options, 'locationKeys', [])));
@@ -185,6 +185,9 @@ class SelectLocationField extends FormField
                 ->where('id', $cityId)
                 ->value('regions'); // Assuming 'regions' is a JSON or array column
         }
+
+        // Convert regions to key-value pairs for the select options
+        $regions = collect($regions)->mapWithKeys(fn($region) => [$region => $region])->all();
 
         $attr = array_merge($this->getOption('attr', []), [
             'id' => $regionKey,

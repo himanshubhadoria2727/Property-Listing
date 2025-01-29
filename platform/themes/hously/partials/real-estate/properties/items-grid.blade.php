@@ -22,7 +22,6 @@
                 <div id="chatsModal" class="hidden">
                     <div data-property-id="{{ $property->id }}" data-user-id="{{ $property->author_id }}" onclick="toggleModal('chatsModal', this.dataset.propertyId, this.dataset.userId)"></div>
                 </div>
-                <p>Debug: Author ID is {{ $property->author_id ?? 'not set' }}</p>
 
                 <button
                     type="button"

@@ -6,6 +6,7 @@ use Botble\RealEstate\Enums\ModerationStatusEnum;
 use Botble\RealEstate\Enums\PropertyStatusEnum;
 use Botble\Support\Http\Requests\Request;
 use Illuminate\Validation\Rule;
+use Botble\Location\Models\City;
 
 class PropertyRequest extends Request
 {
@@ -29,7 +30,12 @@ class PropertyRequest extends Request
             'custom_fields.*.name' => ['required', 'string', 'max:255'],
             'custom_fields.*.value' => ['required', 'string', 'max:255'],
             'unique_id' => 'nullable|string|max:120|unique:re_properties,unique_id,' . $this->route('property'),
-            'region' => 'nullable|string|max:255',
+            'region' => 'nullable|string|max:255|in:' . implode(',', $this->getRegionValues()),
         ];
+    }
+
+    protected function getRegionValues(): array
+    {
+        return City::all()->pluck('regions')->flatten()->unique()->toArray();
     }
 }

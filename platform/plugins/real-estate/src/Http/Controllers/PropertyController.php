@@ -153,15 +153,41 @@ class PropertyController extends BaseController
     public function destroy(int|string $id, Request $request)
     {
         try {
-            $property = Property::query()->findOrFail($id);
+            $decodedId = json_decode($id, true);
+            $propertyId = $decodedId['id'];
+            $property = Property::query()->find($propertyId);
+
+            if (!$property) {
+                Log::warning('Attempted to delete a non-existent property', [
+                    'property_id' => $id,
+                    'user_id' => auth('account')->id(),
+                ]);
+
+                return $this
+                    ->httpResponse()
+                    ->setError()
+                    ->setMessage(trans('core/base::notices.not_found_message'));
+            }
+
             $property->delete();
 
             event(new DeletedContentEvent(PROPERTY_MODULE_SCREEN_NAME, $request, $property));
+
+            Log::info('Property deleted successfully', [
+                'property_id' => $property->id,
+                'user_id' => auth('account')->id(),
+            ]);
 
             return $this
                 ->httpResponse()
                 ->setMessage(trans('core/base::notices.delete_success_message'));
         } catch (Exception $exception) {
+            Log::error('Error deleting property', [
+                'property_id' => $id,
+                'user_id' => auth('account')->id(),
+                'error' => $exception->getMessage(),
+            ]);
+
             return $this
                 ->httpResponse()
                 ->setError()
