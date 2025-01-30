@@ -204,7 +204,12 @@ abstract class TableAbstract extends DataTable implements ExtensibleContract
 
         return $this->builder()
             ->columns($this->getColumns())
-            ->ajax(['url' => $this->getAjaxUrl(), 'method' => 'POST'])
+            ->postAjax([
+                'data' => 'function(d) {
+                    d._token = "' . csrf_token() . '";
+                }',
+            ])
+            // ->ajax(['url' => $this->getAjaxUrl(), 'method' => 'POST'])
             ->parameters([
                 'dom' => $this->getDom(),
                 'buttons' => $this->getBuilderParameters(),
