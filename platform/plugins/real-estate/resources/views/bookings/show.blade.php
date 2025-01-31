@@ -1,88 +1,169 @@
 @extends('plugins/real-estate::themes.dashboard.layouts.master')
 
 @section('content')
-<div style="max-width: 1200px; margin: 0 auto; padding: 24px;">
+<div class="container">
     @auth('account')
 
     @php
     // Fetch the authenticated user's ID
     $userId = auth('account')->id();
 
-    // Check if the user ID is valid
+    // Log the authenticated user ID
     \Log::info('Authenticated User ID:', ['user_id' => $userId]);
-
-    // Fetch future bookings for the authenticated user with property details
-    $futureBookings = \Botble\RealEstate\Models\Booking::where('user_id', $userId)
-    ->where('scheduled_at', '>', now()->addMinutes(30))
-    ->with('property') // Eager load the property relationship
-    ->get();
 
     // Fetch properties owned by the authenticated user
     $ownedProperties = \Botble\RealEstate\Models\Property::where('author_id', $userId)->get();
 
     // Log the count of owned properties
     \Log::info('Count of Owned Properties:', ['count' => $ownedProperties->count()]);
-
-    // Count bookings for each owned property
-    $propertyBookings = [];
-    foreach ($ownedProperties as $property) {
-    $propertyBookings[] = [
-    'id' => $property->id, // Include the property ID
-    'name' => $property->name,
-    'bookings' => $property->bookings()->where('scheduled_at', '>', now())->where('live', true)->with('user')->get() // Eager load user relationship
-    ];
-    }
     @endphp
 
-    <!-- Main container with flex layout for the section -->
-    <div style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- Main container with grid layout for the section -->
+    <div class="properties-container">
 
-        <!-- Bookings for User's Properties by Others -->
-        <div style="flex: 1; background: linear-gradient(to bottom, #f3f4f6, #ffffff); padding: 24px; border-radius: 8px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); transition: box-shadow 0.3s;">
-            <h3 style="font-weight: bold; font-size: 24px; color: #1a202c; margin-bottom: 16px;">Live Tour Bookings for Your Properties</h3>
+        <!-- Properties Owned by User -->
+        <div class="properties-card">
+            <h3>Your Properties</h3>
 
-            @if (count($propertyBookings) > 0)
-            @foreach ($propertyBookings as $property)
-            <div style="margin-bottom: 24px;">
-                <h4 style="font-size: 18px; font-weight: 600; color: #1a202c;">{{ $property['name'] }}</h4>
-                @if (count($property['bookings']) > 0)
-                <ul style="list-style-type: none; padding-left: 0; margin-top: 16px;">
-                    @foreach ($property['bookings'] as $booking)
-                    <li style="display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; padding: 16px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); transition: transform 0.3s; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div style="width: 40px; height: 40px; background-color: #e6f4f7; color: #4c9f70; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <div>
-                                <span style="display: block; font-size: 18px; font-weight: 600; color: #1a202c;">
-                                    {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('Y-m-d H:i') }}
-                                </span>
-                                <span style="font-size: 14px; color: #718096;">Booked by {{ $booking->user->name }}</span>
-                            </div>
-                        </div>
-                    </li>
-                    @endforeach
-                </ul>
-                <div style="margin-top: 16px;">
-                    <a href="{{ route('bookings.index', $property['id']) }}" style="display: inline-flex; align-items: center; background-color: #4299e1; color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; text-decoration: none; transition: background-color 0.2s;">
-                        <i class="fas fa-video" style="margin-right: 8px;"></i> Broadcast
-                    </a>
+            @if (count($ownedProperties) > 0)
+            <div class="grid">
+                @foreach ($ownedProperties as $property)
+                <div class="property-card">
+                    <div class="property-details">
+                        <h4>{{ $property->name }}</h4>
+                        <p>Location: {{ $property->location }}</p>
+                        <p>{{ $property->description }}</p>
+                    </div>
+                    <div class="broadcast-button-container">
+                        <a href="{{ route('bookings.index', $property['id']) }}" class="broadcast-button">
+                            <i class="fas fa-video"></i>  Broadcast
+                        </a>
+                    </div>
                 </div>
-                @else
-                <p style="font-size: 18px; color: #4a5568;">No bookings yet.</p>
-                @endif
+                @endforeach
             </div>
-            @endforeach
             @else
-            <p style="font-size: 20px; color: #e53e3e;">You do not own any properties.</p>
+            <p class="no-properties">You do not own any properties.</p>
             @endif
         </div>
     </div>
 
     @else
-    <div style="text-align: center; padding: 32px; background: linear-gradient(to bottom, #f3f4f6, #ffffff); border-radius: 8px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
-        <p style="font-size: 20px; color: #4a5568;">Please log in to view your bookings.</p>
+    <div class="login-prompt">
+        <p>Please log in to view your properties.</p>
     </div>
     @endauth
 </div>
+
+<style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        border-radius: 8px; /* Rounded corners for a softer look */
+    }
+
+    .properties-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .properties-card {
+        background: #ffffff;
+        padding: 24px;
+        border-radius: 12px; /* Increased border radius for a modern feel */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Softer shadow */
+    }
+
+    h3 {
+        font-weight: bold;
+        font-size: 26px; /* Slightly larger font size */
+        color: #2d3748; /* Darker color for better readability */
+        margin-bottom: 16px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+    }
+
+    .property-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px; /* Increased border radius */
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        transition: box-shadow 0.2s; /* Smooth shadow transition */
+    }
+
+    .property-card:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* Shadow on hover */
+    }
+
+    .property-details {
+        flex: 1;
+    }
+
+    .property-details h4 {
+        font-size: 22px; /* Increased font size */
+        font-weight: 600;
+        color: #2d3748; /* Darker color */
+    }
+
+    .property-details p {
+        font-size: 16px;
+        color: #4a5568;
+    }
+
+    .broadcast-button-container {
+        width: fit-content;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .broadcast-button {
+        width: fit-content;
+        display: inline-flex;
+        align-items: center;
+        background-color: #3182ce; /* Updated to a more modern blue */
+        color: white;
+        font-weight: bold;
+        gap: 10px;
+        padding: 12px 24px;
+        border-radius: 9999px;
+        text-decoration: none;
+        transition: background-color 0.2s, transform 0.2s; /* Added transform transition */
+    }
+
+    .broadcast-button:hover {
+        background-color: #2b6cb0; /* Darker blue on hover */
+        transform: scale(1.05); /* Slightly enlarge on hover */
+    }
+
+    .no-properties {
+        font-size: 20px;
+        color: #e53e3e;
+    }
+
+    .login-prompt {
+        text-align: center;
+        padding: 32px;
+        background: linear-gradient(to bottom, #f3f4f6, #ffffff);
+        border-radius: 12px; /* Increased border radius */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        h3 {
+            font-size: 22px; /* Adjusted for smaller screens */
+        }
+        .broadcast-button {
+            width: 100%;
+            text-align: center;
+            margin-top: 10px;
+        }
+    }
+</style>
 @endsection

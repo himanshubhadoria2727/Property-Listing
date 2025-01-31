@@ -1,5 +1,6 @@
 import AgoraRTC from "agora-rtc-sdk-ng";
 import axios from "axios";
+import { event } from "jquery";
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 
@@ -80,7 +81,7 @@ function fetchToken(channelName) {
 }
 
 // Function to join an Agora audio call
-async function joinAudioCall(channelName, token) {
+async function joinAudioCall(channelName, token,event) {
     console.log("Joining audio call on channel:", channelName);
     const appId = process.env.MIX_AGORA_APP_ID;
     console.log("appId:", appId);
@@ -122,7 +123,7 @@ async function joinAudioCall(channelName, token) {
                 console.log("Remote user stopped audio.");
             }
         });
-
+        
         await client.join(appId, channelName, token, uid);
         console.log("Successfully joined Agora channel:", channelName);
         isInCall = true;
@@ -147,6 +148,7 @@ async function notifyCallEnded(channelName) {
         const response = await axios.post("/account/call/end", {
             channel: channelName,
             userId: window.userId,
+            sessionId:null,
         });
         localStorage.removeItem('onCall');
         console.log("Call ended notification sent:", response.data);
@@ -181,10 +183,11 @@ async function notifyCallRejected(channelName) {
 }
 
 // Add this function near other notification functions
-async function notifyCallRinging(channelName) {
+async function notifyCallRinging(channelName,sessionId) {
     try {
         const response = await axios.post("/account/call/ringing", {
             channelName,
+            sessionId: sessionId,
             userId: window.userId,
         });
         console.log("Call ringing notification sent:", response.data);
@@ -321,7 +324,7 @@ function showCallPopup(channelName, token, event) {
     acceptButton.onclick = async () => {
         try {
             stopRingtone(); // Stop ringtone when call is accepted
-            await joinAudioCall(channelName, token);
+            await joinAudioCall(channelName, token,event);
             modal.remove();
             showCallControls();
         } catch (error) {
@@ -345,6 +348,12 @@ function showCallPopup(channelName, token, event) {
         "ease-in-out"
     );
     declineButton.onclick = async () => {
+        const data = await axios.post("/create/call-logs", {
+            user_id: event.callerId,
+            call_type: "connected",
+            agent_id: userId,
+            channel: channel,
+        });
         try {
             stopRingtone(); // Stop ringtone when call is declined
             await notifyCallRejected(channelName);
@@ -573,7 +582,7 @@ async function initiateCall(userId) {
     currentChannel
     .listen('.incoming.call', async (event) => {
         console.log('Incoming call event received:', event);
-    
+        sessionId = event.sessionId;
         if (activeUserId === Number(event.userId)) {
             console.log('Call status check - isInCall:', isInCall, 'isCalling:', isCalling);
             // Check if user is already in a call
@@ -584,7 +593,7 @@ async function initiateCall(userId) {
             }
     
             // Continue with normal call flow if not busy
-            await notifyCallRinging(event.channel);
+            await notifyCallRinging(event.channel, event.sessionId);
             showCallPopup(event.channel, token, event);
         }
     }) 

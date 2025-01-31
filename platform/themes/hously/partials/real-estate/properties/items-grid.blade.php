@@ -31,7 +31,7 @@
                     onclick="startCall({{ json_encode(DB::table('re_accounts')->where('id', $property->author_id)->value(DB::raw("CONCAT(first_name, ' ', last_name)")) ?? 'User') }}, {{ $property->author_id }}, {{ $property->id }})">
                     <i class="mdi mdi-phone"></i>
                 </button>
-                
+
             </div>
             @if($property->images && $imagesCount = count($property->images))
             <div class="absolute top-6 start-6">
@@ -157,13 +157,13 @@
     let sessionId; // Declare a global variable for sessionId
     window.addEventListener('DOMContentLoaded', () => {
         // Remove a specific item from localStorage
-        
-            axios.post('/account/call/end', {
-                channel: channel,
-                userId: currentCallUserId,
-                sessionId: sessionId
-            });
-            localStorage.removeItem('onCall');    
+
+        axios.post('/account/call/end', {
+            channel: channel,
+            userId: currentCallUserId,
+            sessionId: sessionId
+        });
+        localStorage.removeItem('onCall');
     });
 
     async function fetchToken(channelName, userId) {
@@ -194,10 +194,21 @@
                 userId: currentCallUserId,
                 channel: currentCallChannel,
             });
-            
-            sessionId = response.data.sessionId;  // Capture the session ID
-            console.log('Session ID:', sessionId);         
 
+            sessionId = response.data.sessionId; // Capture the session ID
+            console.log('Session ID:', sessionId);
+            // Set a timeout for the call
+            const callTimeout = setTimeout(async () => {
+                // Log missed call
+                await axios.post('/create/call-logs', {
+                    user_id: userId,
+                    call_type: "missed",
+                    agent_id: getSessionId(),
+                    channel: currentCallChannel,
+                });
+                console.log('Missed call logged');
+                endCall(); // End the call after logging
+            }, 30000); // 30 seconds timeout (adjust as needed)
             // Listen for call events
             window.Echo.channel(`user.${userId}`)
                 .listen('.call.ringing', (event) => {
@@ -232,6 +243,7 @@
                 .listen('.call.rejected', (event) => {
                     if (event.sessionId === sessionId) { // Check session ID
                         console.log('Call rejected event received:', event);
+                        clearTimeout(callTimeout); // Clear the timeout
                         document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Rejected</p>';
                         setTimeout(() => {
                             // Clean up and hide modal
@@ -252,6 +264,7 @@
                     }
                 })
                 .listen('.call.busy', (data) => {
+
                     if (data.callerId === window.userId && data.sessionId === sessionId) { // Check session ID
                         isCallBusy = true;
                         console.log('Call busy event received:', data);
@@ -283,14 +296,14 @@
     }
 
     // Start audio call (without video)
-    async function startAudioCallNow(userId,sessionId) {
+    async function startAudioCallNow(userId, sessionId) {
         if (isCalling) {
             console.log('Already in a call');
             return;
         }
 
         const channel = `channel-${sessionId}`;
-        const appId = '{{ env('AGORA_APP_ID') }}' || '84220a4dc86144bb9457af1cd9965016'; // Replace 'fallback_app_id' with a valid ID for testing
+        const appId = '{{ env('AGORA_APP_ID ') }}' || '84220a4dc86144bb9457af1cd9965016'; // Replace 'fallback_app_id' with a valid ID for testing
         if (!appId) {
             console.error('Agora App ID is not set. Please check your environment configuration.');
             return; // Prevent further execution if App ID is not valid
@@ -328,6 +341,12 @@
                         document.getElementById('callStatus').innerHTML =
                             '<p style="color: #48bb78;">Call Connected</p>';
                         localStorage.setItem('onCall', 'true');
+                        const data = await axios.post("/create/call-logs", {
+                            user_id: window.userId,
+                            call_type: "connected",
+                            agent_id: userId,
+                            channel: channel,
+                        });
                     }
                 });
 

@@ -1,73 +1,71 @@
 @extends('plugins/real-estate::themes.dashboard.layouts.master')
 
 @section('content')
-<div style="max-width: 1200px; margin: 0 auto; padding: 24px;">
+<div style="">
     @auth('account')
 
     @php
     $userId = auth('account')->id();
 
-    // Fetch future bookings for the authenticated user with property details
-    $futureBookings = \Botble\RealEstate\Models\Booking::where('user_id', $userId)
-    ->where('scheduled_at', '>', now())
-    ->with('property')
-    ->get();
-
-    // Fetch properties owned by the authenticated user
-    $ownedProperties = \Botble\RealEstate\Models\Property::where('author_id', $userId)->get();
-
-    // Count bookings for each owned property
-    $propertyBookings = [];
-    foreach ($ownedProperties as $property) {
-    $propertyBookings[] = [
-    'id' => $property->id,
-    'name' => $property->name,
-    'bookings' => $property->bookings()->where('scheduled_at', '>', now())->where('call', true)->with('user')->get()
-    ];
+    // Fetch call logs for the current agent with proper column names
+    try {
+    $callLogs = \DB::table('call_logs')
+    ->join('re_accounts', 'call_logs.user_id', '=', 're_accounts.id')
+    ->select('call_logs.*', 're_accounts.username as caller_name', 're_accounts.id as caller_id')
+    ->where('agent_id', $userId)
+    ->orderBy('created_at', 'desc')
+    ->paginate(8);
+    } catch (\Exception $e) {
+    $callLogs = collect([]);
+    $queryError = $e->getMessage();
     }
     @endphp
 
     <div style="display: flex; flex-direction: column; gap: 24px;">
-        <!-- Bookings for User's Properties by Others -->
-        <div style="flex: 1; background: linear-gradient(to bottom, #f3f4f6, #ffffff); padding: 24px; border-radius: 8px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); transition: box-shadow 0.3s;">
-            <h3 style="font-weight: bold; font-size: 24px; color: #1a202c; margin-bottom: 16px;">Call Bookings for Your Properties</h3>
+        <!-- Call Logs Section -->
+        <div style="background: #ffffff; padding: 24px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+            <h3 style="font-weight: bold; font-size: 24px; color: #1a202c; margin-bottom: 16px;">Your Call Logs</h3>
 
-            @if (count($propertyBookings) > 0)
-            @foreach ($propertyBookings as $property)
-            <div style="margin-bottom: 24px;">
-                <h4 style="font-size: 18px; font-weight: 600; color: #1a202c;">{{ $property['name'] }}</h4>
-                @if (count($property['bookings']) > 0)
-                @foreach ($property['bookings'] as $booking)
-                <div style="margin-bottom: 24px;">
-                    <div style="background-color: #ffffff; padding: 16px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div style="width: 40px; height: 40px; background-color: #e6f4f7; color: #4c9f70; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-phone-alt"></i>
-                            </div>
-                            <div>
-                                <span style="font-size: 18px; font-weight: 600; color: #1a202c;">
-                                    {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('Y-m-d H:i') }}
+            @if($callLogs->count() > 0)
+            <div class="table-responsive">
+                <table class="table table-striped" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background-color: #f1f1f1; color: #333;">
+                            <th style="padding: 12px; text-align: left;">Caller Name</th>
+                            <th style="padding: 12px; text-align: left;">Date & Time</th>
+                            <th style="padding: 12px; text-align: left;">Status</th>
+                            <th style="padding: 12px; text-align: left;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($callLogs as $log)
+                        <tr style="border-bottom: 1px solid #eaeaea;">
+                            <td style="padding: 12px;">{{ $log->caller_name }}</td>
+                            <td style="padding: 12px;">{{ \Carbon\Carbon::parse($log->created_at)->format('M d, Y H:i:s') }}</td>
+                            <td style="padding: 12px;">
+                                <span class="badge badge-{{ $log->call_type === 'connected' ? 'success' : 'warning' }}" style="padding: 6px 12px; border-radius: 12px; background-color: {{ $log->call_type === 'connected' ? '#48bb78' : '#f6ad55' }}; color: white;">
+                                    {{ ucfirst($log->call_type) }}
                                 </span>
-                                <span style="font-size: 14px; color: #718096;">Booked by {{ $booking->user->name }}</span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <button onclick="startCall('{{ $booking->user->name }}', '{{ $booking->user->id }}', '{{ $property['id'] }}')"
-                                style="display: inline-flex; align-items: center; background-color: #4299e1; color: white; font-weight: bold; padding: 12px 24px; border-radius: 9999px; border: none; text-decoration: none; transition: background-color 0.2s, box-shadow 0.2s;">
-                                <i class="fas fa-phone-alt" style="margin-right: 8px;"></i> Start Call
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-                @else
-                <p style="font-size: 18px; color: #4a5568;">No bookings yet.</p>
-                @endif
+                            </td>
+                            <td style="padding: 12px;">
+                                <button onclick="startCall('{{$log->caller_name}}','{{ $log->caller_id }}')" class="btn btn-primary btn-sm" style="background-color: #3182ce; border: none; border-radius: 5px; padding: 8px 12px; color: white;">
+                                    <i class="fas fa-phone"></i>
+                                </button>
+                                <button onclick="deleteCallLog({{ $log->id }})" class="btn btn-danger btn-sm" style="background-color: #e53e3e; border: none; border-radius: 5px; padding: 8px 12px; color: white; margin-left: 10px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-            @endforeach
+            <!-- Pagination Links -->
+            <div style="margin-top: 20px;" class="pagination">
+                {{ $callLogs->links() }}
+            </div>
             @else
-            <p style="font-size: 20px; color: #e53e3e;">You do not own any properties.</p>
+            <p style="font-size: 16px; color: #718096;">No call logs found.</p>
             @endif
         </div>
     </div>
@@ -94,9 +92,10 @@
         </div>
     </div>
 
+
     @else
-    <div style="text-align: center; padding: 32px; background: linear-gradient(to bottom, #f3f4f6, #ffffff); border-radius: 8px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
-        <p style="font-size: 20px; color: #4a5568;">Please log in to view your bookings.</p>
+    <div style="text-align: center; padding: 32px; background: #ffffff; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
+        <p style="font-size: 20px; color: #4a5568;">Please log in to view your call logs.</p>
     </div>
     @endauth
 </div>
@@ -115,16 +114,22 @@
     let currentCallUserId = null;
     let currentCallId = null;
     window.addEventListener('DOMContentLoaded', () => {
-    // Remove a specific item from localStorage
-    localStorage.removeItem('onCall');
-});
+        // Remove a specific item from localStorage
+        localStorage.removeItem('onCall');
+    });
+
+    // Function to get session ID from local storage
+    function getSessionId() {
+        return localStorage.getItem('sessionId'); // Adjust this if your session ID is stored differently
+    }
 
     // Fetch the token for Agora client
-    async function fetchToken(channelName,userId) {
+    async function fetchToken(channelName, userId) {
         try {
             const response = await axios.post('/account/agora/token', {
                 channelName,
-                uid
+                uid,
+                sessionId: getSessionId() // Include sessionId
             });
             console.log('Token fetched successfully:', response.data);
             return response.data;
@@ -134,12 +139,25 @@
         }
     }
 
+    // Add this function to create/remove blur overlay
+    function toggleBackgroundBlur(show) {
+        const existingOverlay = document.getElementById('blur-overlay');
+        if (show && !existingOverlay) {
+            const overlay = document.createElement('div');
+            overlay.id = 'blur-overlay';
+            overlay.className = 'blur-background';
+            document.body.appendChild(overlay);
+        } else if (!show && existingOverlay) {
+            existingOverlay.remove();
+        }
+    }
+
     // Initialize Laravel Echo listener
     window.Echo.channel(`user.${userId}`)
         .listen('.call.ringing', (data) => {
             console.log('Call ringing:', data);
             if (data.channel === currentCallChannel) {
-                document.getElementById('callStatus').innerHTML = 
+                document.getElementById('callStatus').innerHTML =
                     '<p style="color: #4299e1;">Ringing...</p>';
             }
         })
@@ -156,61 +174,64 @@
             }
         });
 
-    // Add this function to create/remove blur overlay
-    function toggleBackgroundBlur(show) {
-        const existingOverlay = document.getElementById('blur-overlay');
-        if (show && !existingOverlay) {
-            const overlay = document.createElement('div');
-            overlay.id = 'blur-overlay';
-            overlay.className = 'blur-background';
-            document.body.appendChild(overlay);
-        } else if (!show && existingOverlay) {
-            existingOverlay.remove();
-        }
-    }
+
 
     // Start calling (audio-only)
-    async function startCall(userName, userId, propertyId) {
+    async function startCall(userName, userId) {
+        console.log('Starting call:', userName, userId);
         try {
             currentCallUserId = userId;
             currentCallChannel = `channel-${userId}`;
-            
+
             document.getElementById('callModal').style.display = 'block';
             toggleBackgroundBlur(true);
-            
+
             document.getElementById('callUserName').innerText = `Calling ${userName}...`;
             document.getElementById('callStatus').innerHTML = '<p style="color: #4299e1;">Connecting...</p>';
-            
+
             // Notify the backend about the call
             const response = await axios.post('/account/call/notify', {
-                userId,
+                userId: currentCallUserId,
                 channel: currentCallChannel,
-                callerId:window.userId,
+                sessionId: getSessionId() // Include sessionId
             });
 
             // Store the call ID
             currentCallId = response.data.callId;
             console.log('Call ID:', currentCallId);
 
+            // Set a timeout for the call
+            const callTimeout = setTimeout(async () => {
+                // Log missed call
+                await axios.post('/create/call-logs', {
+                    user_id: userId,
+                    call_type: "missed",
+                    agent_id: getSessionId(),
+                    channel: currentCallChannel,
+                });
+                console.log('Missed call logged');
+                endCall(); // End the call after logging
+            }, 30000); // 30 seconds timeout (adjust as needed)
+
             // Listen for call events
             window.Echo.channel(`user.${userId}`)
                 .listen('.call.busy', (event) => {
                     if (event.callerId === window.userId) {
                         isCallBusy = true;
-                        document.getElementById('callStatus').innerHTML = 
+                        document.getElementById('callStatus').innerHTML =
                             '<p style="color: #e53e3e;">User is busy</p>';
-                            
-                        setTimeout(() =>{
-                        document.getElementById('callModal').style.display = 'none';
-                        toggleBackgroundBlur(false); // Remove blur when call ends
-                        stopCall();
-                    }, 2000);
+                        clearTimeout(callTimeout); // Clear the timeout
+                        setTimeout(() => {
+                            document.getElementById('callModal').style.display = 'none';
+                            toggleBackgroundBlur(false); // Remove blur when call ends
+                            stopCall();
+                        }, 2000);
                     }
                 })
                 .listen('.call.ringing', (event) => {
                     console.log('Call ringing event received:', event);
                     if (event.channel === currentCallChannel) {
-                        document.getElementById('callStatus').innerHTML = 
+                        document.getElementById('callStatus').innerHTML =
                             '<p style="color: #4299e1;">Ringing...</p>';
                     }
                 })
@@ -254,11 +275,11 @@
                         endCall();
                     }, 2000);
                 });
-            
+
             await startAudioCall(userId);
         } catch (error) {
             if (error.response && error.response.status === 409) {
-                document.getElementById('callStatus').innerHTML = 
+                document.getElementById('callStatus').innerHTML =
                     '<p style="color: #e53e3e;">User is busy</p>';
                 setTimeout(() => {
                     document.getElementById('callModal').style.display = 'none';
@@ -266,7 +287,7 @@
                 }, 2000);
             } else {
                 console.error('Error in startCall:', error);
-                document.getElementById('callStatus').innerHTML = 
+                document.getElementById('callStatus').innerHTML =
                     '<p style="color: #e53e3e;">Failed to connect. Please try again.</p>';
             }
             toggleBackgroundBlur(false);
@@ -281,11 +302,11 @@
         }
 
         const channel = `channel-${userId}`;
-        const appId = '{{ env('AGORA_APP_ID') }}';
+        const appId = '{{ env("AGORA_APP_ID") }}';
 
         try {
             // Fetch token
-            const token = await fetchToken(channel,userId);
+            const token = await fetchToken(channel, userId);
 
             // Create client if not exists
             if (!client) {
@@ -294,11 +315,11 @@
                     codec: 'h264'
                 });
 
-         
+
                 // Set up remote user handling
                 client.on('user-published', async (remoteUser, mediaType) => {
                     console.log('Remote user published:', remoteUser.uid, mediaType);
-                    
+
                     await client.subscribe(remoteUser, mediaType);
                     console.log('Subscribed to remote user:', remoteUser.uid);
 
@@ -306,8 +327,17 @@
                         remoteUsers[remoteUser.uid] = remoteUser;
                         remoteUser.audioTrack.play();
                         console.log('Playing remote audio');
-                        
-                        
+
+                        // Update UI to show connected state
+                        document.getElementById('callStatus').innerHTML =
+                            '<p style="color: #48bb78;">Call Connected</p>';
+                        localStorage.setItem('onCall', 'true');
+                        const data = await axios.post("/create/call-logs", {
+                            user_id: userId,
+                            call_type: "connected",
+                            agent_id: getSessionId(),
+                            channel: channel,
+                        });
                     }
                 });
 
@@ -319,6 +349,14 @@
                         }
                     }
                 });
+
+                const response = await axios.post("/agent/session/update", {
+                    agentId: window.userId,
+                    is_available: false,
+                    session_id: getSessionId(),
+                });
+
+                console.log("Session created:", response.data.message);
 
                 client.on('user-left', (remoteUser) => {
                     console.log('Remote user left:', remoteUser.uid);
@@ -333,7 +371,7 @@
             await client.join(appId, channel, token, uid);
             console.log('Joined channel:', channel);
             // Update UI to show connected state
-            
+
             localTracks.audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
                 encoderConfig: {
                     sampleRate: 48000,
@@ -344,16 +382,11 @@
 
             await client.publish([localTracks.audioTrack]);
             console.log('Published local audio track');
-            
-            isCalling = true;
-            if(!isCallBusy){
-                document.getElementById('callStatus').innerHTML = '<p style="color: #48bb78;">Call Connected</p>';
-                localStorage.setItem('onCall', 'true');
-            }
 
+            isCalling = true;
         } catch (error) {
             console.error('Error in startAudioCall:', error);
-            document.getElementById('callStatus').innerHTML = 
+            document.getElementById('callStatus').innerHTML =
                 '<p style="color: #e53e3e;">Call Failed</p>';
             throw error;
         }
@@ -368,9 +401,9 @@
 
         try {
             await localTracks.audioTrack.setEnabled(!currentState);
-            
-            muteButton.innerHTML = currentState ? 
-                '<i class="fas fa-microphone"></i> Unmute' : 
+
+            muteButton.innerHTML = currentState ?
+                '<i class="fas fa-microphone"></i> Unmute' :
                 '<i class="fas fa-microphone-slash"></i> Mute';
             muteButton.style.backgroundColor = currentState ? '#f56565' : '#48bb78';
         } catch (error) {
@@ -384,19 +417,30 @@
             if (currentCallUserId && currentCallChannel) {
                 await axios.post('/account/call/end', {
                     userId: currentCallUserId,
-                    channel: currentCallChannel
+                    channel: currentCallChannel,
+                    sessionId: getSessionId() // Include sessionId
                 });
             }
             localStorage.removeItem('onCall');
             await stopCall();
             document.getElementById('callModal').style.display = 'none';
             toggleBackgroundBlur(false); // Remove blur when call ends
-            
+
             currentCallChannel = null;
             currentCallUserId = null;
         } catch (error) {
             console.error('Error ending call:', error);
             toggleBackgroundBlur(false); // Remove blur if error occurs
+        }
+        try {
+            const response = await axios.post('/agent/session/update', {
+                agentId: window.userId,
+                is_available: true,
+                session_id: getSessionId(),
+            });
+            console.log(response.data.message);
+        } catch (error) {
+            console.error("Error updating agent session:", error);
         }
     }
 
@@ -410,7 +454,7 @@
                 localTracks.audioTrack.stop();
                 localTracks.audioTrack.close();
             }
-            
+
             // Stop all remote audio tracks
             Object.values(remoteUsers).forEach(user => {
                 if (user.audioTrack) {
@@ -423,10 +467,10 @@
 
             // Leave the channel
             await client?.leave();
-            
+
             isCalling = false;
             console.log('Call ended successfully');
-            
+
 
         } catch (error) {
             console.error('Error stopping call:', error);
@@ -438,32 +482,6 @@
         await stopCall();
     });
 
-    // Clean up when leaving the page
-    window.addEventListener('beforeunload', async () => {
-        await stopCall();
-    });
-
-    function handleIncomingCall(data) {
-        const modal = document.getElementById('callModal');
-        toggleBackgroundBlur(true); // Add blur for incoming calls
-        
-        const userName = data.userName || 'Unknown User';
-        
-        document.getElementById('callUserName').innerText = `Incoming call from ${userName}`;
-        document.getElementById('callControls').innerHTML = `
-            <button onclick="acceptCall('${data.channel}', ${data.userId})" 
-                style="background-color: #48bb78; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600;">
-                <i class="fas fa-phone-alt"></i> Accept
-            </button>
-            <button onclick="rejectCall('${data.channel}', ${data.userId})"
-                style="background-color: #e53e3e; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600;">
-                <i class="fas fa-phone-slash"></i> Reject
-            </button>
-        `;
-        
-        modal.style.display = 'block';
-    }
-
     function handleCallRejected() {
         document.getElementById('callStatus').innerHTML = '<p style="color: #e53e3e;">Call Rejected</p>';
         setTimeout(() => {
@@ -471,40 +489,18 @@
         }, 2000);
     }
 
-    async function acceptCall(channel, callerId) {
-        try {
-            currentCallChannel = channel;
-            currentCallUserId = userId;
-            
-            document.getElementById('callControls').innerHTML = `
-                <button onclick="toggleMute()" id="muteButton"
-                    style="background-color: #48bb78; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600;">
-                    <i class="fas fa-microphone-slash"></i> Mute
-                </button>
-                <button onclick="endCall()"
-                    style="background-color: #e53e3e; color: white; padding: 14px 28px; border-radius: 50px; border: none; font-weight: 600;">
-                    <i class="fas fa-phone-alt"></i> End Call
-                </button>
-            `;
-            
-            await startAudioCall(callerId);
-        } catch (error) {
-            console.error('Error accepting call:', error);
-        }
-    }
-
-    async function rejectCall(channel, callerId) {
-        try {
-            await axios.post('/account/call/reject', {
-                userId: callerId,
-                channel: channel
-            });
-            
-            document.getElementById('callModal').style.display = 'none';
-            toggleBackgroundBlur(false); // Remove blur when call is rejected
-        } catch (error) {
-            console.error('Error rejecting call:', error);
-            toggleBackgroundBlur(false); // Remove blur if error occurs
+    // Function to delete a call log
+    async function deleteCallLog(logId) {
+        if (confirm('Are you sure you want to delete this call log?')) {
+            try {
+                const response = await axios.delete(`/call-logs/${logId}`);
+                if (response.status === 200) {
+                    location.reload(); // Reload the page to reflect changes
+                }
+            } catch (error) {
+                console.error('Error deleting call log:', error);
+                alert('Failed to delete the call log. Please try again.');
+            }
         }
     }
 </script>
@@ -549,5 +545,14 @@
         z-index: 1000;
     }
 </style>
+
+<!-- Call Modal Structure -->
+<div id="callModal" style="display: none;">
+    <div style="padding: 20px; background: white; border-radius: 8px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);">
+        <h4 id="callUserName"></h4>
+        <div id="callStatus"></div>
+        <button onclick="endCall()" class="btn btn-danger">End Call</button>
+    </div>
+</div>
 
 @endsection

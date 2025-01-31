@@ -81,7 +81,7 @@ function fetchToken(channelName) {
 }
 
 // Function to join an Agora audio call
-async function joinAudioCall(channelName, token, activeUserId) {
+async function joinAudioCall(channelName, token, event, activeUserId) {
     console.log("Joining audio call on channel:", channelName);
     const appId = process.env.MIX_AGORA_APP_ID;
     
@@ -109,6 +109,11 @@ async function joinAudioCall(channelName, token, activeUserId) {
             }
         });
 
+        // Ensure token is valid before joining
+        if (!token) {
+            throw new Error("Token is invalid or undefined");
+        }
+
         await client.join(appId, channelName, token, uid);
         console.log("Successfully joined Agora channel:", channelName);
         localStorage.setItem('onCall', 'true');
@@ -123,9 +128,11 @@ async function joinAudioCall(channelName, token, activeUserId) {
             agentId: activeUserId,
             is_available: false,
             session_id: localStorage.getItem('sessionId'),
-        });
-        console.log("Agent call session activated:", response.data);
-        
+        }); 
+
+        console.log("Session created:", response.data.message);
+
+            
     } catch (error) {
         isInCall = false;
         isCalling = false;
@@ -359,7 +366,7 @@ function showCallPopup(channelName, token, event,activeUserId) {
     modal.querySelector('#accept-call').onclick = async () => {
         try {
             stopRingtone(); // Stop ringtone when call is accepted
-            await joinAudioCall(channelName, token,activeUserId);
+            await joinAudioCall(channelName, token, event, activeUserId);
             // Hide call buttons and show controls
             modal.querySelector('#call-buttons').style.display = 'none';
             modal.querySelector('#call-controls').style.display = 'flex';
@@ -373,6 +380,12 @@ function showCallPopup(channelName, token, event,activeUserId) {
     
 
     modal.querySelector('#decline-call').onclick = async () => {
+        const data = await axios.post("/create/call-logs", {
+            user_id: event.callerId,
+            call_type: "rejected",
+            agent_id: activeUserId,
+            channel: channelName,
+        });
         stopRingtone();
         try {
             stopRingtone(); // Stop ringtone when call is declined

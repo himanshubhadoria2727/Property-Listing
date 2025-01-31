@@ -376,14 +376,14 @@ class RealEstateServiceProvider extends ServiceProvider
                 ->registerItem([
                     'id' => 'cms-account-bookings',
                     'priority' => 4,
-                    'name' => 'Live Tour Bookings',
+                    'name' => 'Live Tour',
                     'url' => fn () => route('public.account.bookings.show'),
                     'icon' => 'ti ti-video',
                 ])
                 ->registerItem([
                     'id' => 'cms-account-calls',
                     'priority' => 4,
-                    'name' => 'Call Bookings',
+                    'name' => 'Call Logs',
                     'url' => fn () => route('public.account.calls.show'),
                     'icon' => 'ti ti-phone',
                 ])

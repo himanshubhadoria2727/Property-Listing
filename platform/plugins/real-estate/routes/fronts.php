@@ -107,7 +107,7 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                         'register/confirm/resend',
                         'RegisterController@resendConfirmation'
                     )
-                    
+
                         ->name('resend_confirmation');
                     Route::get('register/confirm/{user}', 'RegisterController@confirm')
                         ->name('confirm');
@@ -126,23 +126,31 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 Route::get('/chats', [ChatController::class, 'getChats']);
                 Route::post('/chat/create', [ChatController::class, 'createChat']);
                 Route::get('/bookings', [BookingController::class, 'userBooking'])->name('user.show');
+                Route::post('create/call-logs', [CallController::class, 'callLogs']);
+                Route::get('/get/call-logs', [CallController::class, 'getCallLogs']);
+                Route::delete('/call-logs/{id}', [CallController::class, 'deleteCallLog']);
                 Route::get('bookings/join/{property}', [AgoraController::class, 'joinLive'])->name('user.join');
-            }); 
+            });
+
+            Route::group(['prefix' => 'account'], function () {
+                Route::post('logout', 'LoginController@logout')
+                    ->name('logout');
+            });
             Route::group(['middleware' => ['web']], function () {
                 Route::group(['prefix' => 'account'], function () {
-                // Booking routes
-                Route::get('/join/{property}', [AgoraController::class, 'joinStream'])->name('broadcast.join');
-                Route::post('/agora/token', [AgoraController::class, 'token']);
-                // Route::get('/start-broadcast/{broadcastId}', [BroadcastController::class, 'startBroadcast'])->name('start.broadcast');
-                Route::post('agora/check-stream-status', [AgoraController::class, 'checkStreamStatus']);
-                Route::get('{property}/live',  [BookingController::class, 'viewBookings'])->name('bookings.index');
-                Route::get('{property}/calls',  [BookingController::class, 'viewCallBookings'])->name('calls.show');
-                // Route::get('properties/{property}/bookings',  [BookingController::class, 'calls'])->name('calls.index');
-                // Route::get('bookings', [BookingController::class, 'show'])
-                // ->name('bookings.show'); // Named route for bookings.show    
-                // Signaling routes for WebRTC
-                // Route::post('/send-signal', [BroadcastController::class, 'sendSignal']);
-                // Route::post('/handleSignaling', [BroadcastController::class, 'handleSignaling']);
+                    // Booking routes
+                    Route::get('/join/{property}', [AgoraController::class, 'joinStream'])->name('broadcast.join');
+                    Route::post('/agora/token', [AgoraController::class, 'token']);
+                    // Route::get('/start-broadcast/{broadcastId}', [BroadcastController::class, 'startBroadcast'])->name('start.broadcast');
+                    Route::post('agora/check-stream-status', [AgoraController::class, 'checkStreamStatus']);
+                    Route::get('{property}/live',  [BookingController::class, 'viewBookings'])->name('bookings.index');
+                    Route::get('{property}/calls',  [BookingController::class, 'viewCallBookings'])->name('calls.show');
+                    // Route::get('properties/{property}/bookings',  [BookingController::class, 'calls'])->name('calls.index');
+                    // Route::get('bookings', [BookingController::class, 'show'])
+                    // ->name('bookings.show'); // Named route for bookings.show    
+                    // Signaling routes for WebRTC
+                    // Route::post('/send-signal', [BroadcastController::class, 'sendSignal']);
+                    // Route::post('/handleSignaling', [BroadcastController::class, 'handleSignaling']);
                 });
             });
             Route::get('feed/properties', [
@@ -155,24 +163,24 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 'uses' => 'PublicController@getProjectFeeds',
             ]);
 
-                Route::group(['middleware' => ['account'], 'as' => 'public.account.'], function () {
-                    Route::group(['prefix' => 'account'], function () {
-                        Route::post('logout', 'LoginController@logout')
-                            ->name('logout');
+            Route::group(['middleware' => ['account','checkUserRole'], 'as' => 'public.account.'], function () {
+                Route::group(['prefix' => 'account'], function () {
+                    Route::post('logout', 'LoginController@logout')
+                        ->name('logout');
 
-                        Route::get('dashboard', [
-                            'as' => 'dashboard',
-                            'uses' => 'PublicAccountController@getDashboard',
-                        ]);
+                    Route::get('dashboard', [
+                        'as' => 'dashboard',
+                        'uses' => 'PublicAccountController@getDashboard',
+                    ]);
 
-                        Route::get('bookings', [
-                            'as' => 'bookings.show',
-                            'uses' => 'BookingController@show',
-                        ]);
-                        Route::get('calls', [
-                            'as' => 'calls.show',
-                            'uses' => 'CallController@viewCallBookings',
-                        ]);
+                    Route::get('bookings', [
+                        'as' => 'bookings.show',
+                        'uses' => 'BookingController@show',
+                    ]);
+                    Route::get('calls', [
+                        'as' => 'calls.show',
+                        'uses' => 'CallController@viewCallBookings',
+                    ]);
 
                     Route::get('settings', [
                         'as' => 'settings',
@@ -280,7 +288,7 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 });
             });
 
-            Route::middleware('account')->group(function () {
+            Route::middleware('account')->group(callback: function () {
                 Route::post('ajax/review/{slug}', [ReviewController::class, 'store'])->name('public.ajax.review.store');
             });
 
@@ -289,6 +297,11 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
 
         Route::group(['prefix' => 'payments', 'middleware' => ['web', 'core']], function () {
             Route::post('checkout', 'CheckoutController@postCheckout')->name('payments.checkout');
+        });
+
+        Route::group(['middleware' => ['api']], function () {
+            Route::get('/call-logs', [CallController::class, 'getCallLogs']);
+            Route::delete('/call-logs/{id}', [CallController::class, 'deleteCallLog']);
         });
     });
 }
