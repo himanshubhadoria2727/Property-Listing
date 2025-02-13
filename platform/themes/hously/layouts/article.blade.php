@@ -17,3 +17,5 @@
 </section>
 
 {!! Theme::partial('footer') !!}
+<script type="module" src="{{ asset('themes/hously/js/calls.js') }}"></script>
+

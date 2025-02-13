@@ -451,6 +451,9 @@ console.log("hello");
             await notifyCallRinging(event.channel);
             showCallPopup(channelName, token, event,activeUserId);
         }
+        else {
+            console.log('Call event ignored:', event);
+        }
     })
     .listen('.call.ended', (event) => {
         if (sessionId === String(event.sessionId)) {

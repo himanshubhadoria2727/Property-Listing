@@ -86,7 +86,7 @@ class CallController extends BaseController
                 $session = DB::table('agent_sessions')
                     ->where('agent_id', $validated['userId'])
                     ->where('is_available', 1)
-                    ->first();
+                    ->latest();
 
                 $sessionId = $session->session_id ?? null;
             }
@@ -298,28 +298,31 @@ class CallController extends BaseController
     }
 
     public function callLogs(Request $request)
-    {
-        try {
-            CallLog::create([
-                'user_id' => $request->user_id,
-                'call_type' => $request->call_type,
-                'channel' => $request->channel,
-                'agent_id' => $request->agent_id,
-            ]);
+{
+    try {
+        // Extract the numeric agent ID from the string
+        $agentId = intval(explode('-', $request->agent_id)[0]);
 
-            return response()->json(['success' => true, 'message' => 'Call log created successfully.']);
-        } catch (\Exception $e) {
-            Log::error('Failed to create call log', [
-                'error' => $e->getMessage(),
-                'userId' => $request->userId,
-                'callType' => $request->callType,
-                'agentId' => $request->agent_id,
-                'channel' => $request->channel,
-            ]);
+        CallLog::create([
+            'user_id' => $request->user_id,
+            'call_type' => $request->call_type,
+            'channel' => $request->channel,
+            'agent_id' => $agentId, // Use the extracted numeric ID
+        ]);
 
-            return response()->json(['success' => false, 'message' => 'Failed to create call log.'], 500);
-        }
+        return response()->json(['success' => true, 'message' => 'Call log created successfully.']);
+    } catch (\Exception $e) {
+        Log::error('Failed to create call log', [
+            'error' => $e->getMessage(),
+            'userId' => $request->user_id,
+            'callType' => $request->call_type,
+            'agentId' => $request->agent_id,
+            'channel' => $request->channel,
+        ]);
+
+        return response()->json(['success' => false, 'message' => 'Failed to create call log.'], 500);
     }
+}
 
     public function getCallLogs(Request $request)
     {

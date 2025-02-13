@@ -205,9 +205,9 @@
                         </div>
                     </div>
 
-                    <div class="mb-6 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700">
+                    <!-- <div class="mb-6 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700">
                         {!! Theme::partial('consult-form', ['type' => 'project', 'data' => $project]) !!}
-                    </div>
+                    </div> -->
 
                     <div class="mt-12 text-center">
                         {!! dynamic_sidebar('property_sidebar') !!}

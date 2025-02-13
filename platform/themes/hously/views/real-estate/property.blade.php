@@ -9,6 +9,8 @@ $property->id,
 RealEstateHelper::getPropertyRelationsQuery(),
 RealEstateHelper::getReviewExtraData()
 );
+$isExpoEnabled = Botble\RealEstate\Models\Expo::where('enabled', true)->exists();
+
 @endphp
 
 <section class="relative mt-28" data-property-id="{{ $property->id }}">
@@ -236,104 +238,46 @@ RealEstateHelper::getReviewExtraData()
                             </div>
                         </div>
                     </div>
-                    <div class="mb-6 pb-4 pl-3 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700" style="padding: 20px; background-color: #f9fafb; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
-                        @if (auth('account')->check()) <!-- Check if the user is logged in -->
-                        @php
-                        // Fetch the authenticated user's ID
-                        $account = Botble\RealEstate\Models\Account::query()->findOrFail(auth('account')->id());
-                        $userId = $account->id;
 
-                        // Log the user ID for debugging
-                        \Log::info('Authenticated User ID: ' . $userId);
 
-                        // Fetch future bookings for the property made by the authenticated user
-                        $futureBookings = $property->bookings()
-                        ->where('scheduled_at', '>', now())
-                        ->where('live', true)
-                        ->where('user_id', $userId) // Filter by the authenticated user's ID
-                        ->get();
-
-                        // Log the future bookings for debugging
-                        \Log::info('Future Bookings: ', $futureBookings->toArray());
-                        @endphp
-
-                        @if ($futureBookings->isNotEmpty())
-                        <div class="mt-4 text-red-600" style="color: #e53e3e; font-size: 16px;">
-                            <p style="font-weight: bold;">Already booked tour for the following time:</p>
-                            <ul style="padding-left: 20px; margin-top: 10px;">
-                                @foreach ($futureBookings as $booking)
-                                <li class="dark:text-black" style="margin-bottom: 8px;">{{ \Carbon\Carbon::parse($booking->scheduled_at)->format('Y-m-d H:i') }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                        @else
-                        <!-- Display booking form only if there are no future bookings -->
-                        <form method="POST" action="/book" style="margin-top: 20px;">
-                            @csrf
-                            <input type="hidden" name="property_id" value="{{ $property->id }}">
-                            <label class="dark:text-white" for="schedule" style="font-weight: bold; font-size: 16px; color: #1a202c;">Schedule Virtual Tour:</label>
-                            <input class="dark:text-black-900" type="datetime-local" name="scheduled_at" required style="padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; font-size: 14px; color: #4a5568;">
-                            <button class="bg-primary" type="submit" style="margin-top: 12px; padding: 10px 20px; color: white; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; transition: background-color 0.3s;">
-                                Book Tour
-                            </button>
-                        </form>
-                        @endif
-                        @else
-                        <p class="mt-4 text-gray-600" style="color: #718096; font-size: 16px;">Please log in to book a tour.</p> <!-- Message for users not logged in -->
-                        @endif
-                    </div>
-                    <div class="mb-6 pb-4 pl-3 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700" style="padding: 20px; background-color: #f9fafb; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
-                        @if (auth('account')->check()) <!-- Check if the user is logged in -->
-                        @php
-                        // Fetch the authenticated user's ID
-                        $account = Botble\RealEstate\Models\Account::query()->findOrFail(auth('account')->id());
-                        $userId = $account->id;
-
-                        // Log the user ID for debugging
-                        \Log::info('Authenticated User ID: ' . $userId);
-
-                        // Fetch future bookings for the property made by the authenticated user
-                        $futureBookings = $property->bookings()
-                        ->where('scheduled_at', '>', now())
-                        ->where('call', true) // Filter by the authenticated user's ID
-                        ->where('user_id', $userId) // Filter by the authenticated user's ID
-                        ->get();
-
-                        // Log the future bookings for debugging
-                        \Log::info('Future Bookings: ', $futureBookings->toArray());
-                        @endphp
-
-                        @if ($futureBookings->isNotEmpty())
-                        <div class="mt-4 text-red-600" style="color: #e53e3e; font-size: 16px;">
-                            <p style="font-weight: bold;">Already booked call for the following time:</p>
-                            <ul style="padding-left: 20px; margin-top: 10px;">
-                                @foreach ($futureBookings as $booking)
-                                <li class="dark:text-black" style="margin-bottom: 8px;">{{ \Carbon\Carbon::parse($booking->scheduled_at)->format('Y-m-d H:i') }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                        @else
-                        <!-- Display booking form only if there are no future bookings -->
-                        <form method="POST" action="/bookCall" style="margin-top: 20px;">
-                            @csrf
-                            <input type="hidden" name="property_id" value="{{ $property->id }}">
-                            <label class="dark:text-white" for="schedule" style="font-weight: bold; font-size: 16px; color: #1a202c;">Schedule Call:</label>
-                            <input class="dark:text-black-900" type="datetime-local" name="scheduled_at" required style="padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; font-size: 14px; color: #4a5568;">
-                            <button class="bg-primary" type="submit" style="margin-top: 12px; padding: 10px 20px; color: white; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; transition: background-color 0.3s;">
-                                Book Call
-                            </button>
-                        </form>
-                        @endif
-                        @else
-                        <p class="mt-4 text-gray-600" style="color: #718096; font-size: 16px;">Please log in to book a tour.</p> <!-- Message for users not logged in -->
-                        @endif
-                    </div>
 
                     @endif
-
-                    <div class="mb-6 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700">
+                    <div class="mt-6 text-center bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-xl shadow-lg border border-gray-200">
+    @if ($isExpoEnabled)
+        <!-- Agent is Live -->
+        <div class="space-y-4">
+            <p class="text-gray-600 text-sm mb-4 flex items-center justify-center">
+                <span class="relative flex h-3 w-3 mr-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                <span>Property tour expo <span class="font-semibold text-red-500">started</span></span>
+            </p>
+            <!-- Join Live Stream Button -->
+            <div class="relative inline-block">
+                <a target="_blank" href="{{ route('user.join', ['property' => $property->id]) }}"
+                    class="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl shadow-md hover:from-blue-700 hover:to-blue-600 transition-all duration-300 ease-in-out transform hover:scale-105">
+                    🎥 {{ __('Join Live Stream') }}
+                </a>
+                <div class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse shadow-sm">
+                    LIVE
+                </div>
+            </div>
+        </div>
+    @else
+        <!-- Live Tour Expo Not Available -->
+        <p class="text-gray-600 text-sm flex items-center justify-center">
+            <span class="relative flex h-3 w-3 mr-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-gray-500"></span>
+            </span>
+            <span>📅 Live Tour Expo is available every <span class="font-semibold text-blue-600">Friday</span>!</span>
+        </p>
+    @endif
+</div>
+                    <!-- <div class="mb-6 rounded-md shadow bg-slate-50 dark:bg-slate-800 dark:shadow-gray-700">
                         {!! Theme::partial('consult-form', ['type' => 'property', 'data' => $property]) !!}
-                    </div>
+                    </div> -->
 
                     <div class="mt-12 text-center">
                         {!! dynamic_sidebar('property_sidebar') !!}

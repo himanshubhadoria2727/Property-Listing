@@ -143,12 +143,12 @@ async function joinAudioCall(channelName, token,event) {
     }
 }
 
-async function notifyCallEnded(channelName) {
+async function notifyCallEnded(channelName,sessionId) {
     try {
         const response = await axios.post("/account/call/end", {
             channel: channelName,
             userId: window.userId,
-            sessionId:null,
+            sessionId:sessionId,
         });
         localStorage.removeItem('onCall');
         console.log("Call ended notification sent:", response.data);
@@ -212,11 +212,6 @@ async function stopCall() {
 
         await cleanupClient();
         isCalling = false;
-        
-        // Notify server about call ending if we have the channel name
-        if (channelName) {
-            await notifyCallEnded(channelName);
-        }
         
         console.log("Call stopped successfully");
         removeUi();
@@ -326,7 +321,8 @@ function showCallPopup(channelName, token, event) {
             stopRingtone(); // Stop ringtone when call is accepted
             await joinAudioCall(channelName, token,event);
             modal.remove();
-            showCallControls();
+            showCallControls(channelName,event.sessionId);
+            console.log("channel and sessoion id",channelName,event.sessionId);
         } catch (error) {
             console.error("Error accepting the call:", error);
         }
@@ -348,11 +344,12 @@ function showCallPopup(channelName, token, event) {
         "ease-in-out"
     );
     declineButton.onclick = async () => {
+        console.log("Declining the call");
         const data = await axios.post("/create/call-logs", {
             user_id: event.callerId,
-            call_type: "connected",
-            agent_id: userId,
-            channel: channel,
+            call_type: "Rejected",
+            agent_id: event.agentId,
+            channel: channelName,
         });
         try {
             stopRingtone(); // Stop ringtone when call is declined
@@ -376,7 +373,7 @@ function showCallPopup(channelName, token, event) {
 }
 
 // Function to show call controls (Mute, End Call)
-function showCallControls() {
+function showCallControls(channelName,sessionId) {
     // Create modal overlay with blur effect
     isCalling = true;
     isInCall = true;
@@ -505,6 +502,7 @@ function showCallControls() {
 
     endCallButton.onclick = async () => {
         stopCall();
+        notifyCallEnded(channelName,sessionId);
         clearInterval(timer);
         await stopCall(); // This will now handle the notification
         modalOverlay.remove();
@@ -582,7 +580,6 @@ async function initiateCall(userId) {
     currentChannel
     .listen('.incoming.call', async (event) => {
         console.log('Incoming call event received:', event);
-        sessionId = event.sessionId;
         if (activeUserId === Number(event.userId)) {
             console.log('Call status check - isInCall:', isInCall, 'isCalling:', isCalling);
             // Check if user is already in a call

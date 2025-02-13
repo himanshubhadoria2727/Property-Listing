@@ -1,4 +1,4 @@
-<x-core::alert
+<!-- <x-core::alert
     type="info"
     class="resume-setup-wizard-wrapper"
 >
@@ -13,4 +13,4 @@
             )->toHtml(),
         ]),
     ) !!}
-</x-core::alert>
+</x-core::alert> -->

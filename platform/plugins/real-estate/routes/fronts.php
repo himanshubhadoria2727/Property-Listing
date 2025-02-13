@@ -18,6 +18,7 @@ use Botble\RealEstate\Http\Controllers\Fronts\ChatController;
 use Botble\Theme\Facades\Theme;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Botble\RealEstate\Http\Controllers\ExpoController;
 
 if (defined('THEME_MODULE_SCREEN_NAME')) {
     Route::group(['namespace' => 'Botble\RealEstate\Http\Controllers\Fronts'], function () {
@@ -129,6 +130,10 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 Route::post('create/call-logs', [CallController::class, 'callLogs']);
                 Route::get('/get/call-logs', [CallController::class, 'getCallLogs']);
                 Route::delete('/call-logs/{id}', [CallController::class, 'deleteCallLog']);
+                // routes/api.php
+
+                Route::get('/expos', [ExpoController::class, 'index']);
+                Route::post('/expos', [ExpoController::class, 'store']);
                 Route::get('bookings/join/{property}', [AgoraController::class, 'joinLive'])->name('user.join');
             });
 
@@ -163,7 +168,7 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 'uses' => 'PublicController@getProjectFeeds',
             ]);
 
-            Route::group(['middleware' => ['account','checkUserRole'], 'as' => 'public.account.'], function () {
+            Route::group(['middleware' => ['account', 'checkUserRole'], 'as' => 'public.account.'], function () {
                 Route::group(['prefix' => 'account'], function () {
                     Route::post('logout', 'LoginController@logout')
                         ->name('logout');
