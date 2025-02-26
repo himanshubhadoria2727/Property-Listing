@@ -104,13 +104,13 @@ $user = auth('account')->user();
                         <a href="#" class="block px-4 py-2 text-base text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-all duration-150 ease-in-out" role="menuitem">
                             Account Settings
                         </a>
-                        <a
+                        <!-- <a
                             href="javascript:void(0);"
                             class="block px-4 py-2 text-base text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-all duration-150 ease-in-out"
                             onclick="toggleModal('streamBookingModal')">
                             Live Stream Bookings
-                        </a>
-                        <a href="javascript:void(0);" onclick="toggleModal('chatsModal')"  class="block px-4 py-2 text-base text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-all duration-150 ease-in-out" role="menuitem">
+                        </a> -->
+                        <a href="javascript:void(0);" onclick="openChatsModal()" class="block px-4 py-2 text-base text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-all duration-150 ease-in-out" role="menuitem">
                             Chats
                         </a>
                         <a
@@ -121,7 +121,7 @@ $user = auth('account')->user();
                             Log out
                             <x-core::icon name="ti ti-logout" />
                         </a>
-                        <form id="logout-form" style="display: none;" action="{{ route('public.account.logout') }}" method="POST">
+                        <form id="logout-form" style="display: none;" action="{{ route('logout') }}" method="POST">
                             @csrf
                         </form>
                     </div>
@@ -164,17 +164,49 @@ $user = auth('account')->user();
 </div>
 
 <script>
-    function toggleModal(modalId) {
+    // Global function to handle modal toggling
+    window.toggleModal = function(modalId, authorId) {
         const modal = document.getElementById(modalId);
         const isHidden = modal.classList.contains('hidden');
+        
+        // Only update authorId if we're opening the modal and have a new authorId
+        if (isHidden && authorId) {
+            localStorage.setItem('authorId', authorId);
+            console.log('Setting authorId:', authorId);
+        }
 
         // Toggle visibility
         modal.classList.toggle('hidden', !isHidden);
         modal.classList.toggle('flex', isHidden);
         modal.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
+
+        // Load chat list if opening the modal
+        if (isHidden) {
+            try {
+                if (window.loadChatList) {
+                    window.loadChatList();
+                    console.log('Chat list loaded');
+                }
+            } catch (error) {
+                console.error('Error loading chat list:', error);
+            }
+        }
     }
-</script>
-<script>
+
+    // Function to handle closing the modal
+    window.handleCloseModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function openChatsModal() {
+        const authorId = localStorage.getItem('authorId');
+        console.log('Opening chat modal with authorId:', authorId);
+        toggleModal('chatsModal', authorId);
+    }
+
     function toggleDropdown() {
         const dropdownMenu = document.getElementById('dropdownMenu');
         const dropdownIcon = document.getElementById('dropdownIcon');
@@ -182,8 +214,6 @@ $user = auth('account')->user();
 
         dropdownMenu.classList.toggle('hidden', !isExpanded);
         dropdownMenu.classList.toggle('block', isExpanded);
-
-        // Toggle rotation of the icon
         dropdownIcon.classList.toggle('rotate-180');
     }
 </script>

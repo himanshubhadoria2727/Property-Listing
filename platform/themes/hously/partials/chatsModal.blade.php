@@ -5,21 +5,20 @@
     <div class="dark:bg-gray-800 chat-modal"
         style="background: white; color: #333; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); width: 90%; max-width: 95%; padding: 16px; max-height: 80vh; overflow: hidden;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-        <button
-            id="sidebarToggle"
-            class=" relative top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg hover:bg-gray-50 transition-colors">
-            <i class="fas fa-bars" id="menuIcon"></i>
-            <i class="fas fa-times hidden" id="closeIcon"></i>
-        </button>
+            <button
+                id="sidebarToggle"
+                class="relative top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-bars" id="menuIcon"></i>
+                <i class="fas fa-times hidden" id="closeIcon"></i>
+            </button>
             <h2 class="dark:text-white" style="font-size: 1.25rem; font-weight: bold; color: #333; margin: 16px auto; text-align: center;">Chats</h2>
-            <!-- Mobile Sidebar Toggle -->
-        
+            
             <button
                 id="closeChatsModal"
                 style="background: #e0e0e0; color: #555; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; margin-left: auto;"
                 onmouseover="this.style.background='#d6d6d6'"
                 onmouseout="this.style.background='#e0e0e0'"
-                onclick="toggleModal('chatsModal');">
+                onclick="handleCloseModal('chatsModal')">
                 Close
             </button>
         </div>

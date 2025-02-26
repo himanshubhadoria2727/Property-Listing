@@ -11,6 +11,7 @@
                     <i class="mdi mdi-heart-outline"></i>
                 </button>
 
+                @if (auth('account')->check()) 
                 <button
                     type="button"
                     class="text-lg text-red-600 bg-white rounded-full shadow btn btn-icon dark:bg-slate-900 dark:shadow-gray-700 start-call"
@@ -31,6 +32,7 @@
                     onclick="startCall({{ json_encode(DB::table('re_accounts')->where('id', $property->author_id)->value(DB::raw("CONCAT(first_name, ' ', last_name)")) ?? 'User') }}, {{ $property->author_id }}, {{ $property->id }})">
                     <i class="mdi mdi-phone"></i>
                 </button>
+                @endif
 
             </div>
             @if($property->images && $imagesCount = count($property->images))
@@ -303,7 +305,8 @@
         }
 
         const channel = `channel-${sessionId}`;
-        const appId = '{{ env('AGORA_APP_ID ') }}' || '84220a4dc86144bb9457af1cd9965016'; // Replace 'fallback_app_id' with a valid ID for testing
+        const appId = '{{ env('
+        AGORA_APP_ID ') }}' || '84220a4dc86144bb9457af1cd9965016'; // Replace 'fallback_app_id' with a valid ID for testing
         if (!appId) {
             console.error('Agora App ID is not set. Please check your environment configuration.');
             return; // Prevent further execution if App ID is not valid
@@ -467,34 +470,7 @@
         document.body.style.overflow = 'auto'; // Restore scrolling
     }
 </script>
-<script>
-    function toggleModal(modalId, authorId) {
-        localStorage.setItem('authorId', authorId);
-        const modal = document.getElementById(modalId);
-        const isHidden = modal.classList.contains('hidden');
-        console.log('authorId in items', authorId);
-        // if (authorId) {
-        //     localStorage.setItem('authorId', authorId);
-        // }
-        // Toggle visibility   
-        if (isHidden) {
-            // Check if chatList exists and loadChatList function is available
-            try {
-                if (window.loadChatList) {
-                    window.loadChatList();
-                    console.log('Chat list loaded');
-                }
-            } catch (error) {
-                console.error('Error loading chat list:', error);
 
-            }
-        }
-    
-        modal.classList.toggle('hidden', !isHidden);
-        modal.classList.toggle('flex', isHidden);
-        modal.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
-    }
-</script>
 <style>
     @keyframes fadeIn {
         from {
