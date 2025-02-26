@@ -182,7 +182,7 @@
             // Update broadcast link for viewers
             document.getElementById('broadcastLink').style.display = 'block';
             document.getElementById('joinLink').href = `/bookings/join/${propertyId}`;
-            document.getElementById('joinLink').innerText = `${window.location.origin}/account/join/${propertyId}`;
+            document.getElementById('joinLink').innerText = `${window.location.origin}/bookings/join/${propertyId}`;
 
             isBroadcasting = true;
         } catch (error) {

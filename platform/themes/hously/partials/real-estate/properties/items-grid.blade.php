@@ -469,13 +469,27 @@
 </script>
 <script>
     function toggleModal(modalId, authorId) {
+        localStorage.setItem('authorId', authorId);
         const modal = document.getElementById(modalId);
         const isHidden = modal.classList.contains('hidden');
         console.log('authorId in items', authorId);
         // if (authorId) {
         //     localStorage.setItem('authorId', authorId);
         // }
-        // Toggle visibility
+        // Toggle visibility   
+        if (isHidden) {
+            // Check if chatList exists and loadChatList function is available
+            try {
+                if (window.loadChatList) {
+                    window.loadChatList();
+                    console.log('Chat list loaded');
+                }
+            } catch (error) {
+                console.error('Error loading chat list:', error);
+
+            }
+        }
+    
         modal.classList.toggle('hidden', !isHidden);
         modal.classList.toggle('flex', isHidden);
         modal.setAttribute('aria-hidden', isHidden ? 'false' : 'true');

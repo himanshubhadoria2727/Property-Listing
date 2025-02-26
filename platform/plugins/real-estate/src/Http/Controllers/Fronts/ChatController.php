@@ -9,6 +9,8 @@ use Botble\RealEstate\Models\Account;
 use Botble\RealEstate\Models\Chat;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
+use App\Models\ChatMessage;
+use Illuminate\Support\Facades\Auth;
 
 class ChatController extends BaseController
 {
@@ -17,7 +19,7 @@ class ChatController extends BaseController
      *
      * @return View
      */
-    public function showChatModal($author_id): View
+    public function showChatModal(?int $author_id = null): View
     {
         return view('plugins/real-estate::user.chat', compact('author_id'));
     }
@@ -30,30 +32,48 @@ class ChatController extends BaseController
             'message' => $request->message,
         ]);
 
-        broadcast(new MessageSent($message->message, auth('account')->id()))->toOthers();
+        broadcast(new MessageSent($message->message, auth('account')->id(), $message->receiver_id))->toOthers();
 
-        return response()->json(['success' => true]);
+        $chatData = Chat::with(['sender', 'receiver'])
+            ->where('id', $message->id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+        return response()->json(['success' => true, 'chat' => $chatData]);
     }
+    public function getChatWithAgent(Request $request)
+    {
+        $senderId = $request->query('sender_id');
+        $receiverId = $request->query('receiver_id');
 
-    public function getChats()
+        $chats = Chat::with(['sender', 'receiver'])
+            ->where(function ($query) use ($senderId, $receiverId) {
+                $query->where('sender_id', $senderId)
+                    ->where('receiver_id', $receiverId);
+            })
+            ->orWhere(function ($query) use ($senderId, $receiverId) {
+                $query->where('sender_id', $receiverId)
+                    ->where('receiver_id', $senderId);
+            })
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $chats]);
+    }
+    public function getChats(Request $request)
     {
         try {
-            // Log::info('Fetching chats for user: ' . Account::find(auth()->id())->name);
-            // Fetch chats where the user is either the sender or the receiver
+            $senderId = $request->query('sender_id');
             $chats = Chat::with(['sender', 'receiver'])
                 ->select('id', 'sender_id', 'receiver_id', 'message', 'created_at')
-                ->where(function ($query) {
-                    $query->where('receiver_id', auth('account')->id())
-                        ->orWhere('sender_id', auth('account')->id());
+                ->where(function ($query) use ($senderId) {
+                    $query->where('sender_id', $senderId)
+                        ->orWhere('receiver_id', $senderId);
                 })
                 ->orderBy('created_at', 'desc')
-                ->get();
-
-            // Add a direction field to indicate incoming or outgoing messages
-            $chats = $chats->map(function ($chat) {
-                $chat->direction = $chat->sender_id === auth('account')->id() ? 'outgoing' : 'incoming';
-                return $chat;
-            });
+                ->get()
+                ->groupBy(function ($chat) use ($senderId) {
+                    return $chat->sender_id == $senderId ? $chat->receiver_id : $chat->sender_id;
+                });
 
             return response()->json([
                 'success' => true,
@@ -114,5 +134,10 @@ class ChatController extends BaseController
             'message' => 'Chat created successfully.',
             'chat' => $newChat,
         ], 201);
+    }
+    
+    public function showChatAgent()
+    {
+        return view('plugins/real-estate::chats.index');
     }
 }

@@ -309,11 +309,11 @@ class BaseServiceProvider extends ServiceProvider
             $router->aliasMiddleware('preventDemo', DisableInDemoModeMiddleware::class);
             $router->middlewareGroup('core', [CoreMiddleware::class]);
 
-            $this->app->extend('core.middleware', function ($middleware) {
-                return array_merge($middleware, [
-                    EnsureLicenseHasBeenActivated::class,
-                ]);
-            });
+            // $this->app->extend('core.middleware', function ($middleware) {
+            //     return array_merge($middleware, [
+            //         EnsureLicenseHasBeenActivated::class,
+            //     ]);
+            // });
         });
 
         Paginator::useBootstrap();

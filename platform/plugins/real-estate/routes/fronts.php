@@ -124,7 +124,10 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
             Route::post('/account/call/reject', 'CallController@rejectCall')->name('call.reject');
             Route::group(['middleware' => ['web']], function () {
                 Route::get('/chats{author_id}', [ChatController::class, 'showChatModal'])->name('chat.show');
+                Route::get('/chats/{author_id}/messages', [ChatController::class, 'getChatWithAgent']);
+                Route::get('/myChats', [ChatController::class, 'showChatAgent'])->name('chats.index');
                 Route::get('/chats', [ChatController::class, 'getChats']);
+                Route::post('/chats/send', [ChatController::class, 'sendMessage']);
                 Route::post('/chat/create', [ChatController::class, 'createChat']);
                 Route::get('/bookings', [BookingController::class, 'userBooking'])->name('user.show');
                 Route::post('create/call-logs', [CallController::class, 'callLogs']);
@@ -185,6 +188,14 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                     Route::get('calls', [
                         'as' => 'calls.show',
                         'uses' => 'CallController@viewCallBookings',
+                    ]);
+                    Route::get('chats', [
+                        'as' => 'chat.show',
+                        'uses' => 'ChatController@showChatModal',
+                    ]);
+                    Route::get('chats', [
+                        'as' => 'chats.index',
+                        'uses' => 'ChatController@showChatAgent',
                     ]);
 
                     Route::get('settings', [

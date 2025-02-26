@@ -255,13 +255,20 @@ $isExpoEnabled = Botble\RealEstate\Models\Expo::where('enabled', true)->exists()
             </p>
             <!-- Join Live Stream Button -->
             <div class="relative inline-block">
-                <a target="_blank" href="{{ route('user.join', ['property' => $property->id]) }}"
-                    class="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl shadow-md hover:from-blue-700 hover:to-blue-600 transition-all duration-300 ease-in-out transform hover:scale-105">
-                    🎥 {{ __('Join Live Stream') }}
-                </a>
-                <div class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse shadow-sm">
-                    LIVE
-                </div>
+                @if(auth('account')->check())
+                    <a target="_blank" href="{{ route('user.join', ['property' => $property->id]) }}"
+                        class="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl shadow-md hover:from-blue-700 hover:to-blue-600 transition-all duration-300 ease-in-out transform hover:scale-105">
+                        🎥 {{ __('Join Live Stream') }}
+                    </a>
+                    <div class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse shadow-sm">
+                        LIVE
+                    </div>
+                @else
+                    <a href="{{ url('/login') }}" 
+                        class="inline-flex items-center justify-center px-8 py-3 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl shadow-md hover:from-blue-700 hover:to-blue-600 transition-all duration-300 ease-in-out transform hover:scale-105">
+                        {{ __('Login to Join Live Stream') }}
+                    </a>
+                @endif
             </div>
         </div>
     @else

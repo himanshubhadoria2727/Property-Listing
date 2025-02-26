@@ -43,7 +43,7 @@
                         <div class="grid grid-cols-2 gap-2">
                             <div class="mb-4">
                                 <label class="font-medium" for="first_name">{{ __('First name:') }}</label>
-                                <input id="first_name" name="first_name" type="text" @class(['form-control form-input dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('first_name')]) placeholder="{{ __('First name') }}">
+                                <input id="first_name" name="first_name" type="text" @class(['form-control form-input bg-white dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('first_name')]) placeholder="{{ __('First name') }}">
                                 @error('first_name')
                                 <span class="invalid-feedback">
                                     <strong>{{ $message }}</strong>
@@ -53,7 +53,7 @@
 
                             <div class="mb-2">
                                 <label class="font-medium" for="last_name">{{ __('Last name:') }}</label>
-                                <input id="last_name" name="last_name" type="text" @class(['form-control form-input dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('last_name')]) placeholder="{{ __('Last name') }}">
+                                <input id="last_name" name="last_name" type="text" @class(['form-control form-input bg-white dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('last_name')]) placeholder="{{ __('Last name') }}">
                                 @error('last_name')
                                 <span class="invalid-feedback">
                                     <strong>{{ $message }}</strong>
@@ -65,7 +65,7 @@
                         <div class="grid grid-cols-2 gap-2">
                             <div class="mb-4">
                                 <label class="font-medium" for="username">{{ __('Username:') }}</label>
-                                <input id="username" name="username" type="text" @class(['form-control form-input dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('username')]) placeholder="{{ __('Username') }}">
+                                <input id="username" name="username" type="text" @class(['form-control form-input bg-white dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('username')]) placeholder="{{ __('Username') }}">
                                 @error('username')
                                 <span class="invalid-feedback">
                                     <strong>{{ $message }}</strong>
@@ -75,7 +75,7 @@
 
                             <div class="mb-4">
                                 <label class="font-medium" for="email">{{ __('Email:') }}</label>
-                                <input id="email" name="email" type="email" @class(['form-control form-input dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('email')]) placeholder="{{ __('Email') }}">
+                                <input id="email" name="email" type="email" @class(['form-control form-input bg-white dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('email')]) placeholder="{{ __('Email') }}">
                                 @error('email')
                                 <span class="invalid-feedback">
                                     <strong>{{ $message }}</strong>
@@ -97,7 +97,7 @@
                         <div class="grid grid-cols-2 gap-2">
                             <div class="mb-4">
                                 <label class="font-medium" for="password">{{ __('Password:') }}</label>
-                                <input id="password" name="password" type="password" @class(['form-control form-input dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('password')]) placeholder="{{ __('Password') }}">
+                                <input id="password" name="password" type="password" @class(['form-control form-input bg-white dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('password')]) placeholder="{{ __('Password') }}">
                                 @error('password')
                                 <span class="invalid-feedback">
                                 <strong>{{ $message }}</strong>
