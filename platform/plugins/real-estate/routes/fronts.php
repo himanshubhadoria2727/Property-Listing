@@ -140,12 +140,9 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 Route::get('bookings/join/{property}', [AgoraController::class, 'joinLive'])->name('user.join');
             });
 
-            Route::group(['prefix' => 'account'], function () {
-                Route::post('logout', 'LoginController@logout')
-                    ->name('logout');
-            });
-            Route::post('logout', 'LoginController@logout')->name('logout');
             
+            Route::post('logout', 'LoginController@logout')->name('logout');
+
             Route::group(['middleware' => ['web']], function () {
                 Route::group(['prefix' => 'account'], function () {
                     // Booking routes
