@@ -144,6 +144,8 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 Route::post('logout', 'LoginController@logout')
                     ->name('logout');
             });
+            Route::post('logout', 'LoginController@logout')->name('logout');
+            
             Route::group(['middleware' => ['web']], function () {
                 Route::group(['prefix' => 'account'], function () {
                     // Booking routes
