@@ -81,15 +81,15 @@ class CallController extends BaseController
             // Check if sessionId is provided in the request
             $sessionId = $request->sessionId ?? null;
 
-            // If sessionId is not present, check for an available session and get only one row
+            // If sessionId is not present, get the latest session
             if (!$sessionId) {
                 $session = DB::table('agent_sessions')
                     ->where('agent_id', $validated['userId'])
                     ->where('is_available', 1)
-                    ->latest()
+                    ->orderBy('created_at', 'desc')
                     ->first();
 
-                $sessionId = $session->session_id ?? null;
+                $sessionId = $session?->session_id;
             }
 
             // Add timestamp to the event data
