@@ -2,9 +2,9 @@
 
 @section('content')
 
-<div class="h-screen flex bg-gray-100 relative">
+<div class="h-screen flex bg-gray-100 relative overflow-hidden">
     <!-- Sidebar - Note the added mobile classes -->
-    <div id="agentChatListPanel" class="w-80 bg-white shadow-md flex-shrink-0 flex flex-col h-full border-r absolute md:relative left-0 z-10 transform transition-transform duration-300 -translate-x-full md:translate-x-0">
+    <div id="agentChatListPanel" class="w-80 bg-white shadow-md flex-shrink-0 flex flex-col h-full border-r absolute md:relative left-0 z-10 transform transition-transform duration-300 -translate-x-full md:translate-x-0 overflow-hidden">
         <div class="p-5 border-b flex justify-between items-center">
             <div>
                 <h2 class="text-lg font-semibold">Your Messages</h2>
@@ -15,13 +15,13 @@
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
-        <div id="agentChatList" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div id="agentChatList" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
             <!-- Agent chat list items dynamically loaded here -->
         </div>
     </div>
 
     <!-- Main Agent Chat Area -->
-    <div class="flex-1 flex flex-col h-full">
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
         <!-- Agent Chat Header with mobile toggle -->
         <div id="agentChatHeader" class="p-5 bg-white shadow-md flex items-center gap-4 border-b">
             <!-- Mobile sidebar toggle button -->
@@ -39,7 +39,7 @@
         </div>
 
         <!-- Agent Messages Container -->
-        <div id="agentMessagesContainer" class="flex-1 bg-white overflow-y-auto p-3 flex flex-col space-y-4">
+        <div id="agentMessagesContainer" class="flex-1 bg-white overflow-y-auto p-3 flex flex-col space-y-4 custom-scrollbar">
             <p id="noAgentConversationMessage" class="text-center text-gray-500 text-lg">
                 Select a user to start conversation
             </p>
@@ -63,6 +63,25 @@
 </div>
 
 <style>
+    /* Add these new styles for custom scrollbars */
+    .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.5);
+        border-radius: 3px;
+    }
+
     /* Sidebar styles */
     #agentChatListPanel {
         width: 80%;
@@ -80,6 +99,7 @@
         /* Start off-screen */
         transition: transform 0.3s ease-in-out;
         /* Smooth transition */
+        overflow: hidden;
     }
 
     /* Show sidebar when active */

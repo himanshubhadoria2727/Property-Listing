@@ -1,8 +1,8 @@
-<div class="chat-app-container" style="height: 100vh; display: flex; background-color: #f9fafb;">
-    <div class="chat-main" style="flex: 1; display: flex; flex-direction: row; position: relative; overflow-x: hidden;">
+<div class="chat-app-container" style="height: 100vh; display: flex; background-color: #f9fafb; overflow: hidden;">
+    <div class="chat-main" style="flex: 1; display: flex; flex-direction: row; position: relative; overflow: hidden;">
         <!-- Sidebar -->
-        <div id="chatListPanel" class="chat-sidebar" style="width: 350px; background-color: white; border-right: 1px solid #e5e7eb; display: none;">
-            <div class="chat-sidebar-inner" style="height: 100%; display: flex; flex-direction: column;">
+        <div id="chatListPanel" class="chat-sidebar" style="width: 350px; background-color: white; border-right: 1px solid #e5e7eb; display: none; overflow: hidden;">
+            <div class="chat-sidebar-inner" style="height: 100%; display: flex; flex-direction: column; overflow: hidden;">
                 <div class="chat-sidebar-header" style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
                     <h2 class="chat-sidebar-title" style="font-size: 1.5rem; font-weight: bold; color: #1f2937;">Messages</h2>
                     <p class="chat-sidebar-subtitle" style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">Your conversations</p>
@@ -14,7 +14,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="chat-content" style="flex: 1; display: flex; flex-direction: column; overflow-x: hidden; overflow-y: auto;">
+        <div class="chat-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
             <!-- Chat Header -->
             <div id="chatHeader" class="chat-header" style="padding: 1.5rem; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                 <div style="display: flex; align-items: center; gap: 1rem;">
@@ -362,6 +362,7 @@
         height: 100vh;
         display: flex;
         background-color: #f9fafb;
+        overflow: hidden;
     }
 
     .chat-main {
@@ -370,18 +371,21 @@
         width: auto;
         flex-direction: row;
         position: relative;
+        overflow: hidden;
     }
 
     .chat-sidebar {
         width: 320px;
         background-color: white;
         border-right: 1px solid #e5e7eb;
+        overflow: hidden;
     }
 
     .chat-content {
         flex: 1;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
     }
 
     @media (max-width: 1024px) {
@@ -394,6 +398,7 @@
         height: 100%;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
     }
 
     .chat-sidebar-header {
@@ -417,6 +422,8 @@
         flex: 1;
         overflow-y: auto;
         padding: 1rem 0.75rem;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
     }
 
     .chat-list-item {
@@ -448,6 +455,8 @@
         padding: 1.5rem;
         display: flex;
         flex-direction: column;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
     }
 
     .message-container {
@@ -540,16 +549,21 @@
         cursor: not-allowed;
     }
 
-    /* Hide scrollbar */
+    /* Webkit scrollbar styles */
     .chat-list::-webkit-scrollbar,
     .chat-messages::-webkit-scrollbar {
-        display: none;
+        width: 6px;
     }
 
-    .chat-list,
-    .chat-messages {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+    .chat-list::-webkit-scrollbar-track,
+    .chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chat-list::-webkit-scrollbar-thumb,
+    .chat-messages::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.5);
+        border-radius: 3px;
     }
 
     /* Avatar */
