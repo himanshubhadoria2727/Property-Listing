@@ -86,7 +86,7 @@ class CallController extends BaseController
                 $session = DB::table('agent_sessions')
                     ->where('agent_id', $validated['userId'])
                     ->where('is_available', 1)
-                    ->orderBy('created_at', 'desc')
+                    ->orderBy('updated_at', 'desc')
                     ->first();
 
                 $sessionId = $session?->session_id;
