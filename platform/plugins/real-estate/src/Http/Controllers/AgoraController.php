@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Botble\Base\Facades\Assets;
 use App\Providers\RtcTokenBuilder;
 use Illuminate\Support\Facades\Http;
+use Botble\RealEstate\Models\Property;
 
 class AgoraController extends BaseController
 {
@@ -96,18 +97,31 @@ class AgoraController extends BaseController
 }
 
 
-    public function joinStream($property)
+    public function joinStream($propertyId)
     {
+        $property = Property::findOrFail($propertyId);
         Assets::addScriptsDirectly('vendor/core/plugins/real-estate/js/join.js');
 
-        // Render the join stream view
         return view('plugins/real-estate::broadcast.join', compact('property'));
     }
-    public function joinLive($property)
-    {
-        Assets::addScriptsDirectly('vendor/core/plugins/real-estate/js/join.js');
 
-        // Render the join stream view
-        return view('plugins/real-estate::user.join', compact('property'));
+    public function joinLive(string|int $propertyId)
+    {
+        try {
+            $property = Property::query()->findOrFail($propertyId);
+
+            if (!$property instanceof Property) {
+                return redirect()->back()
+                    ->with('error', 'Invalid property data.');
+            }
+
+            Assets::addScriptsDirectly('vendor/core/plugins/real-estate/js/join.js');
+
+            return view('plugins/real-estate::user.join', compact('property'));
+        } catch (\Exception $e) {
+            Log::error('Error in joinLive: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Unable to join the live stream. Please try again later.');
+        }
     }
 }

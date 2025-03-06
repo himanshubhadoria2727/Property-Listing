@@ -380,13 +380,7 @@ class RealEstateServiceProvider extends ServiceProvider
                     'url' => fn () => route('public.account.bookings.show'),
                     'icon' => 'ti ti-video',
                 ])
-                ->registerItem([
-                    'id' => 'cms-account-chat',
-                    'priority' => 4,
-                    'name' => 'Chats',
-                    'url' => fn () => route('public.account.chats.index'),
-                    'icon' => 'ti ti-message',
-                ])
+                
                 ->registerItem([
                     'id' => 'cms-account-calls',
                     'priority' => 4,

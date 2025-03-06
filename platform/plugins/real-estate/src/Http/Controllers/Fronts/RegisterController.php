@@ -29,7 +29,7 @@ class RegisterController extends BaseController
 
     public function __construct()
     {
-        $this->redirectTo = route('public.account.dashboard');
+        $this->redirectTo = URL::to('/login');
     }
 
     public function showRegistrationForm()
@@ -63,6 +63,13 @@ class RegisterController extends BaseController
         $account->save();
 
         $this->guard()->login($account);
+
+        if ($account->role === 1) {
+            return $this
+                ->httpResponse()
+                ->setNextUrl(URL::to('/'))
+                ->setMessage(__('You successfully confirmed your email address.'));
+        }
 
         return $this
             ->httpResponse()
@@ -131,28 +138,31 @@ class RegisterController extends BaseController
         }
 
         $account->confirmed_at = Carbon::now();
-
         $account->is_public_profile = false;
-        if($request->has('role')) {
-            $account->role = $request->input('role');
-            if($request->input('role') == 1){
+        
+        // Set the role before saving
+        if ($request->has('role')) {
+            $role = (int) $request->input('role');
+            $account->role = $role;
+            
+            // Set redirect path based on role
+            if ($role === 1) {
                 $this->redirectTo = '/';
+            } else {
+                $this->redirectTo = route('public.account.dashboard');
             }
         }
+        
         $account->save();
-        // if ($request->has('role')) {
-        //     // Here we assume `getRoleIdByName` is a helper method to get the role ID by name
-        //     $roleId = Role::where('name', $request->input('role'))->value('id');
-        //     if ($roleId) {
-        //         $account->roles()->sync([$roleId]);
-        //     }
-        // }
-        Log::info('account'. $account);
+        
+        Log::info('Account created with role: ' . $account->role);
+        
         $this->guard()->login($account);
 
         return $this
             ->httpResponse()
-            ->setNextUrl($this->redirectPath())->setMessage(__('Registered successfully!'));
+            ->setNextUrl($this->redirectPath())
+            ->setMessage(__('Registered successfully!'));
     }
 
     protected function validator(array $data)

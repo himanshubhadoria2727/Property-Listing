@@ -11,7 +11,7 @@
                     <i class="mdi mdi-heart-outline"></i>
                 </button>
 
-                @if (auth('account')->check()) 
+                @if (auth('account')->check() && auth('account')->user()->role == 1) 
                 <button
                     type="button"
                     class="text-lg text-red-600 bg-white rounded-full shadow btn btn-icon dark:bg-slate-900 dark:shadow-gray-700 start-call"

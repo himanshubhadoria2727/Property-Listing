@@ -119,35 +119,31 @@ class AccountPropertyController extends BaseController
 
     public function edit(int|string $id, Request $request)
     {
-        // Decode the JSON string in the $id parameter
-        $decodedId = json_decode($id, true);
-    
-        // Check if the decoded data is valid and contains the 'id' field
-        if (!is_array($decodedId) || !isset($decodedId['id'])) {
-            Log::warning('Invalid property ID format', [
-                'user_id' => auth('account')->id(),
-                'property_id' => $id,
-            ]);
-            abort(400, 'Invalid property ID format');
+        $propertyId = $id;
+        
+        // If the ID is a JSON string, try to decode it
+        if (is_string($id) && str_starts_with($id, '{')) {
+            try {
+                $decodedId = json_decode($id, true);
+                if (is_array($decodedId) && isset($decodedId['id'])) {
+                    $propertyId = $decodedId['id'];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to decode property ID', [
+                    'user_id' => auth('account')->id(),
+                    'property_id' => $id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
-    
-        // Extract the actual ID
-        $propertyId = $decodedId['id'];
-    
-        Log::info("Extracted property ID", ['id' => $propertyId]);
-        Log::info('Edit property', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $propertyId,
-            'request' => $request->only(['name', 'description', 'price']), // Log only necessary fields
-        ]);
-    
+
         // Fetch the property
         $property = $this->propertyRepository->getFirstBy([
             'id' => $propertyId,
             'author_id' => auth('account')->id(),
             'author_type' => Account::class,
         ]);
-    
+
         if (!$property) {
             Log::warning('Property not found or unauthorized', [
                 'user_id' => auth('account')->id(),
@@ -155,19 +151,9 @@ class AccountPropertyController extends BaseController
             ]);
             abort(404, 'Property not found or you do not have permission to edit it.');
         }
-    
-        Log::info('Property found', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $id,
-        ]);
-    
-        // Dispatch event
+
         try {
             event(new BeforeEditContentEvent($request, $property));
-            Log::info('Dispatch BeforeEditContentEvent', [
-                'user_id' => auth('account')->id(),
-                'property_id' => $propertyId,
-            ]);
         } catch (\Exception $e) {
             Log::error('Error dispatching BeforeEditContentEvent', [
                 'user_id' => auth('account')->id(),
@@ -176,18 +162,10 @@ class AccountPropertyController extends BaseController
             ]);
             abort(500, 'An error occurred while processing your request.');
         }
-    
-        // Set page title
+
         $this->pageTitle(trans('plugins/real-estate::property.edit') . ' "' . e($property->name) . '"');
-    
-        Log::info('Rendering form', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $propertyId,
-        ]);
-    
-        // Render the form
-        return AccountPropertyForm::createFromModel($property)
-            ->renderForm();
+
+        return AccountPropertyForm::createFromModel($property)->renderForm();
     }
 
     public function update(
@@ -196,12 +174,23 @@ class AccountPropertyController extends BaseController
         StorePropertyCategoryService $propertyCategoryService,
         SaveFacilitiesService $saveFacilitiesService
     ) {
-        Log::info('Updating property', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $id,
-        ]);
-        $decodedId = json_decode($id, true);
-        $propertyId = $decodedId['id'];
+        $propertyId = $id;
+        
+        // If the ID is a JSON string, try to decode it
+        if (is_string($id) && str_starts_with($id, '{')) {
+            try {
+                $decodedId = json_decode($id, true);
+                if (is_array($decodedId) && isset($decodedId['id'])) {
+                    $propertyId = $decodedId['id'];
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to decode property ID', [
+                    'user_id' => auth('account')->id(),
+                    'property_id' => $id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         $property = $this->propertyRepository->getFirstBy([
             'id' => $propertyId,
@@ -209,68 +198,25 @@ class AccountPropertyController extends BaseController
             'author_type' => Account::class,
         ]);
 
-        if (! $property) {
-            Log::error('Property not found or you do not have permission to edit it.', [
-                'user_id' => auth('account')->id(),
-                'property_id' => $id,
-            ]);
+        if (!$property) {
             abort(404);
         }
 
-        Log::info('Property found', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $id,
-        ]);
-
         $property->fill($this->processRequestData($request));
-
-        Log::info('Updating property model', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $id,
-        ]);
 
         $property->save();
 
         if (RealEstateHelper::isEnabledCustomFields()) {
-            Log::info('Saving custom fields', [
-                'user_id' => auth('account')->id(),
-                'property_id' => $id,
-            ]);
             $this->saveCustomFields($property, $request->input('custom_fields', []));
         }
 
-        Log::info('Syncing features', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $id,
-        ]);
-
         $property->features()->sync($request->input('features', []));
-
-        Log::info('Saving facilities', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $id,
-        ]);
 
         $saveFacilitiesService->execute($property, $request->input('facilities', []));
 
-        Log::info('Saving categories', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $id,
-        ]);
-
         $propertyCategoryService->execute($request, $property);
 
-        Log::info('Dispatching UpdatedContentEvent', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $id,
-        ]);
-
         event(new UpdatedContentEvent(PROPERTY_MODULE_SCREEN_NAME, $request, $property));
-
-        Log::info('Creating activity log', [
-            'user_id' => auth('account')->id(),
-            'property_id' => $id,
-        ]);
 
         AccountActivityLog::query()->create([
             'action' => 'update_property',

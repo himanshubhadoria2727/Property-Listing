@@ -73,7 +73,7 @@ class CityForm extends FormAbstract
                         [0 => trans('plugins/location::city.select_state')]) + $states,
             ])
             ->add('regions', 'text', [
-                'label' => trans('plugins/location::city.regions'),
+                'label' => trans('Regions'),
                 'attr' => [
                     'id' => 'regions-input',
                     'placeholder' => __('Add regions and press Enter'),

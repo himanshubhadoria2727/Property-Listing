@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
 use App\Models\ChatMessage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ChatController extends BaseController
 {
@@ -26,11 +27,33 @@ class ChatController extends BaseController
 
     public function sendMessage(Request $request)
     {
-        $message = Chat::create([
+        $data = [
             'sender_id' => $request->sender_id,
             'receiver_id' => $request->receiver_id,
             'message' => $request->message,
-        ]);
+        ];
+
+        // Handle file upload if present
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $extension = $file->getClientOriginalExtension();
+            $allowedTypes = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'gif'];
+
+            if (!in_array(strtolower($extension), $allowedTypes)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid file type. Allowed types: ' . implode(', ', $allowedTypes)
+                ], 400);
+            }
+
+            // Store the file
+            $path = $file->store('chat-attachments', 'public');
+            
+            $data['attachment'] = $path;
+            $data['attachment_type'] = $this->getAttachmentType($extension);
+        }
+
+        $message = Chat::create($data);
 
         broadcast(new MessageSent($message->message, auth('account')->id(), $message->receiver_id))->toOthers();
 
@@ -38,8 +61,29 @@ class ChatController extends BaseController
             ->where('id', $message->id)
             ->orderBy('created_at', 'asc')
             ->get();
+
         return response()->json(['success' => true, 'chat' => $chatData]);
     }
+
+    private function getAttachmentType(string $extension): string
+    {
+        $extension = strtolower($extension);
+        
+        if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif'])) {
+            return 'image';
+        }
+        
+        if (in_array($extension, ['pdf'])) {
+            return 'pdf';
+        }
+        
+        if (in_array($extension, ['doc', 'docx'])) {
+            return 'document';
+        }
+        
+        return 'file';
+    }
+
     public function getChatWithAgent(Request $request)
     {
         $senderId = $request->query('sender_id');

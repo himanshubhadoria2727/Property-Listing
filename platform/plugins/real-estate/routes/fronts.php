@@ -133,8 +133,6 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 Route::post('create/call-logs', [CallController::class, 'callLogs']);
                 Route::get('/get/call-logs', [CallController::class, 'getCallLogs']);
                 Route::delete('/call-logs/{id}', [CallController::class, 'deleteCallLog']);
-                // routes/api.php
-
                 Route::get('/expos', [ExpoController::class, 'index']);
                 Route::post('/expos', [ExpoController::class, 'store']);
                 Route::get('bookings/join/{property}', [AgoraController::class, 'joinLive'])->name('user.join');
@@ -155,13 +153,8 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                     Route::post('agora/check-stream-status', [AgoraController::class, 'checkStreamStatus']);
                     Route::get('{property}/live',  [BookingController::class, 'viewBookings'])->name('bookings.index');
                     Route::get('{property}/calls',  [BookingController::class, 'viewCallBookings'])->name('calls.show');
-                    // Route::get('properties/{property}/bookings',  [BookingController::class, 'calls'])->name('calls.index');
-                    // Route::get('bookings', [BookingController::class, 'show'])
-                    // ->name('bookings.show'); // Named route for bookings.show    
-                    // Signaling routes for WebRTC
-                    // Route::post('/send-signal', [BroadcastController::class, 'sendSignal']);
-                    // Route::post('/handleSignaling', [BroadcastController::class, 'handleSignaling']);
                 });
+                Route::get('/user/settings',  [BookingController::class, 'viewSettings'])->name('user.settings');
             });
             Route::get('feed/properties', [
                 'as' => 'feeds.properties',
@@ -195,11 +188,12 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                         'as' => 'chat.show',
                         'uses' => 'ChatController@showChatModal',
                     ]);
+
                     Route::get('chats', [
                         'as' => 'chats.index',
                         'uses' => 'ChatController@showChatAgent',
                     ]);
-
+                    
                     Route::get('settings', [
                         'as' => 'settings',
                         'uses' => 'PublicAccountController@getSettings',

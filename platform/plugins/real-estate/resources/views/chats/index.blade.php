@@ -47,13 +47,38 @@
 
         <!-- Agent Message Input -->
         <div id="agentMessageInputContainer" class="p-4 bg-white border-t">
-            <form id="agentMessageForm" class="flex items-center gap-3">
+            <form id="agentMessageForm" class="flex flex-col gap-2">
                 <input type="hidden" id="currentAgentId" value="" />
-                <input id="agentMessageInput" type="text" class="flex-1 px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type your message to agent..." />
-                <button type="submit" id="sendAgentMessageButton" class="px-3 py-3 bg-blue-600 text-white rounded-lg shadow-md flex items-center gap-2 disabled:opacity-50" disabled>
-                    <span>Send</span>
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+                <div class="flex items-center gap-3">
+                    <div class="flex-1 relative">
+                        <input 
+                            id="agentMessageInput" 
+                            type="text" 
+                            class="w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            placeholder="Type your message..." 
+                        />
+                        <label for="agentAttachment" class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-paperclip text-xl"></i>
+                            <input 
+                                type="file" 
+                                id="agentAttachment" 
+                                name="attachment" 
+                                class="hidden" 
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" 
+                            />
+                        </label>
+                    </div>
+                    <button 
+                        type="submit" 
+                        id="sendAgentMessageButton" 
+                        class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md flex items-center gap-2 disabled:opacity-50 hover:bg-blue-700 transition-colors" 
+                        disabled
+                    >
+                        <span>Send</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div id="agentAttachmentPreview" class="hidden p-2 bg-gray-50 rounded-lg"></div>
             </form>
         </div>
     </div>
@@ -151,6 +176,8 @@
         const currentAgentId = document.getElementById('currentAgentId');
         const agentChatHeader = document.getElementById('agentChatHeader');
         const agentMessageInputContainer = document.getElementById('agentMessageInputContainer');
+        const agentAttachmentInput = document.getElementById('agentAttachment');
+        const agentAttachmentPreview = document.getElementById('agentAttachmentPreview');
 
         // Mobile sidebar elements
         const openSidebarBtn = document.getElementById('openSidebarBtn');
@@ -197,7 +224,7 @@
                             agentChatItem.dataset.agentId = agentId;
 
                             if (agentId === activeUserId) {
-                                agentChatItem.classList.add('bg-gray-100');
+                                agentChatItem.classList.add('bg-gray-500');
                             }
 
                             agentChatList.appendChild(agentChatItem);
@@ -223,10 +250,10 @@
 
         function createAgentChatListItem(agentChat, agentId) {
             const agentChatItem = document.createElement('div');
-            agentChatItem.className = 'p-3 mb-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer';
+            agentChatItem.className = 'p-3 mb-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer';
 
             if (agentId === localStorage.getItem('activeUserId')) {
-                agentChatItem.classList.add('bg-gray-100');
+                agentChatItem.classList.add('bg-gray-500');
             }
 
             // Determine which user is the chat partner (not the current user)
@@ -252,9 +279,9 @@
                 localStorage.setItem('activeUserId', agentId);
 
                 document.querySelectorAll('#agentChatList > div').forEach(item => {
-                    item.classList.remove('bg-gray-100');
+                    item.classList.remove('bg-gray-500');
                 });
-                agentChatItem.classList.add('bg-gray-100');
+                agentChatItem.classList.add('bg-gray-500');
 
                 // Also use chatPartner here for consistency
                 loadAgentChat(agentId, `${chatPartner.first_name} ${chatPartner.last_name}`);
@@ -316,10 +343,31 @@
             const messageElement = document.createElement('div');
             messageElement.className = `flex w-full ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-2`;
 
+            let attachmentHtml = '';
+            if (message.attachment) {
+                if (message.attachment_type === 'image') {
+                    attachmentHtml = `
+                        <div class="mt-2">
+                            <img src="${message.attachment_url}" alt="Attached image" class="max-w-xs rounded-lg shadow-sm" />
+                        </div>`;
+                } else {
+                    const fileName = message.attachment.split('/').pop();
+                    const icon = message.attachment_type === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
+                    attachmentHtml = `
+                        <div class="mt-2">
+                            <a href="${message.attachment_url}" target="_blank" class="flex items-center gap-2 text-sm ${isCurrentUser ? 'text-blue-100' : 'text-blue-600'} hover:underline">
+                                <i class="fas ${icon}"></i>
+                                ${fileName}
+                            </a>
+                        </div>`;
+                }
+            }
+
             messageElement.innerHTML = `
-                <div class="${isCurrentUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'} 
+                <div class="${isCurrentUser ? 'bg-blue-600 text-white' : 'bg-gray-400 text-gray-800'} 
                             rounded-lg px-4 py-2 max-w-xs md:max-w-md lg:max-w-lg shadow-sm">
                     <p class="text-sm" style="white-space: pre-wrap;">${message.message}</p>
+                    ${attachmentHtml}
                     <p class="text-xs ${isCurrentUser ? 'text-blue-200' : 'text-gray-500'} mt-1 text-right">
                         ${new Date(message.created_at).toLocaleTimeString()}
                     </p>
@@ -329,36 +377,75 @@
             return messageElement;
         }
 
-        agentMessageForm?.addEventListener("submit", (e) => {
+        // File upload preview
+        agentAttachmentInput?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) {
+                agentAttachmentPreview.classList.add('hidden');
+                return;
+            }
+
+            const fileName = file.name;
+            const fileSize = (file.size / 1024 / 1024).toFixed(2); // Convert to MB
+
+            agentAttachmentPreview.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas ${file.type.includes('image') ? 'fa-image' : 'fa-file'} text-gray-500"></i>
+                        <span class="text-sm text-gray-700">${fileName} (${fileSize} MB)</span>
+                    </div>
+                    <button type="button" class="text-red-500 hover:text-red-700" onclick="removeAgentAttachment()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            agentAttachmentPreview.classList.remove('hidden');
+        });
+
+        // Remove attachment
+        window.removeAgentAttachment = function() {
+            agentAttachmentInput.value = '';
+            agentAttachmentPreview.classList.add('hidden');
+        };
+
+        agentMessageForm?.addEventListener("submit", async (e) => {
             e.preventDefault();
             const messageText = agentMessageInput.value.trim();
-            if (messageText === "" || !currentAgentId.value) return;
-
-            const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const attachment = agentAttachmentInput.files[0];
+            
+            if ((!messageText && !attachment) || !currentAgentId.value) return;
 
             sendAgentMessageButton.disabled = true;
 
-            axios.post('/chats/send', {
-                    message: messageText,
-                    receiver_id: currentAgentId.value,
-                    sender_id: String(window.userId)
-                }, {
+            const formData = new FormData();
+            formData.append('message', messageText);
+            formData.append('receiver_id', currentAgentId.value);
+            formData.append('sender_id', String(window.userId));
+            
+            if (attachment) {
+                formData.append('attachment', attachment);
+            }
+
+            try {
+                const response = await axios.post('/chats/send', formData, {
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'multipart/form-data',
                     }
-                })
-                .then(response => {
-                    if (response.data.success) {
-                        const messageElement = createAgentMessageElement(response.data.chat[0]);
-                        agentMessagesContainer.appendChild(messageElement);
-                        agentMessageInput.value = "";
-                        scrollToBottom();
-                    }
-                })
-                .catch(error => console.error('Error sending message to agent:', error))
-                .finally(() => {
-                    sendAgentMessageButton.disabled = false;
                 });
+
+                if (response.data.success) {
+                    const messageElement = createAgentMessageElement(response.data.chat[0]);
+                    agentMessagesContainer.appendChild(messageElement);
+                    agentMessageInput.value = "";
+                    agentAttachmentInput.value = "";
+                    agentAttachmentPreview.classList.add('hidden');
+                    scrollToBottom();
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+            } finally {
+                sendAgentMessageButton.disabled = false;
+            }
         });
 
         function scrollToBottom() {
@@ -367,7 +454,7 @@
 
         function highlightActiveAgentChat(activeUserId) {
             document.querySelectorAll("#agentChatList > div").forEach(chatItem => {
-                chatItem.classList.toggle('bg-gray-200', chatItem.dataset.agentId === activeUserId);
+                chatItem.classList.toggle('bg-gray-500', chatItem.dataset.agentId === activeUserId);
             });
         }
 

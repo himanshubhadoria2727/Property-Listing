@@ -262,4 +262,16 @@ Route::group(['namespace' => 'Botble\RealEstate\Http\Controllers', 'middleware' 
             ]);
         });
     });
+
+    Route::group(['prefix' => 'chat', 'middleware' => ['account']], function () {
+        Route::post('presence', [
+            'as' => 'public.account.chat.presence',
+            'uses' => 'Fronts\ChatController@setUserOnlineStatus',
+        ]);
+        
+        Route::get('presence/{userId}', [
+            'as' => 'public.account.chat.presence.status',
+            'uses' => 'Fronts\ChatController@getUserOnlineStatus',
+        ]);
+    });
 });

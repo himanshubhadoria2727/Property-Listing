@@ -1,4 +1,4 @@
-<div class="chat-app-container" style="height: 100vh; display: flex; background-color: #f9fafb; overflow: hidden;">
+<div class="chat-app-container" style="height: 100%; display: flex; background-color: #f9fafb; overflow: hidden;">
     <div class="chat-main" style="flex: 1; display: flex; flex-direction: row; position: relative; overflow: hidden;">
         <!-- Sidebar -->
         <div id="chatListPanel" class="chat-sidebar" style="width: 350px; background-color: white; border-right: 1px solid #e5e7eb; display: none; overflow: hidden;">
@@ -14,11 +14,11 @@
         </div>
 
         <!-- Main Content -->
-        <div class="chat-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="chat-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; height: 100%;">
             <!-- Chat Header -->
-            <div id="chatHeader" class="chat-header" style="padding: 1.5rem; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
+            <div id="chatHeader" class="chat-header" style="padding: 0.75rem 1.5rem; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div class="chat-avatar" style="width: 3rem; height: 3rem; background-color: #dbeafe; border-radius: 9999px; display: flex; align-items: center; justify-content: center; color: #2563eb;">
+                    <div class="chat-avatar" style="width: 2.5rem; height: 2.5rem; background-color: #dbeafe; border-radius: 9999px; display: flex; align-items: center; justify-content: center; color: #2563eb;">
                         <i class="fas fa-user"></i>
                     </div>
                     <div>
@@ -29,32 +29,40 @@
             </div>
 
             <!-- Messages Container -->
-            <div id="messagesContainer" class="chat-messages" style="padding:0.5rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+            <div id="messagesContainer" class="chat-messages" style="padding:1rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; min-height: 0;">
                 <p id="noConversationMessage" style="text-align: center; color: #6b7280; margin-top: 2.5rem;">
                     Select an agent to start conversation
                 </p>
             </div>
 
             <!-- Message Input -->
-            <div id="messageInputContainer" class="chat-input" style="padding: 0.5rem; color: #1f2937; background-color: white; border-top: 1px solid #e5e7eb;">
-                <form id="messageForm" class="chat-input-form" style="padding: 0.5em;display: flex; gap: 1rem;">
+            <div id="messageInputContainer" class="chat-input" style="padding: 1rem; color: #1f2937; background-color: white; border-top: 1px solid #e5e7eb;">
+                <form id="messageForm" class="chat-input-form" style="padding: 0.25rem; display: flex; gap: 0.75rem;">
                     <input type="hidden" id="currentAgentId" value="" />
-                    <input
-                        id="messageInput"
-                        type="text"
-                        class="chat-input-field"
-                        placeholder="Type your message..."
-                        style="flex: 1; padding: 0.75rem 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; background-color: #f9fafb; transition: all 0.2s;" />
+                    <div class="w-full flex-1 flex items-center gap-2">
+                        <input
+                            id="messageInput"
+                            type="text"
+                            class="chat-input-field flex-1"
+                            placeholder="Type your message..."
+                            style="padding: 0.5rem 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; background-color: #f9fafb; transition: all 0.2s;" />
+                        
+                        <label for="attachment" class="cursor-pointer text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-paperclip text-xl"></i>
+                            <input type="file" id="attachment" name="attachment" class="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" />
+                        </label>
+                    </div>
                     <button
                         type="submit"
                         id="sendMessageButton"
                         class="chat-send-button"
                         disabled
-                        style="padding: 0.75rem 0.7rem; background-color: #2563eb; color: white; border: none; border-radius: 0.5rem; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 0.5rem;">
+                        style="padding: 0.5rem 1rem; background-color: #2563eb; color: white; border: none; border-radius: 0.5rem; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 0.5rem;">
                         <span class="send-text">Send</span>
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </form>
+                <div id="attachmentPreview" class="hidden mt-2 p-2 bg-gray-50 rounded-lg"></div>
             </div>
         </div>
     </div>
@@ -132,10 +140,10 @@
 
         function createChatListItem(chat, receiverId) {
             const chatItem = document.createElement('div');
-            chatItem.className = 'p-3 mb-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer';
+            chatItem.className = 'p-4 mb-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer';
 
             if (receiverId === localStorage.getItem('authorId')) {
-                chatItem.classList.add('bg-gray-100');
+                chatItem.classList.add('bg-gray-300');
             }
 
             // Determine which user is the chat partner (not the current user)
@@ -143,15 +151,15 @@
             const chatPartner = isCurrentUserSender ? chat.receiver : chat.sender;
 
             chatItem.innerHTML = `
-        <div class="flex items-center space-x-3">
-            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-user text-blue-600"></i>
+        <div class="flex items-center space-x-4">
+            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-gray-200">
+                <i class="fas fa-user text-gray-600"></i>
             </div>
             <div class="flex-1 min-w-0">
                 <h3 class="text-sm font-semibold text-gray-900 truncate">
                     ${chatPartner.first_name} ${chatPartner.last_name}
                 </h3>
-                <p class="text-sm text-gray-500 truncate">${chat.message || 'No messages yet'}</p>
+                <p class="text-sm text-gray-500 truncate mt-1">${chat.message || 'No messages yet'}</p>
             </div>
         </div>
     `;
@@ -202,10 +210,10 @@
             // Update header with active chat
             chatHeader.innerHTML = `
                 <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-user text-blue-600 text-xl"></i>
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center border-2 border-gray-200 shadow-sm">
+                        <i class="fas fa-user text-gray-600 text-xl"></i>
                     </div>
-                    <div>
+                    <div class="flex flex-col gap-0.5">
                         <h3 class="text-lg font-semibold text-gray-800">${agentName}</h3>
                         <p class="text-sm text-gray-500">Online</p>
                     </div>
@@ -233,19 +241,34 @@
         }
 
         function createMessageElement(message) {
-            console.log('Creating message element:', message);
             const isCurrentUser = message.sender_id === window.userId;
             const messageElement = document.createElement('div');
             messageElement.className = `flex w-full ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-2`;
 
-            messageElement.style.cssText = `
-                display: flex;
-                justify-content: ${isCurrentUser ? 'flex-end' : 'flex-start'};
-                margin-bottom: 0.5rem;
-            `;
+            let attachmentHtml = '';
+            if (message.attachment) {
+                if (message.attachment_type === 'image') {
+                    attachmentHtml = `
+                        <div class="mt-2">
+                            <img src="${message.attachment_url}" alt="Attached image" class="max-w-xs rounded-lg shadow-sm" />
+                        </div>`;
+                } else {
+                    const fileName = message.attachment.split('/').pop();
+                    const icon = message.attachment_type === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
+                    attachmentHtml = `
+                        <div class="mt-2">
+                            <a href="${message.attachment_url}" target="_blank" class="flex items-center gap-2 text-sm ${isCurrentUser ? 'text-blue-100' : 'text-blue-600'} hover:underline">
+                                <i class="fas ${icon}"></i>
+                                ${fileName}
+                            </a>
+                        </div>`;
+                }
+            }
+
             messageElement.innerHTML = `
                 <div style="background-color: ${isCurrentUser ? '#3B82F6' : '#E5E7EB'}; color: ${isCurrentUser ? 'white' : '#1A202C'}; border-radius: 0.5rem; padding: 0.5rem; max-width: 300px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
                     <p style="font-size: 0.875rem; white-space: pre-wrap;">${message.message}</p>
+                    ${attachmentHtml}
                     <p style="font-size: 0.75rem; color: ${isCurrentUser ? 'rgba(255, 255, 255, 0.6)' : 'rgba(26, 32, 44, 0.6)'}; margin-top: 0.25rem; text-align: right;">
                         ${new Date(message.created_at).toLocaleTimeString()}
                     </p>
@@ -255,37 +278,78 @@
             return messageElement;
         }
 
-        messageForm?.addEventListener("submit", (e) => {
+        // File upload preview
+        const attachmentInput = document.getElementById('attachment');
+        const attachmentPreview = document.getElementById('attachmentPreview');
+        
+        attachmentInput?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) {
+                attachmentPreview.classList.add('hidden');
+                return;
+            }
+
+            const fileName = file.name;
+            const fileSize = (file.size / 1024 / 1024).toFixed(2); // Convert to MB
+
+            attachmentPreview.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas ${file.type.includes('image') ? 'fa-image' : 'fa-file'} text-gray-500"></i>
+                        <span class="text-sm text-gray-700">${fileName} (${fileSize} MB)</span>
+                    </div>
+                    <button type="button" class="text-red-500 hover:text-red-700" onclick="removeAttachment()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            attachmentPreview.classList.remove('hidden');
+        });
+
+        // Remove attachment
+        window.removeAttachment = function() {
+            attachmentInput.value = '';
+            attachmentPreview.classList.add('hidden');
+        };
+
+        messageForm?.addEventListener("submit", async (e) => {
             e.preventDefault();
             const messageText = messageInput.value.trim();
-            if (messageText === "" || !currentAgentId.value) return;
-
-            const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const attachment = attachmentInput.files[0];
+            
+            if ((!messageText && !attachment) || !currentAgentId.value) return;
 
             sendMessageButton.disabled = true;
 
-            axios.post('/chats/send', {
-                    message: messageText,
-                    receiver_id: currentAgentId.value,
-                    sender_id: String(window.userId)
-                }, {
+            const formData = new FormData();
+            formData.append('message', messageText);
+            formData.append('receiver_id', currentAgentId.value);
+            formData.append('sender_id', String(window.userId));
+            
+            if (attachment) {
+                formData.append('attachment', attachment);
+            }
+
+            try {
+                const response = await axios.post('/chats/send', formData, {
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'multipart/form-data',
                     }
-                })
-                .then(response => {
-                    if (response.data.success) {
-                        const messageElement = createMessageElement(response.data.chat[0]);
-                        messagesContainer.appendChild(messageElement);
-                        messageInput.value = "";
-                        // loadChatList?.();
-                        scrollToBottom();
-                    }
-                })
-                .catch(error => console.error('Error sending message:', error))
-                .finally(() => {
-                    sendMessageButton.disabled = false;
                 });
+
+                if (response.data.success) {
+                    const messageElement = createMessageElement(response.data.chat[0]);
+                    messagesContainer.appendChild(messageElement);
+                    messageInput.value = "";
+                    attachmentInput.value = "";
+                    attachmentPreview.classList.add('hidden');
+                    scrollToBottom();
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+            } finally {
+                sendMessageButton.disabled = false;
+            }
         });
 
         function scrollToBottom() {
@@ -294,7 +358,7 @@
 
         function highlightActiveChat(activeId) {
             document.querySelectorAll("#chatList > div").forEach(chatItem => {
-                chatItem.classList.toggle('bg-gray-200', chatItem.dataset.receiverId === activeId);
+                chatItem.classList.toggle('bg-gray-300', chatItem.dataset.receiverId === activeId);
             });
         }
 
@@ -359,7 +423,7 @@
 
     /* Scoped styles for chat component */
     .chat-app-container {
-        height: 100vh;
+        height: 100%;
         display: flex;
         background-color: #f9fafb;
         overflow: hidden;
@@ -386,6 +450,7 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        height: 100%;
     }
 
     @media (max-width: 1024px) {
@@ -443,7 +508,7 @@
     }
 
     .chat-header {
-        padding: 1.5rem;
+        padding: 0.75rem 1.5rem;
         background-color: white;
         border-bottom: 1px solid #e5e7eb;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -452,16 +517,17 @@
     .chat-messages {
         flex: 1;
         overflow-y: auto;
-        padding: 1.5rem;
+        padding: 1rem;
         display: flex;
         flex-direction: column;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+        gap: 0.75rem;
+        min-height: 0;
     }
 
     .message-container {
         display: flex;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
+        max-width: 80%;
     }
 
     .message-container.sent {
@@ -469,10 +535,11 @@
     }
 
     .message-bubble {
-        max-width: 75%;
+        max-width: 100%;
         padding: 0.75rem 1rem;
-        border-radius: 0.5rem;
+        border-radius: 0.75rem;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        word-wrap: break-word;
     }
 
     .message-bubble.sent {
@@ -501,8 +568,7 @@
     }
 
     .chat-input {
-        padding: 1.5rem;
-        color: #1f2937;
+        padding: 1rem;
         background-color: white;
         border-top: 1px solid #e5e7eb;
     }
@@ -510,6 +576,7 @@
     .chat-input-form {
         display: flex;
         gap: 1rem;
+        align-items: flex-start;
     }
 
     .chat-input-field {
@@ -518,7 +585,9 @@
         border: 1px solid #e5e7eb;
         border-radius: 0.5rem;
         background-color: #f9fafb;
-        transition: all 0.2s;
+        min-height: 45px;
+        max-height: 120px;
+        resize: vertical;
     }
 
     .chat-input-field:focus {
@@ -528,7 +597,7 @@
     }
 
     .chat-send-button {
-        padding: 0.75rem 1.5rem;
+        padding: 0.5rem 1rem;
         background-color: #2563eb;
         color: white;
         border: none;
@@ -568,8 +637,8 @@
 
     /* Avatar */
     .chat-avatar {
-        width: 3rem;
-        height: 3rem;
+        width: 2.5rem;
+        height: 2.5rem;
         background-color: #dbeafe;
         border-radius: 9999px;
         display: flex;
@@ -588,6 +657,41 @@
         .chat-send-button {
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
+        }
+    }
+
+    /* Fix for PDF attachment name overflow */
+    .chat-messages a {
+        word-break: break-word;
+        max-width: 100%;
+        display: inline-block;
+    }
+
+    /* Ensure message bubbles handle long content properly */
+    .chat-messages p {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+    }
+
+    #attachmentPreview {
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .chat-sidebar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 10;
+            width: 280px;
+        }
+
+        .message-container {
+            max-width: 90%;
         }
     }
 </style>
