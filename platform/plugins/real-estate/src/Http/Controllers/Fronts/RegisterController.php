@@ -196,6 +196,7 @@ class RegisterController extends BaseController
             'email' => $data['email'],
             // 'phone' => $data['phone'],
             'password' => Hash::make($data['password']),
+            'role' => isset($data['role']) ? (int)$data['role'] : 1, // Set role with default as 1 (user)
         ]);
     }
 

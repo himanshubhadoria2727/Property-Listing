@@ -14,6 +14,7 @@ class RegisterRequest extends Request
             'username' => 'required|string|max:60|min:2|unique:re_accounts,username',
             'email' => 'required|max:60|min:6|email|unique:re_accounts',
             'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:1,2',
         ];
     }
 }
