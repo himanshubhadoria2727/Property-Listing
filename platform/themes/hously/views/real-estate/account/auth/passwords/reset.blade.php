@@ -1,4 +1,3 @@
-
 @php
     Theme::asset()->container('footer')->usePath()->add('feather-icons', 'plugins/feather-icons/feather.min.js');
     Theme::asset()->container('footer')->usePath()->add('particles.js', 'plugins/particles.js/particles.js');
@@ -24,7 +23,7 @@
                         <div class="grid grid-cols-1">
                             <div class="mb-4">
                                 <label class="font-medium" for="email">{{ __('Email Address:') }}</label>
-                                <input id="email" name="email" type="email" value="{{ old('email') }}" @class(['form-control form-input dark:bg-slate-800 mt-3', 'is-invalid' => $errors->has('email')]) placeholder="{{ __('name@example.com') }}">
+                                <input id="email" name="email" type="email" value="{{ old('email') }}" @class(['form-control form-input dark:bg-slate-800 mt-3', 'is-invalid' => $errors->has('email')]) placeholder="{{ __('name@example.com') }}" autocomplete="email">
                                 @error('email')
                                     <span class="invalid-feedback">
                                         <strong>{{ $message }}</strong>
@@ -33,8 +32,8 @@
                             </div>
 
                             <div class="mb-4">
-                                <label class="font-medium" for="email">{{ __('Password:') }}</label>
-                                <input id="password" name="password" type="password" @class(['form-control form-input dark:bg-slate-800 mt-3', 'is-invalid' => $errors->has('password')]) placeholder="{{ __('Password') }}">
+                                <label class="font-medium" for="password">{{ __('Password:') }}</label>
+                                <input id="password" name="password" type="password" @class(['form-control form-input dark:bg-slate-800 mt-3', 'is-invalid' => $errors->has('password')]) placeholder="{{ __('Password') }}" autocomplete="new-password">
                                 @error('password')
                                     <span class="invalid-feedback">
                                         <strong>{{ $message }}</strong>
@@ -43,10 +42,10 @@
                             </div>
 
                             <div class="mb-4 mb-3">
-                                <label class="font-medium" for="email">{{ __('Password confirmation:') }}</label>
+                                <label class="font-medium" for="password-confirm">{{ __('Password confirmation:') }}</label>
                                 <input id="password-confirm" type="password" class="mt-3 form-control form-input"
                                        name="password_confirmation" required
-                                       placeholder="{{ __('Password confirmation') }}">
+                                       placeholder="{{ __('Password confirmation') }}" autocomplete="new-password">
                                 @error('password')
                                     <span class="invalid-feedback">
                                         <strong>{{ $message }}</strong>

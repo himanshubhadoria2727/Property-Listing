@@ -48,6 +48,7 @@
                                                 id="password"
                                                 name="password"
                                                 type="password"
+                                                autocomplete="new-password"
                                             >
                                         </div>
                                         <div class="form-group mb-3">
@@ -58,6 +59,7 @@
                                                 id="password_confirmation"
                                                 name="password_confirmation"
                                                 type="password"
+                                                autocomplete="new-password"
                                             >
                                         </div>
                                         <button

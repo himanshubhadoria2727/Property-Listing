@@ -26,7 +26,7 @@
                     <div class="grid grid-cols-1">
                         <div class="mb-4">
                             <label class="font-medium" for="email">{{ __('Email Address:') }}</label>
-                            <input id="email" name="email" type="email" @class(['form-control form-input bg-white dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('email')]) placeholder="{{ __('name@example.com') }}">
+                            <input id="email" name="email" type="email" @class(['form-control form-input bg-white dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('email')]) placeholder="{{ __('name@example.com') }}" autocomplete="email">
                             @error('email')
                                 <span class="invalid-feedback">
                                     <strong>{{ $message }}</strong>
@@ -36,7 +36,7 @@
 
                         <div class="mb-4">
                             <label class="font-medium" for="password">{{ __('Password:') }}</label>
-                            <input id="password" name="password" type="password" @class(['form-control form-input bg-white dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('password')]) placeholder="{{ __('Password') }}">
+                            <input id="password" name="password" type="password" @class(['form-control form-input bg-white dark:bg-slate-800 mt-1', 'is-invalid' => $errors->has('password')]) placeholder="{{ __('Password') }}" autocomplete="current-password">
                             @error('password')
                             <span class="invalid-feedback">
                                     <strong>{{ $message }}</strong>
