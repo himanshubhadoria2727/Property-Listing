@@ -8,7 +8,6 @@
             id="location-{{ $type }}" 
             class="border-0 form-input filter-input-box bg-gray-50 dark:bg-slate-800" 
             placeholder="{{ __('City, state') }}" 
-            autocomplete="off" 
             data-url="{{ route('public.ajax.cities') }}"
             style="width: 100%; padding-right: 30px;">
         <i class="absolute hidden mdi mdi-loading mdi-spin top-5 end-5"></i>

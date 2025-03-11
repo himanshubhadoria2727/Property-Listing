@@ -8,7 +8,6 @@
     tabindex="0"
     wrapper-class-default=""
     data-bb-toggle="gs-navbar-input"
-    autocomplete="off"
 >
     <x-slot:append>
         <div class="input-group-text">

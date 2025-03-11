@@ -36,7 +36,6 @@
                                     data-stripe="number"
                                     type="text"
                                     placeholder="{{ trans('plugins/payment::payment.card_number') }}"
-                                    autocomplete="off"
                                 >
                             </div>
                             <div class="col-sm-4">
@@ -46,7 +45,6 @@
                                     data-stripe="exp"
                                     type="text"
                                     placeholder="{{ trans('plugins/payment::payment.mm_yy') }}"
-                                    autocomplete="off"
                                 >
                             </div>
                         </div>
@@ -60,7 +58,6 @@
                                     data-stripe="name"
                                     type="text"
                                     placeholder="{{ trans('plugins/payment::payment.full_name') }}"
-                                    autocomplete="off"
                                 >
                             </div>
                             <div class="col-sm-4">
@@ -70,7 +67,6 @@
                                     data-stripe="cvc"
                                     type="text"
                                     placeholder="{{ trans('plugins/payment::payment.cvc') }}"
-                                    autocomplete="off"
                                 >
                             </div>
                         </div>
