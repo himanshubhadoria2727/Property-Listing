@@ -30,11 +30,11 @@
                         <div class="flex gap-4 mt-1">
                             <div>
                                 <input type="radio" id="user" name="role" value="1" checked>
-                                <label for="user" class="ml-2">{{ __('User') }}</label>
+                                <label for="user" class="ml-2">{{ __('Buyer') }}</label>
                             </div>
                             <div>
                                 <input type="radio" id="agent" name="role" value="2">
-                                <label for="agent" class="ml-2">{{ __('Agent') }}</label>
+                                <label for="agent" class="ml-2">{{ __('Seller') }}</label>
                             </div>
                         </div>
                     </div>
