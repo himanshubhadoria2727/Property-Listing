@@ -213,6 +213,7 @@ class RealEstateHelper
             'state' => 'nullable|string',
             'state_id' => 'nullable|numeric',
             'type' => 'nullable|string',
+            'status' => 'nullable|string',
             'bedroom' => 'nullable|numeric',
             'bathroom' => 'nullable|numeric',
             'floor' => 'nullable|numeric',

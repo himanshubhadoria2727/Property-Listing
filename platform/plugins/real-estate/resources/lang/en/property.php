@@ -41,6 +41,9 @@ return [
         'renting' => 'Renting',
         'rented' => 'Rented',
         'building' => 'Building',
+        'ready_possession' => 'Ready Possession',
+        'under_construction' => 'Under Construction',
+        'ready_to_move' => 'Ready to Move in',
     ],
     'types' => [
         'sale' => 'Sale',

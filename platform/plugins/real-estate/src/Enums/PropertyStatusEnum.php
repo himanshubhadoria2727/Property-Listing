@@ -15,6 +15,9 @@ use Illuminate\Support\HtmlString;
  * @method static PropertyStatusEnum RENTING()
  * @method static PropertyStatusEnum RENTED()
  * @method static PropertyStatusEnum BUILDING()
+ * @method static PropertyStatusEnum READY_POSSESSION()
+ * @method static PropertyStatusEnum UNDER_CONSTRUCTION()
+ * @method static PropertyStatusEnum READY_TO_MOVE()
  */
 class PropertyStatusEnum extends Enum
 {
@@ -31,6 +34,12 @@ class PropertyStatusEnum extends Enum
     public const RENTED = 'rented';
 
     public const BUILDING = 'building';
+
+    public const READY_POSSESSION = 'ready_possession';
+
+    public const UNDER_CONSTRUCTION = 'under_construction';
+
+    public const READY_TO_MOVE = 'ready_to_move';
 
     public static $langPath = 'plugins/real-estate::property.statuses';
 
@@ -56,6 +65,21 @@ class PropertyStatusEnum extends Enum
                     ->toHtml(),
                 self::BUILDING => Html::tag('span', self::BUILDING()->label(), ['class' => 'label-info status-label'])
                     ->toHtml(),
+                self::READY_POSSESSION => Html::tag(
+                    'span',
+                    self::READY_POSSESSION()->label(),
+                    ['class' => 'label-success status-label']
+                )->toHtml(),
+                self::UNDER_CONSTRUCTION => Html::tag(
+                    'span',
+                    self::UNDER_CONSTRUCTION()->label(),
+                    ['class' => 'label-warning status-label']
+                )->toHtml(),
+                self::READY_TO_MOVE => Html::tag(
+                    'span',
+                    self::READY_TO_MOVE()->label(),
+                    ['class' => 'label-info status-label']
+                )->toHtml(),
                 default => null,
             };
         }
@@ -65,6 +89,9 @@ class PropertyStatusEnum extends Enum
             self::PRE_SALE, self::SELLING, self::RENTING => 'success',
             self::SOLD, self::RENTED => 'danger',
             self::BUILDING => 'info',
+            self::READY_POSSESSION => 'success',
+            self::UNDER_CONSTRUCTION => 'warning',
+            self::READY_TO_MOVE => 'info',
             default => null,
         };
 

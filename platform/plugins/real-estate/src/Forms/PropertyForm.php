@@ -98,7 +98,7 @@ class PropertyForm extends FormAbstract
             }
         }
 
-        $squareUnit = setting('real_estate_square_unit', 'm²') ? sprintf('(%s)', setting('real_estate_square_unit', 'm²')) : null;
+        $squareUnit = 'ft²';
 
         if ($this->getModel() && is_in_admin(true)) {
             add_filter('base_action_form_actions_extra', function (?string $html) {
@@ -390,8 +390,12 @@ class PropertyForm extends FormAbstract
                 'status',
                 SelectField::class,
                 StatusFieldOption::make()
-                ->choices(PropertyStatusEnum::labels())
-                ->selected((string)$this->model->status ?: PropertyStatusEnum::SELLING)
+                ->choices([
+                    PropertyStatusEnum::READY_POSSESSION => PropertyStatusEnum::READY_POSSESSION()->label(),
+                    PropertyStatusEnum::UNDER_CONSTRUCTION => PropertyStatusEnum::UNDER_CONSTRUCTION()->label(),
+                    PropertyStatusEnum::READY_TO_MOVE => PropertyStatusEnum::READY_TO_MOVE()->label(),
+                ])
+                ->selected((string)$this->model->status ?: PropertyStatusEnum::READY_POSSESSION)
                 ->toArray()
             )
             ->add('moderation_status', 'customSelect', [

@@ -106,7 +106,7 @@
 
                     @if($property->square)
                     <div class="flex-1">
-                        <span class="block mb-1 text-sm font-medium text-slate-400">{{ __('Square') }}</span>
+                        <span class="block mb-1 text-sm font-medium text-slate-400">{{ __('Area') }}</span>
                         <p class="text-base font-semibold text-slate-800 dark:text-slate-200">
                             @if($property->max_square && count($enabledBhks) > 1)
                                 {{ $property->square }} - {{ $property->max_square }} ft²

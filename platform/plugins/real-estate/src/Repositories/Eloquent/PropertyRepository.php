@@ -55,6 +55,7 @@ class PropertyRepository extends RepositoriesAbstract implements PropertyInterfa
         $filters = array_merge([
             'keyword' => null,
             'type' => null,
+            'status' => null,
             'bedroom' => null,
             'bathroom' => null,
             'floor' => null,
@@ -145,6 +146,10 @@ class PropertyRepository extends RepositoriesAbstract implements PropertyInterfa
             } else {
                 $this->model = $this->model->where('type', $filters['type']);
             }
+        }
+
+        if ($filters['status'] !== null) {
+            $this->model = $this->model->where('status', $filters['status']);
         }
 
         if ($filters['bedroom']) {
