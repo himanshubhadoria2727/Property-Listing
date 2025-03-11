@@ -46,6 +46,7 @@ class PropertyForm extends FormAbstract
             ->addScriptsDirectly([
                 'vendor/core/plugins/real-estate/js/real-estate.js',
                 'vendor/core/plugins/real-estate/js/components.js',
+                'vendor/core/plugins/real-estate/js/bhk-details.js',
             ]);
 
         $projects = Project::query()
@@ -195,32 +196,101 @@ class PropertyForm extends FormAbstract
             ->add('rowOpen1', 'html', [
                 'html' => '<div class="row">',
             ])
-            ->add('number_bedroom', 'number', [
-                'label' => trans('plugins/real-estate::property.form.number_bedroom'),
+            // ->add('number_bedroom', 'number', [
+            //     'label' => trans('plugins/real-estate::property.form.number_bedroom'),
+            //     'wrapper' => [
+            //         'class' => 'form-group mb-3 col-md-3',
+            //     ],
+            //     'attr' => [
+            //         'placeholder' => trans('plugins/real-estate::property.form.number_bedroom'),
+            //     ],
+            // ])
+            // ->add('number_bathroom', 'number', [
+            //     'label' => trans('plugins/real-estate::property.form.number_bathroom'),
+            //     'wrapper' => [
+            //         'class' => 'form-group mb-3 col-md-3',
+            //     ],
+            //     'attr' => [
+            //         'placeholder' => trans('plugins/real-estate::property.form.number_bathroom'),
+            //     ],
+            // ])
+            // ->add('number_floor', 'number', [
+            //     'label' => trans('plugins/real-estate::property.form.number_floor'),
+            //     'wrapper' => [
+            //         'class' => 'form-group mb-3 col-md-3',
+            //     ],
+            //     'attr' => [
+            //         'placeholder' => trans('plugins/real-estate::property.form.number_floor'),
+            //     ],
+            // ])
+            ->add('rowClose1', 'html', [
+                'html' => '</div>',
+            ])
+            ->add('bhk_section_title', 'html', [
+                'html' => '<h4 class="form-section mb-3">' . trans('plugins/real-estate::property.form.bhk_details') . '</h4>',
+            ])
+            ->add('bhk_section_start', 'html', [
+                'html' => '<div class="row">',
+            ])
+            ->add('has_1_bhk', 'onOff', [
+                'label' => '1 BHK',
                 'wrapper' => [
                     'class' => 'form-group mb-3 col-md-3',
-                ],
-                'attr' => [
-                    'placeholder' => trans('plugins/real-estate::property.form.number_bedroom'),
                 ],
             ])
-            ->add('number_bathroom', 'number', [
-                'label' => trans('plugins/real-estate::property.form.number_bathroom'),
+            ->add('has_2_bhk', 'onOff', [
+                'label' => '2 BHK',
                 'wrapper' => [
                     'class' => 'form-group mb-3 col-md-3',
-                ],
-                'attr' => [
-                    'placeholder' => trans('plugins/real-estate::property.form.number_bathroom'),
                 ],
             ])
-            ->add('number_floor', 'number', [
-                'label' => trans('plugins/real-estate::property.form.number_floor'),
+            ->add('has_2_5_bhk', 'onOff', [
+                'label' => '2.5 BHK',
                 'wrapper' => [
                     'class' => 'form-group mb-3 col-md-3',
                 ],
-                'attr' => [
-                    'placeholder' => trans('plugins/real-estate::property.form.number_floor'),
+            ])
+            ->add('has_3_bhk', 'onOff', [
+                'label' => '3 BHK',
+                'wrapper' => [
+                    'class' => 'form-group mb-3 col-md-3',
                 ],
+            ])
+            ->add('bhk_row_end_1', 'html', [
+                'html' => '</div><div class="row">',
+            ])
+            ->add('has_3_5_bhk', 'onOff', [
+                'label' => '3.5 BHK',
+                'wrapper' => [
+                    'class' => 'form-group mb-3 col-md-3',
+                ],
+            ])
+            ->add('has_4_bhk', 'onOff', [
+                'label' => '4 BHK',
+                'wrapper' => [
+                    'class' => 'form-group mb-3 col-md-3',
+                ],
+            ])
+            ->add('has_4_5_bhk', 'onOff', [
+                'label' => '4.5 BHK',
+                'wrapper' => [
+                    'class' => 'form-group mb-3 col-md-3',
+                ],
+            ])
+            ->add('has_5_bhk', 'onOff', [
+                'label' => '5 BHK',
+                'wrapper' => [
+                    'class' => 'form-group mb-3 col-md-3',
+                ],
+            ])
+            ->add('bhk_section_end', 'html', [
+                'html' => '</div>',
+            ])
+            ->add('bhk_details_section', 'html', [
+                'html' => '<div id="bhk-details-section"></div>',
+            ])
+            ->add('rowOpen2', 'html', [
+                'html' => '<div class="row">',
             ])
             ->add('square', 'number', [
                 'label' => trans('plugins/real-estate::property.form.square', ['unit' => $squareUnit]),
@@ -231,16 +301,19 @@ class PropertyForm extends FormAbstract
                     'placeholder' => trans('plugins/real-estate::property.form.square', ['unit' => $squareUnit]),
                 ],
             ])
-            ->add('rowClose1', 'html', [
-                'html' => '</div>',
-            ])
-            ->add('rowOpen2', 'html', [
-                'html' => '<div class="row">',
+            ->add('max_square', 'number', [
+                'label' => trans('plugins/real-estate::property.form.max_square', ['unit' => $squareUnit]),
+                'wrapper' => [
+                    'class' => 'form-group mb-3 col-md-3 hidden',
+                ],
+                'attr' => [
+                    'placeholder' => trans('plugins/real-estate::property.form.max_square', ['unit' => $squareUnit]),
+                ],
             ])
             ->add('price', 'text', [
                 'label' => trans('plugins/real-estate::property.form.price'),
                 'wrapper' => [
-                    'class' => 'form-group mb-3 col-md-6',
+                    'class' => 'form-group mb-3 col-md-3',
                 ],
                 'attr' => [
                     'id' => 'price-number',
@@ -248,6 +321,16 @@ class PropertyForm extends FormAbstract
                     'class' => 'form-control input-mask-number',
                     'data-thousands-separator' => RealEstateHelper::getThousandSeparatorForInputMask(),
                     'data-decimal-separator' => RealEstateHelper::getDecimalSeparatorForInputMask(),
+                ],
+            ])
+            ->add('max_price', 'text', [
+                'label' => trans('plugins/real-estate::property.form.max_price'),
+                'wrapper' => [
+                    'class' => 'form-group mb-3 col-md-3 hidden',
+                ],
+                'attr' => [
+                    'placeholder' => trans('plugins/real-estate::property.form.max_price'),
+                    'class' => 'form-control input-mask-number',
                 ],
             ])
             ->add('currency_id', 'customSelect', [

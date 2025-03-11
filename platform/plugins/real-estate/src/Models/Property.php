@@ -53,6 +53,16 @@ class Property extends BaseModel
         'longitude',
         'unique_id',
         'region',
+        'has_1_bhk',
+        'has_2_bhk',
+        'has_2_5_bhk',
+        'has_3_bhk',
+        'has_3_5_bhk',
+        'has_4_bhk',
+        'has_4_5_bhk',
+        'has_5_bhk',
+        'max_square',
+        'max_price',
     ];
 
     protected $casts = [
@@ -67,10 +77,20 @@ class Property extends BaseModel
         'expire_date' => 'datetime',
         'images' => 'json',
         'price' => 'float',
+        'max_price' => 'float',
         'square' => 'float',
+        'max_square' => 'float',
         'number_bedroom' => 'int',
         'number_bathroom' => 'int',
         'number_floor' => 'int',
+        'has_1_bhk' => 'boolean',
+        'has_2_bhk' => 'boolean',
+        'has_2_5_bhk' => 'boolean',
+        'has_3_bhk' => 'boolean',
+        'has_3_5_bhk' => 'boolean',
+        'has_4_bhk' => 'boolean',
+        'has_4_5_bhk' => 'boolean',
+        'has_5_bhk' => 'boolean',
     ];
 
     protected static function booted(): void

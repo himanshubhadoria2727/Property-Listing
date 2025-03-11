@@ -15,7 +15,9 @@ return [
         'number_bathroom' => 'Number bathrooms',
         'number_floor' => 'Number floors',
         'square' => 'Square :unit',
+        'max_square' => 'Maximum Square :unit',
         'price' => 'Price',
+        'max_price' => 'Maximum Price',
         'features' => 'Features',
         'project' => 'Project',
         'date' => 'Date information',
@@ -29,6 +31,7 @@ return [
         'longitude_helper' => 'Go here to get Longitude from address.',
         'categories' => 'Categories',
         'images_upload_placeholder' => 'Drop files here or click to upload.',
+        'bhk_details' => 'BHK Details',
     ],
     'statuses' => [
         'not_available' => 'Not available',
