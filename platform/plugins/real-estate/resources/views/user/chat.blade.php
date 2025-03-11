@@ -115,22 +115,30 @@
                         } else {
                             Object.keys(chatListData).forEach(receiverId => {
                                 const chat = chatListData[receiverId][0];
+                                console.log('Chat:', chat);
                                 const chatItem = createChatListItem(chat, receiverId);
-                                chatItem.dataset.receiverId = receiverId;
-                                chatList.appendChild(chatItem);
+                                if (chatItem) {
+                                    chatItem.dataset.receiverId = receiverId;
+                                    chatList.appendChild(chatItem);
+                                }
                             });
                         }
 
                         const activeChat = localStorage.getItem('authorId');
                         if (activeChat) {
                             const activeChatData = result.data[activeChat];
-                            if (activeChatData) {
+                            if (activeChatData && activeChatData[0]) {
                                 // Determine chat partner (the one who isn't the current user)
                                 const chatData = activeChatData[0];
                                 const isCurrentUserSender = chatData.sender_id == window.userId;
                                 const chatPartner = isCurrentUserSender ? chatData.receiver : chatData.sender;
-
-                                loadChat(activeChat, `${chatPartner.first_name} ${chatPartner.last_name}`);
+                                
+                                if (chatPartner) {
+                                    const partnerName = `${chatPartner.first_name || ''} ${chatPartner.last_name || ''}`.trim() || 'Unknown User';
+                                    loadChat(activeChat, partnerName);
+                                } else {
+                                    loadChat(activeChat, 'Unknown User');
+                                }
                             }
                         }
                     }
@@ -139,6 +147,8 @@
         };
 
         function createChatListItem(chat, receiverId) {
+            if (!chat) return null;
+
             const chatItem = document.createElement('div');
             chatItem.className = 'p-4 mb-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer';
 
@@ -150,23 +160,25 @@
             const isCurrentUserSender = chat.sender_id == window.userId;
             const chatPartner = isCurrentUserSender ? chat.receiver : chat.sender;
 
+            // Handle case where chat partner data might be missing
+            const partnerName = chatPartner ? `${chatPartner.first_name || ''} ${chatPartner.last_name || ''}`.trim() : 'Unknown User';
+
             chatItem.innerHTML = `
-        <div class="flex items-center space-x-4">
-            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-gray-200">
-                <i class="fas fa-user text-gray-600"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <h3 class="text-sm font-semibold text-gray-900 truncate">
-                    ${chatPartner.first_name} ${chatPartner.last_name}
-                </h3>
-                <p class="text-sm text-gray-500 truncate mt-1">${chat.message || 'No messages yet'}</p>
-            </div>
-        </div>
-    `;
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-gray-200">
+                        <i class="fas fa-user text-gray-600"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-sm font-semibold text-gray-900 truncate">
+                            ${partnerName}
+                        </h3>
+                        <p class="text-sm text-gray-500 truncate mt-1">${chat.message || 'No messages yet'}</p>
+                    </div>
+                </div>
+            `;
 
             chatItem.addEventListener('click', () => {
-                // Use chatPartner for consistency
-                loadChat(receiverId, `${chatPartner.first_name} ${chatPartner.last_name}`);
+                loadChat(receiverId, partnerName);
 
                 // Close sidebar on mobile after selection
                 if (window.innerWidth < 1024) {

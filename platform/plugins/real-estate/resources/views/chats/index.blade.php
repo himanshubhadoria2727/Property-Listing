@@ -220,28 +220,31 @@
                         Object.keys(agentChatListData).forEach(agentId => {
                             const agentChat = agentChatListData[agentId][0];
                             const agentChatItem = createAgentChatListItem(agentChat, agentId);
-                            console.log("agent", agentChat);
-                            agentChatItem.dataset.agentId = agentId;
+                            if (agentChatItem) { // Only append if chat item is created successfully
+                                agentChatItem.dataset.agentId = agentId;
 
-                            if (agentId === activeUserId) {
-                                agentChatItem.classList.add('bg-gray-500');
+                                if (agentId === activeUserId) {
+                                    agentChatItem.classList.add('bg-gray-500');
+                                }
+
+                                agentChatList.appendChild(agentChatItem);
                             }
-
-                            agentChatList.appendChild(agentChatItem);
                         });
 
                         if (activeUserId && agentChatListData[activeUserId]) {
                             const activeAgentChatData = agentChatListData[activeUserId][0];
+                            if (activeAgentChatData) {
+                                // Determine which user is the chat partner (not the current user)
+                                const isCurrentUserSender = activeAgentChatData.sender_id == window.userId;
+                                const chatPartner = isCurrentUserSender ? activeAgentChatData.receiver : activeAgentChatData.sender;
 
-                            // Determine which user is the chat partner (not the current user)
-                            const isCurrentUserSender = activeAgentChatData.sender_id == window.userId;
-                            const chatPartner = isCurrentUserSender ? activeAgentChatData.receiver : activeAgentChatData.sender;
+                                // Create a safe partner name
+                                const partnerName = chatPartner ? 
+                                    `${chatPartner.first_name || ''} ${chatPartner.last_name || ''}`.trim() || 'Unknown User' 
+                                    : 'Unknown User';
 
-                            // Use chat partner's name
-                            loadAgentChat(
-                                activeUserId,
-                                `${chatPartner.first_name} ${chatPartner.last_name}`
-                            );
+                                loadAgentChat(activeUserId, partnerName);
+                            }
                         }
                     }
                 })
@@ -249,6 +252,8 @@
         };
 
         function createAgentChatListItem(agentChat, agentId) {
+            if (!agentChat) return null;
+
             const agentChatItem = document.createElement('div');
             agentChatItem.className = 'p-3 mb-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer';
 
@@ -257,9 +262,13 @@
             }
 
             // Determine which user is the chat partner (not the current user)
-            // If sender_id is the current user's ID, use receiver info; otherwise use sender info
             const isCurrentUserSender = agentChat.sender_id == window.userId;
             const chatPartner = isCurrentUserSender ? agentChat.receiver : agentChat.sender;
+
+            // Create a safe partner name
+            const partnerName = chatPartner ? 
+                `${chatPartner.first_name || ''} ${chatPartner.last_name || ''}`.trim() || 'Unknown User' 
+                : 'Unknown User';
 
             agentChatItem.innerHTML = `
                 <div class="flex items-center space-x-3">
@@ -268,7 +277,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <h3 class="text-sm font-semibold text-gray-900 truncate">
-                            ${chatPartner.first_name} ${chatPartner.last_name}
+                            ${partnerName}
                         </h3>
                         <p class="text-sm text-gray-500 truncate">${agentChat.message || 'No messages yet'}</p>
                     </div>
@@ -283,8 +292,7 @@
                 });
                 agentChatItem.classList.add('bg-gray-500');
 
-                // Also use chatPartner here for consistency
-                loadAgentChat(agentId, `${chatPartner.first_name} ${chatPartner.last_name}`);
+                loadAgentChat(agentId, partnerName);
 
                 // Close sidebar on mobile after selecting a chat
                 if (window.innerWidth < 768) {

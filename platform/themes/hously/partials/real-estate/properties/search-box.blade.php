@@ -17,11 +17,11 @@
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 lg:gap-0">
                 {!! Theme::partial('filters.category', compact('id', 'type', 'categories')) !!}
 
-                {!! Theme::partial('filters.bedroom', compact('id', 'type')) !!}
+                <!-- {!! Theme::partial('filters.bedroom', compact('id', 'type')) !!}
 
                 {!! Theme::partial('filters.bathroom', compact('id', 'type')) !!}
 
-                {!! Theme::partial('filters.floor', compact('id', 'type')) !!}
+                {!! Theme::partial('filters.floor', compact('id', 'type')) !!} -->
             </div>
 
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 lg:gap-0">
@@ -30,9 +30,9 @@
                 {!! Theme::partial('filters.squares') !!}
             </div>
 
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-0">
+            <!-- <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-0">
                 {!! Theme::partial('filters.by-project', compact('type')) !!}
-            </div>
+            </div> -->
         </div>
 
         <div class="grid items-center grid-cols-3 gap-2 md:flex">

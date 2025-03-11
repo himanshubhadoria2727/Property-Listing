@@ -37,27 +37,45 @@ $isExpoEnabled = Botble\RealEstate\Models\Expo::where('enabled', true)->exists()
                     @if ($property->square)
                     <li class="flex items-center lg:me-6 me-4">
                         <i class="text-2xl text-primary mdi mdi-arrow-collapse-all me-2"></i>
-                        <span class="lg:text-xl">{{ $property->square_text }}</span>
-                    </li>
-                    @endif
-
-                    @if ($numberBedrooms = $property->number_bedroom)
-                    <li class="flex items-center lg:me-6 me-4">
-                        <i class="text-2xl mdi mdi-bed-double lg:text-3xl me-2 text-primary"></i>
                         <span class="lg:text-xl">
-                            {{ $numberBedrooms == 1 ? __('1 Bed') :  __(':number Beds', ['number' => $numberBedrooms]) }}
+                            @php
+                                $enabledBhks = [];
+                                $bhkTypes = [
+                                    ['id' => '1', 'label' => '1 BHK'],
+                                    ['id' => '2', 'label' => '2 BHK'],
+                                    ['id' => '2_5', 'label' => '2.5 BHK'],
+                                    ['id' => '3', 'label' => '3 BHK'],
+                                    ['id' => '3_5', 'label' => '3.5 BHK'],
+                                    ['id' => '4', 'label' => '4 BHK'],
+                                    ['id' => '4_5', 'label' => '4.5 BHK'],
+                                    ['id' => '5', 'label' => '5 BHK']
+                                ];
+                                foreach ($bhkTypes as $bhk) {
+                                    $field = 'has_' . str_replace('.', '_', $bhk['id']) . '_bhk';
+                                    if ($property->$field) {
+                                        $enabledBhks[] = $bhk['label'];
+                                    }
+                                }
+                            @endphp
+                            @if($property->max_square && count($enabledBhks) > 1)
+                                {{ $property->square }} - {{ $property->max_square }} ft²
+                            @else
+                                {{ $property->square }} ft²
+                            @endif
                         </span>
                     </li>
                     @endif
 
-                    @if ($numberBathrooms = $property->number_bathroom)
                     <li class="flex items-center">
-                        <i class="text-2xl text-primary mdi mdi-shower me-2"></i>
+                        <i class="text-2xl text-primary mdi mdi-home-city me-2"></i>
                         <span class="lg:text-xl">
-                            {{ $numberBathrooms == 1 ? __('1 Bath') : __(':number Baths', ['number' => $numberBathrooms])  }}
+                            @if(count($enabledBhks) > 0)
+                                {{ implode(', ', $enabledBhks) }}
+                            @else
+                                {{ __('No BHK info') }}
+                            @endif
                         </span>
                     </li>
-                    @endif
                 </ul>
 
                 <div class="text-slate-600 dark:text-slate-200 ck-content">{!! BaseHelper::clean($property->content) !!}</div>
@@ -155,7 +173,32 @@ $isExpoEnabled = Botble\RealEstate\Models\Expo::where('enabled', true)->exists()
                             <h5 class="text-2xl font-medium">{{ __('Price:') }}</h5>
 
                             <div class="flex items-center justify-between mt-4">
-                                <span class="text-xl font-medium">{{ $property->price_html }}</span>
+                                <span class="text-xl font-medium">
+                                    @php
+                                        $enabledBhks = [];
+                                        $bhkTypes = [
+                                            ['id' => '1', 'label' => '1 BHK'],
+                                            ['id' => '2', 'label' => '2 BHK'],
+                                            ['id' => '2_5', 'label' => '2.5 BHK'],
+                                            ['id' => '3', 'label' => '3 BHK'],
+                                            ['id' => '3_5', 'label' => '3.5 BHK'],
+                                            ['id' => '4', 'label' => '4 BHK'],
+                                            ['id' => '4_5', 'label' => '4.5 BHK'],
+                                            ['id' => '5', 'label' => '5 BHK']
+                                        ];
+                                        foreach ($bhkTypes as $bhk) {
+                                            $field = 'has_' . str_replace('.', '_', $bhk['id']) . '_bhk';
+                                            if ($property->$field) {
+                                                $enabledBhks[] = $bhk['label'];
+                                            }
+                                        }
+                                    @endphp
+                                    @if($property->max_price && count($enabledBhks) > 1)
+                                        {{ format_price($property->price, $property->currency) }} - {{ format_price($property->max_price, $property->currency) }}
+                                    @else
+                                        {{ $property->price_html }}
+                                    @endif
+                                </span>
 
                                 <span class="bg-primary/10 text-primary text-sm px-2.5 py-0.75 rounded h-6">{{ $property->type->label() }}</span>
                             </div>
@@ -170,31 +213,53 @@ $isExpoEnabled = Botble\RealEstate\Models\Expo::where('enabled', true)->exists()
 
                                 @if ($property->square)
                                 <li class="flex items-center justify-between mt-2">
-                                    <span class="text-sm text-slate-400">{{ __('Square') }}</span>
-                                    <span class="text-sm font-medium">{{ $property->square_text }}</span>
+                                    <span class="text-sm text-slate-400">{{ __('Area') }}</span>
+                                    <span class="text-sm font-medium">
+                                        @php
+                                            $enabledBhks = [];
+                                            $bhkTypes = [
+                                                ['id' => '1', 'label' => '1 BHK'],
+                                                ['id' => '2', 'label' => '2 BHK'],
+                                                ['id' => '2_5', 'label' => '2.5 BHK'],
+                                                ['id' => '3', 'label' => '3 BHK'],
+                                                ['id' => '3_5', 'label' => '3.5 BHK'],
+                                                ['id' => '4', 'label' => '4 BHK'],
+                                                ['id' => '4_5', 'label' => '4.5 BHK'],
+                                                ['id' => '5', 'label' => '5 BHK']
+                                            ];
+                                            foreach ($bhkTypes as $bhk) {
+                                                $field = 'has_' . str_replace('.', '_', $bhk['id']) . '_bhk';
+                                                if ($property->$field) {
+                                                    $enabledBhks[] = $bhk['label'];
+                                                }
+                                            }
+                                        @endphp
+                                        @if($property->max_square && count($enabledBhks) > 1)
+                                            {{ $property->square }} - {{ $property->max_square }} ft²
+                                        @else
+                                            {{ $property->square }} ft²
+                                        @endif
+                                    </span>
                                 </li>
                                 @endif
 
-                                @if ($bedrooms = $property->number_bedroom)
                                 <li class="flex items-center justify-between mt-2">
-                                    <span class="text-sm text-slate-400">{{ __('Number of bedrooms') }}</span>
-                                    <span class="text-sm font-medium">{{ $bedrooms }}</span>
+                                    <span class="text-sm text-slate-400">{{ __('Available Units') }}</span>
+                                    <span class="text-sm font-medium">
+                                        @if(count($enabledBhks) > 0)
+                                            {{ implode(', ', $enabledBhks) }}
+                                        @else
+                                            {{ __('No BHK info') }}
+                                        @endif
+                                    </span>
                                 </li>
-                                @endif
 
-                                @if ($bathrooms = $property->number_bathroom)
-                                <li class="flex items-center justify-between mt-2">
-                                    <span class="text-sm text-slate-400">{{ __('Number of bathrooms') }}</span>
-                                    <span class="text-sm font-medium">{{ $bathrooms }}</span>
-                                </li>
-                                @endif
-
-                                @if ($floors = $property->number_floor)
+                                <!-- @if ($floors = $property->number_floor)
                                 <li class="flex items-center justify-between mt-2">
                                     <span class="text-sm text-slate-400">{{ __('Number of floors') }}</span>
                                     <span class="text-sm font-medium">{{ $floors }}</span>
                                 </li>
-                                @endif
+                                @endif -->
 
                                 @if(RealestateHelper::isEnabledCustomFields())
                                 @foreach($property->customFields as $customField)
