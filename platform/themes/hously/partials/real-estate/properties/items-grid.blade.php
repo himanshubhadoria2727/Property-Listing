@@ -4,7 +4,7 @@
     <div class="overflow-hidden duration-500 ease-in-out bg-white shadow property-item group rounded-xl dark:bg-slate-800 hover:shadow-lg dark:shadow-gray-700 dark:hover:shadow-gray-700">
         <div class="relative overflow-hidden">
             <a href="{{ $property->url }}">
-                <img src="{{ RvMedia::getImageUrl($property->image, 'large', false, RvMedia::getDefaultImage()) }}" alt="{{ $property->name }}" class="transition-all duration-500 hover:scale-110">
+                <img src="{{ RvMedia::getImageUrl($property->image, '', false, RvMedia::getDefaultImage()) }}" alt="{{ $property->name }}" class="transition-all duration-500 hover:scale-110">
             </a>
             <div class="absolute top-6 end-6">
                 <button type="button" class="text-lg text-red-600 bg-white rounded-full shadow btn btn-icon dark:bg-slate-900 dark:shadow-gray-700 add-to-wishlist" aria-label="{{ __('Add to wishlist') }}" data-box-type="property" data-id="{{ $property->id }}">
@@ -61,46 +61,70 @@
                 @endif
             </div>
 
-            <ul class="flex items-center justify-between py-3 ps-0 mb-0 list-none border-b dark:border-gray-800">
-                @if ($numberBedrooms = $property->number_bedroom)
-                <li class="flex items-center me-2">
-                    <i class="text-2xl text-primary mdi mdi-bed-empty me-2"></i>
-                    <span>
-                        {{ $numberBedrooms == 1 ? __('1 Bed') : __(':number Beds', ['number' => $numberBedrooms]) }}
-                    </span>
+            <ul class="flex items-center justify-between py-4 ps-0 mb-0 list-none border-b dark:border-gray-800">
+                @php
+                    $enabledBhks = [];
+                    $bhkTypes = [
+                        ['id' => '1', 'label' => '1 BHK'],
+                        ['id' => '2', 'label' => '2 BHK'],
+                        ['id' => '2_5', 'label' => '2.5 BHK'],
+                        ['id' => '3', 'label' => '3 BHK'],
+                        ['id' => '3_5', 'label' => '3.5 BHK'],
+                        ['id' => '4', 'label' => '4 BHK'],
+                        ['id' => '4_5', 'label' => '4.5 BHK'],
+                        ['id' => '5', 'label' => '5 BHK']
+                    ];
+                    foreach ($bhkTypes as $bhk) {
+                        $field = 'has_' . str_replace('.', '_', $bhk['id']) . '_bhk';
+                        if ($property->$field) {
+                            $enabledBhks[] = $bhk['label'];
+                        }
+                    }
+                @endphp
+                <li class="w-full">
+                    <span class="block mb-2 text-sm font-medium text-slate-400">Available Units</span>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($enabledBhks as $bhk)
+                            <span class="px-3 py-1.5 text-sm font-medium bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">{{ $bhk }}</span>
+                        @endforeach
+                    </div>
                 </li>
-                @endif
-
-                @if ($numberBathrooms = $property->number_bathroom)
-                <li class="flex items-center me-2">
-                    <i class="text-2xl text-primary mdi mdi-shower me-2"></i>
-                    <span>
-                        {{ $numberBathrooms == 1 ? __('1 Bath') : __(':number Baths', ['number' => $numberBathrooms]) }}
-                    </span>
-                </li>
-                @endif
-
-                @if ($property->square)
-                <li class="flex items-center me-2">
-                    <i class="text-2xl text-primary mdi mdi-arrow-collapse-all me-2"></i>
-                    <span>{{ $property->square_text }}</span>
-                </li>
-                @endif
             </ul>
 
-            <ul class="flex flex-wrap gap-3 items-center justify-between pt-4 ps-0 mb-0 list-none">
-                <li>
-                    <span class="text-slate-400">{{ __('Price') }}</span>
-                    <p class="text-lg font-semibold">{{ format_price($property->price, $property->currency) }}</p>
-                </li>
+            <div class="pt-4 ps-0">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <span class="block mb-1 text-sm font-medium text-slate-400">{{ __('Price') }}</span>
+                        <p class="text-base font-semibold text-slate-800 dark:text-slate-200">
+                            @if($property->max_price && count($enabledBhks) > 1)
+                                {{ format_price($property->price, $property->currency) }} - {{ format_price($property->max_price, $property->currency) }}
+                            @else
+                                {{ format_price($property->price, $property->currency) }}
+                            @endif
+                        </p>
+                    </div>
+
+                    @if($property->square)
+                    <div class="flex-1">
+                        <span class="block mb-1 text-sm font-medium text-slate-400">{{ __('Square') }}</span>
+                        <p class="text-base font-semibold text-slate-800 dark:text-slate-200">
+                            @if($property->max_square && count($enabledBhks) > 1)
+                                {{ $property->square }} - {{ $property->max_square }} ft²
+                            @else
+                                {{ $property->square }} ft²
+                            @endif
+                        </p>
+                    </div>
+                    @endif
+                </div>
 
                 @if (RealEstateHelper::isEnabledReview())
-                <li>
-                    <span class="text-slate-400">{{ __('Rating') }}</span>
+                <div class="mt-4 pt-4 border-t dark:border-gray-700">
+                    <span class="block mb-2 text-sm font-medium text-slate-400">{{ __('Rating') }}</span>
                     @include(Theme::getThemeNamespace('views.real-estate.partials.review-star'), ['avgStar' => $property->reviews_avg_star, 'count' => $property->reviews_count])
-                </li>
+                </div>
                 @endif
-            </ul>
+            </div>
         </div>
     </div>
     @endforeach

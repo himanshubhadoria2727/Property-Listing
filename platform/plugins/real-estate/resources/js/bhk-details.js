@@ -27,6 +27,8 @@ $(document).ready(function() {
         // Show/hide max fields based on BHK selection
         const maxSquareWrapper = $('[name="max_square"]').closest('.form-group');
         const maxPriceWrapper = $('[name="max_price"]').closest('.form-group');
+        const maxSquareInput = $('[name="max_square"]');
+        const maxPriceInput = $('[name="max_price"]');
 
         if (selectedBhkCount > 1) {
             maxSquareWrapper.removeClass('hidden');
@@ -34,6 +36,9 @@ $(document).ready(function() {
         } else {
             maxSquareWrapper.addClass('hidden');
             maxPriceWrapper.addClass('hidden');
+            // Clear max values when only one BHK is selected
+            maxSquareInput.val('');
+            maxPriceInput.val('');
         }
 
         if (detailsSection.children().length > 0) {
@@ -77,6 +82,23 @@ $(document).ready(function() {
     // Watch for changes in BHK checkboxes
     bhkTypes.forEach(bhk => {
         $(`#has_${bhk.id}_bhk`).on('change', createBhkDetailsForm);
+    });
+
+    // Handle form submission
+    $('form').on('submit', function() {
+        let selectedBhkCount = 0;
+        bhkTypes.forEach(bhk => {
+            const checkbox = $(`#has_${bhk.id}_bhk`);
+            if (checkbox.length && checkbox.prop('checked')) {
+                selectedBhkCount++;
+            }
+        });
+
+        // Clear max values if only one BHK is selected
+        if (selectedBhkCount <= 1) {
+            $('[name="max_square"]').val('');
+            $('[name="max_price"]').val('');
+        }
     });
 
     // Initial form creation
